@@ -58,6 +58,11 @@ for k, v in RES.items():
     top = [dict(pl=r['pl'], n=r.get('name') or (r['team'] + ' ' + r.get('rel', '')), tm=fixteam(r.get('team', '')), f=r.get('fin'),
                 me=is_sri(r.get('team'))) for r in sorted(fin, key=lambda r: r['pl'])[:3]]
     evres[ev] = dict(nfin=len(fin), our=our, top=top)
+# rule 16: ages 7-11 get medals per heat (last column), ages 12-14 per event place 1-3 (G/S/B column)
+def medal_of(h, ev):
+    age = int(re.match(r'\d+', ev['age'])[0]) if re.match(r'\d+', ev['age']) else 0
+    if age >= 12 or ev['relay']: return {'G': 0, 'S': 1, 'B': 2}.get(h.get('pod'))
+    return {'ทอง': 0, 'เงิน': 1, 'ทองแดง': 2}.get(h['lv'])
 nres = 0
 for r in races:
     er = evres.get(r['ev'])
@@ -68,7 +73,7 @@ for r in races:
         hit = next((o for o in er['our'] if o['n'].strip().endswith(' ' + r['relay']) or o['n'].strip().endswith(r['relay'])), None)
     if hit:
         nres += 1
-        r['res'] = dict(pl=hit['pl'], f=hit['f'], pts=hit['pts'], why=hit['why'], nfin=er['nfin'], lv={'ทอง':0,'เงิน':1,'ทองแดง':2}.get(hit['lv']))
+        r['res'] = dict(pl=hit['pl'], f=hit['f'], pts=hit['pts'], why=hit['why'], nfin=er['nfin'], lv=medal_of(hit, events[r['ev']]))
         s0, s1 = secs(r['seed']), secs(hit['f'])
         if s0 and s1: r['res']['d'] = round(s1 - s0, 2)
     else:
@@ -77,7 +82,8 @@ for r in races:
 # events to watch: all individual events in categories (gender+age) where we have a swimmer -> needed for
 # cumulative-points trophy standings; plus our relay events. Checked once the event's last heat has started.
 cats = {(events[r['ev']]['g'], events[r['ev']]['age']) for r in races if not r.get('relay')}
-watch = {no: e['last'] for no, e in events.items() if (not e['relay'] and (e['g'], e['age']) in cats)}
+# club standings need every individual event, so watch them all (ETag keeps re-checks cheap)
+watch = {no: e['last'] for no, e in events.items() if not e['relay']}
 for r in races:
     if r.get('relay'): watch[r['ev']] = events[r['ev']]['last']
 json.dump({str(k): v for k, v in sorted(watch.items())}, open('data/watch.json', 'w'), indent=0)
@@ -95,20 +101,41 @@ for (g, age) in sorted(cats):
         for x in rr['rows']:
             if not x.get('name'): continue
             k = norm(x['name'])
-            t = tot.setdefault(k, dict(n=x['name'], tm=fixteam(x.get('team', '')), p=0, me=is_sri(x.get('team')), ev=0))
+            t = tot.setdefault(k, dict(n=x['name'], tm=fixteam(x.get('team', '')), p=0, me=is_sri(x.get('team')), ev=0, gsb=[0, 0, 0]))
             t['p'] += int(x.get('pts') or 0); t['ev'] += 1
-    rows = sorted([t for t in tot.values() if t['p'] > 0 or t['me']], key=lambda t: -t['p'])
+            if x.get('pod') in ('G', 'S', 'B'): t['gsb']['GSB'.index(x['pod'])] += 1
+    # rules: rank by points, tie -> gold, silver, bronze (event places 1-3)
+    key_ = lambda t: (-t['p'], -t['gsb'][0], -t['gsb'][1], -t['gsb'][2])
+    rows = sorted([t for t in tot.values() if t['p'] > 0 or t['me']], key=key_)
     rk, prev = 0, None
     for i, t in enumerate(rows):
-        if t['p'] != prev: rk, prev = i + 1, t['p']
+        if key_(t) != prev: rk, prev = i + 1, key_(t)
         t['rk'] = rk if t['p'] > 0 else None
     key = f"{g}|{age}"
     stand[key] = dict(g=g, age=age, nev=len(evs), done=done,
-                      top=[dict(rk=t['rk'], n=t['n'], tm=t['tm'], p=t['p'], me=t['me']) for t in rows if t['p'] > 0][:8],
+                      top=[dict(rk=t['rk'], n=t['n'], tm=t['tm'], p=t['p'], me=t['me'], gsb=t['gsb']) for t in rows if t['p'] > 0][:8],
                       our={norm(t['n']): dict(rk=t['rk'], p=t['p']) for t in rows if t['me']})
+# ---- club standings (individual events only, per meet rules)
+club = {}
+for no, e in events.items():
+    if e['relay']: continue
+    rr = RES.get(str(no))
+    if not rr: continue
+    for x in rr['rows']:
+        t = fixteam(x.get('team', ''))
+        if not t: continue
+        c = club.setdefault(t, dict(n=t, p=0, me=is_sri(t)))
+        c['p'] += int(x.get('pts') or 0)
+crow = sorted(club.values(), key=lambda c: -c['p'])
+rk, prev = 0, None
+for i, c in enumerate(crow):
+    if c['p'] != prev: rk, prev = i + 1, c['p']
+    c['rk'] = rk
+clubs = dict(n=len(crow), done=sum(1 for no, e in events.items() if not e['relay'] and str(no) in RES),
+             nev=sum(1 for e in events.values() if not e['relay']), top=crow[:5], our=next((c for c in crow if c['me']), None))
 now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=7))).strftime('%d/%m %H:%M')
 out = dict(events={k: v for k, v in events.items() if k in {r['ev'] for r in races}}, races=races, heats=heats,
-           evres={k: dict(nfin=v['nfin'], top=v['top']) for k, v in evres.items() if k in {r['ev'] for r in races}}, stand=stand,
+           evres={k: dict(nfin=v['nfin'], top=v['top']) for k, v in evres.items() if k in {r['ev'] for r in races}}, stand=stand, clubs=clubs,
            days=CFG['days_meta'], meet=dict(name=CFG['meet_name'], total=total, teams=len(teams), updated=now,
            results_url=CFG['results_url'], nres=nres, nevres=len(RES)))
 os.makedirs('site', exist_ok=True)
