@@ -7,6 +7,12 @@ SRI = tuple(CFG['team_names'])
 def is_sri(t): return bool(t) and (t in SRI or 'อรุโณ' in t or 'arunothai' in t.lower())
 TH = {'IM':'เดี่ยวผสม','Freestyle':'ฟรีสไตล์','Breaststroke':'กบ','Backstroke':'กรรเชียง','Butterfly':'ผีเสื้อ',
       'Medley Relay 4X25':'ผลัดผสม 4x25','Freestyle Relay 4X25':'ผลัดฟรีสไตล์ 4x25'}
+def stroke_th(st):
+    k = re.sub(r'\s+', '', st).lower()
+    if 'relay' in k: return 'ผลัดผสม 4x25' if 'medley' in k else 'ผลัดฟรีสไตล์ 4x25'
+    for en, th in (('butterfly', 'ผีเสื้อ'), ('backstroke', 'กรรเชียง'), ('breaststroke', 'กบ'), ('freestyle', 'ฟรีสไตล์'), ('im', 'เดี่ยวผสม')):
+        if k == en: return th
+    return TH.get(st, st)
 def secs(s):
     if not re.match(r'^(\d+:)?\d+\.\d\d$', s or ''): return None
     p = s.split(':'); return float(p[0])*60+float(p[1]) if len(p) == 2 else float(p[0])
@@ -30,7 +36,7 @@ for day in CFG['days']:
         seeded = [secs(x['seed']) for x in byev[no] if secs(x['seed'])]
         events[no] = dict(no=no, day=day['n'], g='M' if ev['gender'] == 'Boys' else 'F',
             age=ev['age'].replace(' Year Olds', '').replace('& Under', 'ปีและต่ำกว่า'), dist=ev['dist'],
-            stroke=TH.get(ev['stroke'], ev['stroke']), relay='Relay' in ev['stroke'], n=len(byev[no]),
+            stroke=stroke_th(ev['stroke']), relay='Relay' in ev['stroke'], n=len(byev[no]),
             heats=max([x['heats'] for x in byev[no]] or [0]), seeded=len(seeded),
             rec=ev.get('rec'),
             last=day_date(day['n']) + 'T' + max([t24(x['time']) for x in byev[no]] or ['23:59']))

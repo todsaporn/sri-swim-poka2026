@@ -137,6 +137,9 @@ button{font:inherit;color:inherit;cursor:pointer}
 .empty{text-align:center;padding:40px 10px;color:var(--mut)}
 .foot{font-size:12px;color:var(--mut);text-align:center;padding:30px 16px 40px}
 .hidden{display:none!important}
+.mini-more,.mini-end{display:flex;align-items:center;justify-content:center;gap:8px;min-width:130px;color:var(--mut);font-size:13px;font-weight:600;background:#f3f7fa;border-style:dashed}
+.mini-end{color:#0f8a4b}
+.mini-more .spin{width:14px;height:14px;border-radius:50%;border:2px solid #cfdbe6;border-top-color:var(--pri2);animation:ptrspin .8s linear infinite}
 .pdf{display:inline-flex;align-items:center;gap:3px;vertical-align:middle;text-decoration:none;color:#c0262d;font-size:11px;font-weight:700;border:1px solid #f3c9cb;background:#fff5f5;border-radius:6px;padding:1px 5px 1px 3px;line-height:1.4;cursor:pointer}
 .pdf svg{width:13px;height:13px;flex:0 0 auto}
 .pdf:active{transform:scale(.95)}
@@ -436,13 +439,24 @@ document.addEventListener('click',e=>{const pd=e.target.closest('[data-pdf]');if
   const h=e.target.closest('[data-h]');if(h){openHeat(h.dataset.h);return}
   const a=e.target.closest('[data-a]');if(a&&!e.target.closest('.sheet'))openAth(a.dataset.a)});
 // next strip
-function renderNext(){const b=bkk(),nm=nowM();$('#clock').textContent=`ตอนนี้ ${b.t} น.`;
+let nextAll=[],nextShown=0,nextNm=0;const NEXT_PAGE=10;
+const miniCard=r=>{const nm=nextNm;return `<button class="mini" data-h="${r.ev}-${r.heat}"><div class="tm">${r.t}${nm>0&&r.m-nm<720?` <span style="font-size:12px;color:var(--mut);font-family:'IBM Plex Sans Thai'">${r.m-nm<=0?'กำลังแข่ง':'อีก '+(r.m-nm)+' น.'}</span>`:''}</div>
+   <div class="nm"><span class="gdot ${r.g}"></span> ${r.relay?'ผลัดทีม '+r.relay:esc(r.name)}</div><div class="ev">${dayList.length>1?'D'+r.day+' · ':''}${evLabel(r.e)} · ฮีต ${r.heat} ลู่ ${r.lane}</div></button>`};
+function appendNext(){const row=$('#nextrow');if(nextShown>=nextAll.length)return;
+  const chunk=nextAll.slice(nextShown,nextShown+NEXT_PAGE);nextShown+=chunk.length;
+  row.querySelector('.mini-more')?.remove();
+  row.insertAdjacentHTML('beforeend',chunk.map(miniCard).join('')+(nextShown<nextAll.length?`<div class="mini mini-more"><span class="spin"></span>อีก ${nextAll.length-nextShown} รายการ</div>`:`<div class="mini mini-end">✓ ครบทั้ง ${nextAll.length} รายการ</div>`))}
+function renderNext(){const b=bkk(),nm=nowM();nextNm=nm;$('#clock').textContent=`ตอนนี้ ${b.t} น.`;
   let list,title;
-  if(nm<0){list=R.slice(0,10);title='รายการแรกของทีม'}
-  else{list=R.filter(r=>!isDone(r,nm)).slice(0,10);title=list.length?(list[0].day*1440-1440>nm?`รายการแรกของ ${dLabel(list[0].day)}`:'รายการถัดไปของทีม'):'จบการแข่งขันแล้ว — ดูสรุปที่แท็บผลแข่ง'}
-  $('#nexttitle').textContent=title;
-  $('#nextrow').innerHTML=list.map(r=>`<button class="mini" data-h="${r.ev}-${r.heat}"><div class="tm">${r.t}${nm>0&&r.m-nm<720?` <span style="font-size:12px;color:var(--mut);font-family:'IBM Plex Sans Thai'">${r.m-nm<=0?'กำลังแข่ง':'อีก '+(r.m-nm)+' น.'}</span>`:''}</div>
-   <div class="nm"><span class="gdot ${r.g}"></span> ${r.relay?'ผลัดทีม '+r.relay:esc(r.name)}</div><div class="ev">${dayList.length>1?'D'+r.day+' · ':''}${evLabel(r.e)} · ฮีต ${r.heat} ลู่ ${r.lane}</div></button>`).join('')||'<div style="color:var(--mut);font-size:14px">—</div>'}
+  if(nm<0){list=R.slice();title='รายการแรกของทีม'}
+  else{list=R.filter(r=>!isDone(r,nm));title=list.length?(list[0].day*1440-1440>nm?`รายการแรกของ ${dLabel(list[0].day)}`:'รายการถัดไปของทีม'):'จบการแข่งขันแล้ว — ดูสรุปที่แท็บผลแข่ง'}
+  $('#nexttitle').textContent=title+(list.length?` · ${list.length} รายการ`:'');
+  const row=$('#nextrow'),keep=row.scrollLeft,want=Math.max(NEXT_PAGE,nextShown);
+  nextAll=list;nextShown=0;row.innerHTML='';
+  if(!list.length){row.innerHTML='<div style="color:var(--mut);font-size:14px">—</div>';return}
+  while(nextShown<Math.min(want,list.length))appendNext();
+  row.scrollLeft=keep}
+$('#nextrow').addEventListener('scroll',e=>{const el=e.currentTarget;if(el.scrollLeft+el.clientWidth>=el.scrollWidth-260)appendNext()},{passive:true});
 // results view
 function vResults(){const done=R.filter(r=>r.res&&okRace(r)).sort((a,b)=>b.m-a.m);const all=R.filter(okRace);
   $('#count').textContent=`ผลออกแล้ว ${done.length} จาก ${all.length} รายการ · อัปเดต ${DATA.meet.updated}`;
