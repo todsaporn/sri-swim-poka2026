@@ -382,7 +382,7 @@ function openAth(n){const a=A[n];if(!a)return;
    <div style="font-weight:600">${evLabel(r.e)}</div><div style="font-size:13px;color:var(--mut)">Event ${r.ev} · ${seedTag(r)} · ${r.e.n} คนในรุ่น</div>${r.res?`<div style="margin-top:6px;display:flex;gap:10px;align-items:center;font-weight:600">${r.res.pl?(r.res.lv!=null?'<span class=medal>'+MED[r.res.lv]+'</span> ':'')+'อันดับ '+r.res.pl+'/'+r.res.nfin+(r.res.pts?' · +'+r.res.pts+' คะแนน':''):'<span style=color:#c0262d>'+esc(r.res.f)+'</span>'} · ${esc(r.res.f)} ${r.res.d!=null?`<span class="${r.res.d<0?'up':'dn'}" style="font-size:12.5px">${r.res.d<0?'เร็วขึ้น '+(-r.res.d).toFixed(2)+' วิ':'ช้าลง '+r.res.d.toFixed(2)+' วิ'}</span>`:''}</div>${r.res.why?`<div class="why">${esc(r.res.why)}</div>`:''}`:''}</button></div>`).join('')}</div>
   <div style="font-size:12px;color:var(--mut);margin-top:6px">แตะรายการเพื่อดูคู่แข่งในฮีต</div>`;showOv()}
 const showOv=()=>{$('#ov').classList.add('show');document.body.style.overflow='hidden'};
-window.closeOv=()=>{$('#ov').classList.remove('show');document.body.style.overflow=''};
+window.closeOv=()=>{$('#ov').classList.remove('show');document.body.style.overflow='';if(typeof pendingNew!=='undefined'&&pendingNew)checkNew()};
 $('#ov').onclick=e=>{if(e.target.id==='ov')closeOv()};
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOv()});
 document.addEventListener('click',e=>{if(e.target.closest('#mmore')){medAll=!medAll;renderMedals();return}
@@ -475,7 +475,12 @@ document.addEventListener('click',e=>{if(e.target.closest('#instdone')){try{loca
 renderMedals();renderNext();setInterval(()=>{renderNext();if(S.v==='schedule')render()},60000);route();
 $('#foot').innerHTML=`<span class="upd">อัปเดตผลล่าสุด ${DATA.meet.updated} น.</span> · ดึงผลอัตโนมัติทุก 10 นาทีจาก <a href="${DATA.meet.results_url}">cnxswimming.com</a><br>เวลาเป็นเวลาประมาณการตามโปรแกรม อาจเลื่อนตามหน้างาน · อันดับเวลาส่ง = อันดับ seed time ในรายการนั้น (NT = ไม่มีเวลาส่ง)`;
 // auto reload when new data is deployed
-setInterval(async()=>{try{const j=await (await fetch('data.json?'+Date.now(),{cache:'no-store'})).json();if(j.meet&&j.meet.updated!==DATA.meet.updated&&!$('#ov').classList.contains('show'))location.reload()}catch(e){}},120000);
+let pendingNew=false;
+async function checkNew(){try{const j=await (await fetch('data.json?t='+Date.now(),{cache:'no-store'})).json();
+  if(j.meet&&j.meet.ts&&j.meet.ts>(DATA.meet.ts||'')){pendingNew=true;if(!$('#ov').classList.contains('show'))location.replace(location.pathname+'?v='+Date.now()+location.hash)}}catch(e){}}
+checkNew();setInterval(checkNew,60000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){renderFetched();checkNew()}});
+window.addEventListener('pageshow',e=>{if(e.persisted)checkNew()});
 </script>
 </body>
 </html>
