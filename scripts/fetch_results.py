@@ -14,7 +14,7 @@ def get(n):
     if m.get('etag'): h['If-None-Match'] = m['etag']
     if m.get('lm'): h['If-Modified-Since'] = m['lm']
     try:
-        with urllib.request.urlopen(urllib.request.Request(url, headers=h), timeout=30) as r:
+        with urllib.request.urlopen(urllib.request.Request(url, headers=h), timeout=15) as r:
             body = r.read()
             if not body.startswith(b'%PDF'): return n, 'notpdf', None
             open(f'{OUT}/{n}.pdf', 'wb').write(body)
@@ -25,7 +25,7 @@ def get(n):
         return n, f'err:{e.__class__.__name__}', None
 
 changed = []
-with cf.ThreadPoolExecutor(8) as ex:
+with cf.ThreadPoolExecutor(24) as ex:
     for n, st, m in ex.map(get, events):
         if m: meta[str(n)] = m; changed.append(n)
 json.dump(meta, open(META, 'w'), indent=0, sort_keys=True)
