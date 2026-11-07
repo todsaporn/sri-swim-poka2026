@@ -77,6 +77,12 @@ out = dict(events={k: v for k, v in events.items() if k in {r['ev'] for r in rac
            evres={k: dict(nfin=v['nfin'], top=v['top']) for k, v in evres.items() if k in {r['ev'] for r in races}},
            days=CFG['days_meta'], meet=dict(name=CFG['meet_name'], total=total, teams=len(teams), updated=now,
            results_url=CFG['results_url'], nres=nres, nevres=len(RES)))
+# events to watch: only events our team swims in, with our latest heat start (Bangkok time)
+watch = {}
+for r in races:
+    d = CFG['days_meta'][str(r['day'])]['date'] + 'T' + r['t']
+    watch[r['ev']] = max(watch.get(r['ev'], d), d)
+json.dump(dict(sorted(watch.items())), open('data/watch.json', 'w'), indent=0)
 os.makedirs('site', exist_ok=True)
 json.dump(out, open('site/data.json', 'w'), ensure_ascii=False, separators=(',', ':'))
 tpl = open('scripts/template.html').read()

@@ -5,7 +5,15 @@ BASE = 'https://www.cnxswimming.com/wp-content/uploads/2026/11/1_{}.pdf'
 OUT = 'raw/results'; os.makedirs(OUT, exist_ok=True)
 META = os.path.join(OUT, '_meta.json')
 meta = json.load(open(META)) if os.path.exists(META) else {}
-events = [int(x) for x in sys.argv[1:]] or range(1, 213)
+import datetime
+# Only our team's events whose (our) heat has already started; already-downloaded ones are re-checked cheaply via ETag.
+if sys.argv[1:]:
+    events = [int(x) for x in sys.argv[1:]]
+else:
+    watch = json.load(open('data/watch.json')) if os.path.exists('data/watch.json') else {str(i): '' for i in range(1, 213)}
+    now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=7))).strftime('%Y-%m-%dT%H:%M')
+    events = [int(k) for k, t in watch.items() if not t or t <= now]
+print('checking events:', events)
 UA = {'User-Agent': 'Mozilla/5.0 (sri-swim results bot)'}
 
 def get(n):
