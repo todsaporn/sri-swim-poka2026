@@ -129,6 +129,34 @@ button{font:inherit;color:inherit;cursor:pointer}
 .empty{text-align:center;padding:40px 10px;color:var(--mut)}
 .foot{font-size:12px;color:var(--mut);text-align:center;padding:30px 16px 40px}
 .hidden{display:none!important}
+.tabs{overflow-x:auto;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
+.tab{padding:8px 10px}
+.dayhd{margin:22px 0 4px;font-family:var(--disp);font-size:19px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:8px}
+.dayhd span{font-family:'IBM Plex Sans Thai',system-ui,sans-serif;font-size:12px;font-weight:600;background:#e3ebf2;color:var(--mut);border-radius:99px;padding:2px 9px}
+.res{text-align:center;min-width:64px}
+.res .pl{font-family:var(--disp);font-weight:700;font-size:20px;line-height:1.05}
+.res .pl.p1{color:#b7860b}.res .pl.p2{color:#6b7a89}.res .pl.p3{color:#a0592b}
+.res .ft{font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums}
+.res .dl{font-size:11px;font-weight:600}
+.up{color:#0f8a4b}.dn{color:#b4462b}
+.res.dq .pl{color:#c0262d;font-size:16px}
+.medal{font-size:18px;line-height:1}
+.rbox{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.rbox div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px;text-align:center}
+.rbox b{display:block;font-family:var(--disp);font-size:24px;line-height:1.1}
+.rbox span{font-size:12px;color:var(--mut)}
+.board{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:6px 12px;margin-bottom:14px}
+.board h3{font-size:15px;margin:8px 0 4px}
+.brow{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-top:1px solid var(--line);width:100%;background:none;border-left:0;border-right:0;border-bottom:0;text-align:left;font-size:14px}
+.brow:first-of-type{border-top:0}
+.brow .md{display:flex;gap:8px;font-variant-numeric:tabular-nums;font-weight:600;font-size:13px}
+.pending{font-size:11.5px;color:var(--mut);font-weight:600}
+.why{font-size:12px;color:#c0262d;margin-top:2px}
+.top3{margin:10px 0 14px;background:#f6f9fb;border-radius:12px;padding:8px 12px;font-size:13.5px}
+.top3 div{display:flex;justify-content:space-between;gap:8px;padding:3px 0}
+.top3 .me{font-weight:700;color:var(--pri)}
+.upd{display:inline-flex;align-items:center;gap:6px}
+.upd:before{content:"";width:7px;height:7px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.2)}
 .pick{flex:0 0 auto;border:1px solid var(--line);background:#fff;border-radius:10px;padding:6px 12px;font-size:14px;font-weight:600;white-space:nowrap;max-width:240px;overflow:hidden;text-overflow:ellipsis}
 .pick.on{background:#e6f6f8;border-color:var(--aqua);color:#08707a}
 .pk-x{font-size:12px;font-weight:500;opacity:.75;margin-left:4px}
@@ -164,11 +192,13 @@ button{font:inherit;color:inherit;cursor:pointer}
 <div class="bar"><div class="wrap">
   <div class="tabs" id="tabs">
     <button class="tab" data-v="schedule">ตารางแข่ง</button>
+    <button class="tab" data-v="results">ผลแข่ง</button>
     <button class="tab" data-v="athletes">นักกีฬา</button>
     <button class="tab" data-v="ages">รุ่นอายุ</button>
     <button class="tab" data-v="relays">ผลัด</button>
   </div>
   <div class="filters" id="filters">
+    <div class="seg" id="fd"></div><span class="sep" id="fdsep"></span>
     <button class="pick" id="pick"></button>
     <div class="seg" id="fg"></div><span class="sep"></span>
     <div class="seg" id="fa"></div><span class="sep"></span>
@@ -180,11 +210,12 @@ button{font:inherit;color:inherit;cursor:pointer}
 <main class="wrap">
   <div class="count" id="count"></div>
   <section id="v-schedule"></section>
+  <section id="v-results"></section>
   <section id="v-athletes"></section>
   <section id="v-ages"></section>
   <section id="v-relays"></section>
 </main>
-<div class="foot wrap">ข้อมูลจาก Meet Program (Startlist Day 1, อัปเดต 27 ต.ค. 2026) · เวลาเป็นเวลาประมาณการตามโปรแกรม อาจเลื่อนตามหน้างาน · อันดับเวลาส่ง = อันดับ seed time ในรายการนั้นทั้งหมด (NT = ไม่มีเวลาส่ง)</div>
+<div class="foot wrap" id="foot"></div>
 
 <div class="ov" id="ov"><div class="sheet" id="sheet"></div></div>
 
@@ -199,67 +230,82 @@ const ST=['ฟรีสไตล์','กรรเชียง','กบ','ผี
 const evLabel=e=>`${e.dist}ม. ${e.stroke}`;
 const ageLabel=e=>/ปี/.test(e.age)?`${e.age}`:`${e.age} ปี`;
 // enrich
-R.forEach(r=>{r.e=EV[r.ev];r.g=r.e.g;r.m=mins(r.t)});
+const DAYS=DATA.days, EVR=DATA.evres||{};
+R.forEach(r=>{r.e=EV[r.ev];r.g=r.e.g;r.day=r.day||1;r.m=(r.day-1)*1440+mins(r.t)});
+const dayList=[...new Set(R.map(r=>r.day))].sort();
+const dLabel=d=>(DAYS[d]||{}).label||('Day '+d);
 R.sort((a,b)=>a.m-b.m||a.ev-b.ev);
 const ind=R.filter(r=>!r.relay), rel=R.filter(r=>r.relay);
 const A={};
 ind.forEach(r=>{(A[r.name]??={name:r.name,age:r.age,g:r.g,races:[]}).races.push(r)});
 const ath=Object.values(A).sort((a,b)=>a.age-b.age||a.g.localeCompare(b.g)||a.name.localeCompare(b.name,'th'));
-ath.forEach(a=>{a.races.sort((x,y)=>x.m-y.m);a.minGap=Infinity;for(let i=1;i<a.races.length;i++){const g=a.races[i].m-a.races[i-1].m;a.races[i].gap=g;a.minGap=Math.min(a.minGap,g)}});
+ath.forEach(a=>{a.races.sort((x,y)=>x.m-y.m);a.minGap=Infinity;for(let i=1;i<a.races.length;i++){if(a.races[i].day!==a.races[i-1].day)continue;const g=a.races[i].m-a.races[i-1].m;a.races[i].gap=g;a.minGap=Math.min(a.minGap,g)}
+  a.med=[0,0,0];a.races.forEach(r=>{const p=r.res&&r.res.pl;if(p&&p<=3)a.med[p-1]++});a.nres=a.races.filter(r=>r.res).length});
 const TIGHT=15;const dur=m=>m<60?m+' นาที':Math.floor(m/60)+' ชม.'+(m%60?' '+m%60+' นาที':'');
 // state
-const S={sel:new Set(),showPast:false,v:'schedule',g:'',a:'',s:'',fav:false};
+const S={d:'',sel:new Set(),showPast:false,v:'schedule',g:'',a:'',s:'',fav:false};
 let favs=new Set();try{favs=new Set(JSON.parse(localStorage.getItem('sri-favs')||'[]'))}catch(e){}
 const saveFav=()=>{try{localStorage.setItem('sri-favs',JSON.stringify([...favs]))}catch(e){}};
 // header
+const MED=['🥇','🥈','🥉'];
+const allMed=[0,0,0];R.forEach(r=>{const p=r.res&&r.res.pl;if(p&&p<=3)allMed[p-1]++});const nRes=R.filter(r=>r.res).length;
+function medStat(){return nRes?[`${allMed[0]}·${allMed[1]}·${allMed[2]}`,`เหรียญ ทอง·เงิน·ทองแดง (ผลออก ${nRes}/${R.length})`]:[dayList.length,'วันแข่งขัน']}
 $('#meetname').textContent=DATA.meet.name;
-$('#meetday').textContent=`${DATA.meet.day} · จากผู้เข้าแข่งขัน ${DATA.meet.teams} ทีม`;
+$('#meetday').textContent=`${dayList.map(dLabel).join(' / ')} · ${DATA.meet.teams} ทีมเข้าแข่งขัน`;
 const boys=ath.filter(a=>a.g==='M').length, girls=ath.length-boys;
 $('#stats').innerHTML=[
  [ath.length,`นักกีฬา (ชาย ${boys} · หญิง ${girls})`],
  [ind.length,'รายการเดี่ยว'],
  [rel.length,'ทีมผลัด'],
- [`${R[0].t}–${R[R.length-1].t}`,'ช่วงเวลาลงแข่ง']].map(([b,s])=>`<div class="stat"><b>${b}</b><span>${s}</span></div>`).join('');
+ medStat()].map(([b,s])=>`<div class="stat"><b>${b}</b><span>${s}</span></div>`).join('');
 // filters
 const ages=[...new Set(ath.map(a=>a.age))].sort((a,b)=>a-b);
 const chips=(el,items,key,cls='')=>{$(el).innerHTML=items.map(([v,l,c])=>`<button class="chip ${c||cls}" data-k="${key}" data-val="${v}">${l}</button>`).join('')};
+if(dayList.length>1)chips('#fd',[['','ทุกวัน'],...dayList.map(d=>[d,'Day '+d])],'d');else{$('#fd').classList.add('hidden');$('#fdsep').classList.add('hidden')}
 chips('#fg',[['','ทุกเพศ'],['M','ชาย','m'],['F','หญิง','f'],['fav','★ ติดตาม']],'g');
 chips('#fa',[['','ทุกอายุ'],...ages.map(a=>[a,a+' ปี'])],'a');
 chips('#fs',[['','ทุกท่า'],...ST.map(s=>[s,s])],'s');
 document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{const k=b.dataset.k,v=b.dataset.val;
   if(k==='g'&&v==='fav'){S.fav=!S.fav}else if(k==='g'){S.g=S.g===v?'':v}else{S[k]=S[k]==v?'':v}render()});
-$('#reset').onclick=()=>{Object.assign(S,{g:'',a:'',s:'',fav:false});S.sel.clear();render()};
+$('#reset').onclick=()=>{Object.assign(S,{d:'',g:'',a:'',s:'',fav:false});S.sel.clear();render()};
 const syncChips=()=>document.querySelectorAll('.chip').forEach(b=>{const k=b.dataset.k,v=b.dataset.val;
   b.classList.toggle('on',k==='g'&&v==='fav'?S.fav:String(S[k])===v)});
 const okAth=a=>(!S.g||a.g===S.g)&&(!S.a||a.age==S.a)&&(!S.sel.size||S.sel.has(a.name))&&(!S.fav||favs.has(a.name));
-const okRace=r=>r.relay?(!S.g||r.g===S.g)&&!S.a&&!S.sel.size&&!S.fav&&(!S.s):okAth(A[r.name])&&(!S.s||r.e.stroke===S.s);
+const okDay=r=>!S.d||r.day==S.d;
+const okRace=r=>!okDay(r)?false:r.relay?(!S.g||r.g===S.g)&&!S.a&&!S.sel.size&&!S.fav&&(!S.s):okAth(A[r.name])&&(!S.s||r.e.stroke===S.s);
 // clock / now (Asia/Bangkok)
 function bkk(){const p=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Bangkok',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date());const o={};p.forEach(x=>o[x.type]=x.value);return{d:`${o.year}-${o.month}-${o.day}`,m:(+o.hour%24)*60+ +o.minute,t:`${o.hour%24}:${o.minute}`}}
-const MEETDAY='2026-11-07';
-function nowM(){const b=bkk();return b.d===MEETDAY?b.m:(b.d>MEETDAY?1e9:-1)}
+const D1=(DAYS[1]||{date:'2026-11-07'}).date;
+function nowM(){const b=bkk();const diff=Math.round((Date.parse(b.d)-Date.parse(D1))/864e5);return diff<0?-1:diff*1440+b.m}
+const LASTM=Math.max(...R.map(r=>r.m));
 // helpers
 const seedTag=r=>r.seed==='NT'?`<span class="seedtag">NT</span>`:`<span class="seedtag ${r.rank&&r.rank<=3?'top':''}">${r.seed}${r.rank?` · #${r.rank}/${r.e.seeded}`:''}</span>`;
+function resBadge(r){const x=r.res;if(!x)return '';
+  if(!x.pl){return `<div class="res dq"><div class="pl">${esc(x.f||'DQ')}</div><div class="ft" style="color:var(--mut)">ไม่ได้อันดับ</div></div>`}
+  const d=x.d!=null?`<div class="dl ${x.d<0?'up':'dn'}">${x.d<0?'▲ เร็วขึ้น '+(-x.d).toFixed(2):'▼ '+x.d.toFixed(2)}</div>`:(r.seed==='NT'?'<div class="dl" style="color:var(--mut)">เวลาแรก</div>':'');
+  return `<div class="res"><div class="pl p${x.pl}">${x.pl<=3?`<span class="medal">${MED[x.pl-1]}</span>`:'ที่ '+x.pl+`<small style="font-size:11px;color:var(--mut)">/${x.nfin}</small>`}</div><div class="ft">${esc(x.f)}</div>${d}</div>`}
 function raceCard(r,nm){const e=r.e,cls=r.m<nm-5?'past':(nm>=r.m-5&&nm<=r.m+5?'now':'');
   const who=r.relay?`ศรีอรุโณทัย ทีม ${r.relay} <span class="tag rel">ผลัด</span>`:`${esc(r.name)}${r.gap!=null&&r.gap<TIGHT?` <span class="tag warn">ห่างรายการก่อน ${r.gap} นาที</span>`:''}`;
   return `<button class="race ${cls}" data-h="${r.ev}-${r.heat}"><div class="tm">${r.t}<small>Event ${r.ev}</small></div>
   <div><div class="who"><span class="gdot ${r.g}"></span>${who}</div>
-  <div class="what">${evLabel(e)} · ${G[e.g]} ${ageLabel(e)} · ฮีต ${r.heat}/${e.heats} ${seedTag(r)}</div></div>
-  <div class="lane"><b>${r.lane}</b><span>ลู่</span></div></button>`}
+  <div class="what">${evLabel(e)} · ${G[e.g]} ${ageLabel(e)} · ฮีต ${r.heat}/${e.heats}${r.res?' ลู่ '+r.lane:''} ${seedTag(r)}</div>
+  ${r.res&&r.res.why?`<div class="why">${esc(r.res.why)}</div>`:''}</div>
+  ${r.res?resBadge(r):`<div class="lane"><b>${r.lane}</b><span>ลู่</span></div>`}</button>`}
 // views
 function vSchedule(){const nm=nowM();const all=R.filter(okRace);
   const past=all.filter(r=>r.m<nm-5),list=S.showPast?all:all.filter(r=>r.m>=nm-5);
   $('#count').textContent=`เหลือ ${all.length-past.length} จาก ${all.length} รายการ`;
   let h=past.length?`<button class="pastbtn" id="pastbtn">${S.showPast?'▲ ซ่อนรายการที่แข่งไปแล้ว':'▼ แสดงรายการที่แข่งไปแล้ว'} <span>${past.length}</span></button>`:'';
   if(!list.length)return h+(all.length?'<div class="empty">แข่งครบทุกรายการตามตัวกรองแล้ว 🎉</div>':'<div class="empty">ไม่พบรายการตามตัวกรอง</div>');
-  let cur='';list.forEach(r=>{const hr=r.t.slice(0,2);if(hr!==cur){cur=hr;h+=`<div class="hour">${hr}:00 น.</div>`}h+=raceCard(r,nm)});return h}
-function vAthletes(){const list=ath.filter(okAth).map(a=>({a,rs:a.races.filter(r=>!S.s||r.e.stroke===S.s)})).filter(x=>x.rs.length);
+  let cur='',cd=0;list.forEach(r=>{if(r.day!==cd){cd=r.day;cur='';if(dayList.length>1)h+=`<div class="dayhd">${dLabel(r.day)} <span>${list.filter(x=>x.day===r.day).length} รายการ</span></div>`}const hr=r.t.slice(0,2);if(hr!==cur){cur=hr;h+=`<div class="hour">${hr}:00 น.</div>`}h+=raceCard(r,nm)});return h}
+function vAthletes(){const list=ath.filter(okAth).map(a=>({a,rs:a.races.filter(r=>(!S.s||r.e.stroke===S.s)&&okDay(r))})).filter(x=>x.rs.length);
   $('#count').textContent=`${list.length} คน · กด ☆ เพื่อติดตาม`;
   if(!list.length)return'<div class="empty">ไม่พบนักกีฬาตามตัวกรอง</div>';
-  return `<div class="grid">${list.map(({a,rs})=>{const strokes=a.races.map(r=>`<span class="sk">${r.e.dist} ${r.e.stroke}</span>`).join('');
+  return `<div class="grid">${list.map(({a,rs})=>{const strokes=rs.map(r=>`<span class="sk">${dayList.length>1?'D'+r.day+' ':''}${r.e.dist} ${r.e.stroke}${r.res&&r.res.pl&&r.res.pl<=3?' '+MED[r.res.pl-1]:''}</span>`).join('');
    return `<div class="ath" role="button" tabindex="0" data-a="${esc(a.name)}"><button class="star ${favs.has(a.name)?'on':''}" data-star="${esc(a.name)}" aria-label="ติดตาม">${favs.has(a.name)?'★':'☆'}</button>
-   <div class="top"><div class="av ${a.g}">${a.age}</div><div><div class="nm">${esc(a.name)}</div><div class="meta">${G[a.g]} · ${a.age} ปี · ${a.races.length} รายการ</div></div></div>
+   <div class="top"><div class="av ${a.g}">${a.age}</div><div><div class="nm">${esc(a.name)}</div><div class="meta">${G[a.g]} · ${a.age} ปี · ${rs.length} รายการ${a.med.some(x=>x)?' · '+a.med.map((n,i)=>n?MED[i]+n:'').join(' '):''}</div></div></div>
    <div class="strk">${strokes}</div>
-   <div class="span"><span>แรก ${a.races[0].t} · สุดท้าย ${a.races.at(-1).t}</span>${a.minGap<TIGHT?`<span class="tag warn">ช่วงติด ${a.minGap} น.</span>`:''}</div></div>`}).join('')}</div>`}
+   <div class="span"><span>${dayList.length>1&&!S.d?dayList.map(d=>`D${d}: ${a.races.filter(r=>r.day===d).length}`).join(' · '):`แรก ${rs[0].t} · สุดท้าย ${rs.at(-1).t}`}</span>${a.minGap<TIGHT?`<span class="tag warn">ช่วงติด ${a.minGap} น.</span>`:''}</div></div>`}).join('')}</div>`}
 function vAges(){const list=ath.filter(okAth);
   $('#count').textContent=`${list.length} คน แยกตามรุ่นอายุ`;
   const by={};list.forEach(a=>(by[a.age]??=[]).push(a));
@@ -272,21 +318,23 @@ function vAges(){const list=ath.filter(okAth);
    const n=xs.reduce((t,a)=>t+a.races.length,0);
    return `<div class="agebox"><h3>${k} ปี <small>${xs.length} คน · ${n} รายการ</small></h3>${rows('M')}${rows('F')}</div>`}).join('')}</div>`}
 function lineup(k){return `<table class="lu">${H[k].map(x=>`<tr class="${x.me?'me':''}"><td>${x.l}</td><td><b>${esc(x.n)}</b>${x.tm?`<div class="tmn">${esc(x.tm)}${x.a?' · '+x.a+' ปี':''}</div>`:''}</td><td>${x.s}</td></tr>`).join('')}</table>`}
-function vRelays(){const list=rel.filter(r=>!S.g||r.g===S.g);
-  $('#count').textContent=`${list.length} ทีมผลัด · ผลัดผสม 4x25 ม.`+(S.a||S.sel.size||S.s||S.fav?' (ตัวกรองอายุ/นักกีฬา/ท่า ไม่ใช้กับผลัด)':'');
+function vRelays(){const list=rel.filter(r=>(!S.g||r.g===S.g)&&okDay(r));
+  $('#count').textContent=`${list.length} ทีมผลัด · ผลัด 4x25 ม.`+(S.a||S.sel.size||S.s||S.fav?' (ตัวกรองอายุ/นักกีฬา/ท่า ไม่ใช้กับผลัด)':'');
   if(!list.length)return'<div class="empty">ไม่พบทีมผลัด</div>';
   return list.map(r=>`<div class="relay"><div class="hd"><div><h3 class="disp" style="font-size:17px"><span class="gdot ${r.g}"></span> ${G[r.g]} ${r.e.age}</h3>
-   <div class="what" style="font-size:13px;color:var(--mut)">Event ${r.ev} · ${evLabel(r.e)} · ฮีต ${r.heat}/${r.e.heats} · ลู่ ${r.lane} · ${r.e.n} ทีมในรายการ</div></div><span class="pill">${r.t} น.</span></div>${lineup(r.ev+'-'+r.heat)}</div>`).join('')}
+   <div class="what" style="font-size:13px;color:var(--mut)">Event ${r.ev} · ${evLabel(r.e)} · ฮีต ${r.heat}/${r.e.heats} · ลู่ ${r.lane} · ${r.e.n} ทีมในรายการ</div>${r.res?`<div style="margin-top:4px;font-weight:700">${r.res.pl?(r.res.pl<=3?MED[r.res.pl-1]+' ':'')+'อันดับ '+r.res.pl:esc(r.res.f)} · ${esc(r.res.f)}</div>`:''}</div><span class="pill">D${r.day} · ${r.t} น.</span></div>${lineup(r.ev+'-'+r.heat)}</div>`).join('')}
 // modal
+function top3(ev){const x=EVR[ev];if(!x||!x.top.length)return '';return `<div class="top3"><div style="font-weight:700;color:var(--mut);font-size:12px">ผลรวมทุกฮีต · เข้าเส้น ${x.nfin} คน</div>${x.top.map(t=>`<div class="${t.me?'me':''}"><span>${MED[t.pl-1]||t.pl} ${esc(t.n)} <small style="color:var(--mut)">${esc(t.tm)}</small></span><b>${esc(t.f)}</b></div>`).join('')}</div>`}
+function ourRes(ev,ht){const rs=R.filter(r=>r.ev===ev&&r.heat===ht&&r.res);if(!rs.length)return '';return `<div class="top3" style="background:#e8f7f9">${rs.map(r=>`<div class="me"><span>${r.relay?'ทีม '+r.relay:esc(r.name)}</span><b>${r.res.pl?'อันดับ '+r.res.pl+'/'+r.res.nfin:''} · ${esc(r.res.f)}</b></div>${r.res.why?`<div class="why">${esc(r.res.why)}</div>`:''}`).join('')}</div>`}
 function openHeat(k){const[ev,ht]=k.split('-').map(Number);const e=EV[ev];
   $('#sheet').innerHTML=`<button class="x" onclick="closeOv()">×</button><div class="kick" style="color:var(--mut)">Event ${ev} · ฮีต ${ht}/${e.heats}</div>
-  <h2>${evLabel(e)}</h2><div style="color:var(--mut);font-size:14px;margin-bottom:12px">${G[e.g]} ${ageLabel(e)} · ${R.find(r=>r.ev===ev&&r.heat===ht).t} น. · ${e.n} คนในรายการ</div>${lineup(k)}`;showOv()}
+  <h2>${evLabel(e)}</h2><div style="color:var(--mut);font-size:14px;margin-bottom:12px">${G[e.g]} ${ageLabel(e)} · ${R.find(r=>r.ev===ev&&r.heat===ht).t} น. (${dLabel(e.day)}) · ${e.n} คนในรายการ</div>${top3(ev)}${ourRes(ev,ht)}${lineup(k)}`;showOv()}
 function openAth(n){const a=A[n];if(!a)return;
   $('#sheet').innerHTML=`<button class="x" onclick="closeOv()">×</button><div class="top" style="display:flex;gap:12px;align-items:center"><div class="av ${a.g}" style="width:50px;height:50px;border-radius:14px;display:grid;place-items:center;font-family:var(--disp);font-weight:600;color:#fff;font-size:20px">${a.age}</div>
-  <div><h2>${esc(a.name)}</h2><div style="color:var(--mut);font-size:14px">${G[a.g]} · ${a.age} ปี · ${a.races.length} รายการ</div></div></div>
-  <div class="tl">${a.races.map((r,i)=>`${i&&r.gap!=null?`<div class="gap ${r.gap<TIGHT?'warn':''}">↓ พัก ${dur(r.gap)}</div>`:''}<div class="it"><button data-h="${r.ev}-${r.heat}">
-   <div style="display:flex;justify-content:space-between;gap:8px"><b class="disp" style="color:var(--pri)">${r.t} น.</b><span style="font-size:13px;color:var(--mut)">ฮีต ${r.heat}/${r.e.heats} · <b style="color:var(--ink)">ลู่ ${r.lane}</b></span></div>
-   <div style="font-weight:600">${evLabel(r.e)}</div><div style="font-size:13px;color:var(--mut)">Event ${r.ev} · ${seedTag(r)} · ${r.e.n} คนในรุ่น</div></button></div>`).join('')}</div>
+  <div><h2>${esc(a.name)}</h2><div style="color:var(--mut);font-size:14px">${G[a.g]} · ${a.age} ปี · ${a.races.length} รายการ${a.med.some(x=>x)?' · '+a.med.map((n,i)=>n?MED[i]+n:'').join(' '):''}</div></div></div>
+  <div class="tl">${a.races.map((r,i)=>`${i&&r.gap!=null&&a.races[i-1].day===r.day?`<div class="gap ${r.gap<TIGHT?'warn':''}">↓ พัก ${dur(r.gap)}</div>`:''}<div class="it"><button data-h="${r.ev}-${r.heat}">
+   ${i===0||a.races[i-1].day!==r.day?(dayList.length>1?`<div style="font-size:12px;font-weight:700;color:var(--mut);margin-bottom:2px">${dLabel(r.day)}</div>`:''):''}<div style="display:flex;justify-content:space-between;gap:8px"><b class="disp" style="color:var(--pri)">${r.t} น.</b><span style="font-size:13px;color:var(--mut)">ฮีต ${r.heat}/${r.e.heats} · <b style="color:var(--ink)">ลู่ ${r.lane}</b></span></div>
+   <div style="font-weight:600">${evLabel(r.e)}</div><div style="font-size:13px;color:var(--mut)">Event ${r.ev} · ${seedTag(r)} · ${r.e.n} คนในรุ่น</div>${r.res?`<div style="margin-top:6px;display:flex;gap:10px;align-items:center;font-weight:600">${r.res.pl?(r.res.pl<=3?'<span class=medal>'+MED[r.res.pl-1]+'</span> ':'')+'อันดับ '+r.res.pl+'/'+r.res.nfin:'<span style=color:#c0262d>'+esc(r.res.f)+'</span>'} · ${esc(r.res.f)} ${r.res.d!=null?`<span class="${r.res.d<0?'up':'dn'}" style="font-size:12.5px">${r.res.d<0?'เร็วขึ้น '+(-r.res.d).toFixed(2)+' วิ':'ช้าลง '+r.res.d.toFixed(2)+' วิ'}</span>`:''}</div>${r.res.why?`<div class="why">${esc(r.res.why)}</div>`:''}`:''}</button></div>`).join('')}</div>
   <div style="font-size:12px;color:var(--mut);margin-top:6px">แตะรายการเพื่อดูคู่แข่งในฮีต</div>`;showOv()}
 const showOv=()=>{$('#ov').classList.add('show');document.body.style.overflow='hidden'};
 window.closeOv=()=>{$('#ov').classList.remove('show');document.body.style.overflow=''};
@@ -302,14 +350,22 @@ document.addEventListener('click',e=>{const pk=e.target.closest('[data-pk]');if(
 // next strip
 function renderNext(){const b=bkk(),nm=nowM();$('#clock').textContent=`ตอนนี้ ${b.t} น.`;
   let list,title;
-  if(nm<0){list=R.slice(0,10);title='เริ่มแข่ง 7 พ.ย. — รายการแรกของทีม'}
-  else if(nm>=1e9){list=[];title='การแข่งขัน Day 1 จบแล้ว'}
-  else{list=R.filter(r=>r.m>=nm-3).slice(0,10);title=list.length?'รายการถัดไปของทีม':'ทีมลงแข่งครบทุกรายการแล้ววันนี้'}
+  if(nm<0){list=R.slice(0,10);title='รายการแรกของทีม'}
+  else{list=R.filter(r=>r.m>=nm-3).slice(0,10);title=list.length?(list[0].day*1440-1440>nm?`รายการแรกของ ${dLabel(list[0].day)}`:'รายการถัดไปของทีม'):'จบการแข่งขันแล้ว — ดูสรุปที่แท็บผลแข่ง'}
   $('#nexttitle').textContent=title;
-  $('#nextrow').innerHTML=list.map(r=>`<button class="mini" data-h="${r.ev}-${r.heat}"><div class="tm">${r.t}${nm>0&&nm<1e9?` <span style="font-size:12px;color:var(--mut);font-family:'IBM Plex Sans Thai'">${r.m-nm<=0?'กำลังแข่ง':'อีก '+(r.m-nm)+' น.'}</span>`:''}</div>
-   <div class="nm"><span class="gdot ${r.g}"></span> ${r.relay?'ผลัดทีม '+r.relay:esc(r.name)}</div><div class="ev">${evLabel(r.e)} · ฮีต ${r.heat} ลู่ ${r.lane}</div></button>`).join('')||'<div style="color:var(--mut);font-size:14px">—</div>'}
+  $('#nextrow').innerHTML=list.map(r=>`<button class="mini" data-h="${r.ev}-${r.heat}"><div class="tm">${r.t}${nm>0&&r.m-nm<720?` <span style="font-size:12px;color:var(--mut);font-family:'IBM Plex Sans Thai'">${r.m-nm<=0?'กำลังแข่ง':'อีก '+(r.m-nm)+' น.'}</span>`:''}</div>
+   <div class="nm"><span class="gdot ${r.g}"></span> ${r.relay?'ผลัดทีม '+r.relay:esc(r.name)}</div><div class="ev">${dayList.length>1?'D'+r.day+' · ':''}${evLabel(r.e)} · ฮีต ${r.heat} ลู่ ${r.lane}</div></button>`).join('')||'<div style="color:var(--mut);font-size:14px">—</div>'}
+// results view
+function vResults(){const done=R.filter(r=>r.res&&okRace(r)).sort((a,b)=>b.m-a.m);const all=R.filter(okRace);
+  $('#count').textContent=`ผลออกแล้ว ${done.length} จาก ${all.length} รายการ · อัปเดต ${DATA.meet.updated}`;
+  const med=[0,0,0];let up=0,cmp=0;done.forEach(r=>{const p=r.res.pl;if(p&&p<=3)med[p-1]++;if(r.res.d!=null){cmp++;if(r.res.d<0)up++}});
+  let h=`<div class="rbox"><div><b>${med[0]}</b><span>🥇 ทอง</span></div><div><b>${med[1]}</b><span>🥈 เงิน</span></div><div><b>${med[2]}</b><span>🥉 ทองแดง</span></div><div><b>${cmp?Math.round(up/cmp*100)+'%':'–'}</b><span>เร็วกว่าเวลาส่ง</span></div></div>`;
+  const bd=ath.filter(okAth).map(a=>{const rs=a.races.filter(r=>r.res&&okDay(r)&&(!S.s||r.e.stroke===S.s));const m=[0,0,0];rs.forEach(r=>{const p=r.res.pl;if(p&&p<=3)m[p-1]++});return{a,m,n:rs.length}}).filter(x=>x.m.some(v=>v)).sort((x,y)=>y.m[0]-x.m[0]||y.m[1]-x.m[1]||y.m[2]-x.m[2]);
+  if(bd.length)h+=`<div class="board"><h3>ตารางเหรียญรายคน</h3>${bd.map(x=>`<button class="brow" data-a="${esc(x.a.name)}"><span><span class="gdot ${x.a.g}"></span> ${esc(x.a.name)} <small style="color:var(--mut)">${x.a.age} ปี</small></span><span class="md">${x.m.map((n,i)=>`<span style="opacity:${n?1:.3}">${MED[i]}${n}</span>`).join('')}</span></button>`).join('')}</div>`;
+  if(!done.length)return h+`<div class="empty">ยังไม่มีผลการแข่งขันตามตัวกรอง<br><small>ระบบดึงผลจาก cnxswimming.com ทุก 10 นาที</small></div>`;
+  let cd=0;done.forEach(r=>{if(r.day!==cd){cd=r.day;if(dayList.length>1)h+=`<div class="dayhd">${dLabel(r.day)}</div>`}h+=raceCard(r,-1)});return h}
 // router
-const VIEWS={schedule:vSchedule,athletes:vAthletes,ages:vAges,relays:vRelays};
+const VIEWS={schedule:vSchedule,results:vResults,athletes:vAthletes,ages:vAges,relays:vRelays};
 function pickLabel(){const n=S.sel.size;$('#pick').classList.toggle('on',n>0);
   $('#pick').innerHTML=n?`👤 ${n===1?esc([...S.sel][0]):n+' คน'} <span class="pk-x">เปลี่ยน</span>`:'👤 เลือกนักกีฬา ▾'}
 function renderPicker(){const n=S.sel.size;
@@ -320,11 +376,14 @@ function renderPicker(){const n=S.sel.size;
   ${sec('M')}${sec('F')}<div class="pk-foot"><button class="pk-b2" id="pkclear">ล้าง</button><button class="pk-b1" id="pkdone">${n?`ดู ${n} คนที่เลือก`:'ดูทุกคน'}</button></div>`}
 function render(){syncChips();pickLabel();document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.v===S.v));
   Object.keys(VIEWS).forEach(k=>{const el=$('#v-'+k);el.classList.toggle('hidden',k!==S.v);if(k===S.v)el.innerHTML=VIEWS[k]()});
-  $('#fa').classList.toggle('hidden',S.v==='relays');$('#fs').classList.toggle('hidden',S.v==='relays'||S.v==='ages')}
+  $('#fa').classList.toggle('hidden',S.v==='relays');$('#pick').classList.toggle('hidden',S.v==='relays');$('#fs').classList.toggle('hidden',S.v==='relays'||S.v==='ages')}
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{location.hash=t.dataset.v});
 function route(){const h=location.hash.slice(1);S.v=VIEWS[h]?h:'schedule';render()}
 window.addEventListener('hashchange',route);
 renderNext();setInterval(()=>{renderNext();if(S.v==='schedule')render()},60000);route();
+$('#foot').innerHTML=`<span class="upd">อัปเดตผลล่าสุด ${DATA.meet.updated} น.</span> · ดึงผลอัตโนมัติทุก 10 นาทีจาก <a href="${DATA.meet.results_url}">cnxswimming.com</a><br>เวลาเป็นเวลาประมาณการตามโปรแกรม อาจเลื่อนตามหน้างาน · อันดับเวลาส่ง = อันดับ seed time ในรายการนั้น (NT = ไม่มีเวลาส่ง)`;
+// auto reload when new data is deployed
+setInterval(async()=>{try{const j=await (await fetch('data.json?'+Date.now(),{cache:'no-store'})).json();if(j.meet&&j.meet.updated!==DATA.meet.updated&&!$('#ov').classList.contains('show'))location.reload()}catch(e){}},120000);
 </script>
 </body>
 </html>

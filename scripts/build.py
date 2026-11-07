@@ -4,6 +4,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.chdir(ROOT)
 CFG = json.load(open('config.json'))
 SRI = tuple(CFG['team_names'])
+def is_sri(t): return bool(t) and (t in SRI or 'อรุโณ' in t or 'arunothai' in t.lower())
 TH = {'IM':'เดี่ยวผสม','Freestyle':'ฟรีสไตล์','Breaststroke':'กบ','Backstroke':'กรรเชียง','Butterfly':'ผีเสื้อ',
       'Medley Relay 4X25':'ผลัดผสม 4x25','Freestyle Relay 4X25':'ผลัดฟรีสไตล์ 4x25'}
 def secs(s):
@@ -50,10 +51,10 @@ for k, v in RES.items():
     rows = v['rows']
     fin = [r for r in rows if r.get('pl')]
     our = [dict(pl=r.get('pl'), n=r.get('name') or (r['team'] + ' ' + r.get('rel', '')), tm=fixteam(r.get('team', '')),
-                f=r.get('fin'), pts=int(r['pts']) if r.get('pts') else 0, why=r.get('reason', ''))
-           for r in rows if r.get('team') in SRI]
+                f=r.get('fin'), pts=int(r['pts']) if r.get('pts') else 0, why=r.get('reason', ''), pod=r.get('pod', ''))
+           for r in rows if is_sri(r.get('team')) or is_sri(r.get('name'))]
     top = [dict(pl=r['pl'], n=r.get('name') or (r['team'] + ' ' + r.get('rel', '')), tm=fixteam(r.get('team', '')), f=r.get('fin'),
-                me=r.get('team') in SRI) for r in sorted(fin, key=lambda r: r['pl'])[:3]]
+                me=is_sri(r.get('team'))) for r in sorted(fin, key=lambda r: r['pl'])[:3]]
     evres[ev] = dict(nfin=len(fin), our=our, top=top)
 nres = 0
 for r in races:
@@ -62,7 +63,7 @@ for r in races:
     key = norm(r.get('name') or 'Sriarunothai SC ' + r['relay'])
     hit = next((o for o in er['our'] if norm(o['n']) == key), None)
     if not hit and r.get('relay'):
-        hit = next((o for o in er['our'] if o['n'].strip().endswith(' ' + r['relay'])), None)
+        hit = next((o for o in er['our'] if o['n'].strip().endswith(' ' + r['relay']) or o['n'].strip().endswith(r['relay'])), None)
     if hit:
         nres += 1
         r['res'] = dict(pl=hit['pl'], f=hit['f'], pts=hit['pts'], why=hit['why'], nfin=er['nfin'])

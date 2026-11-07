@@ -8,9 +8,17 @@ def clean(t):
     t = re.sub(r'\s+',' ',t).strip()
     t = re.sub(r' ([\u0e31\u0e34-\u0e3a\u0e47-\u0e4e])', r'\1', t)
     return t.replace('ํ้า','้ำ').replace('ํา','ำ')
-FIN = r'(?:\d+:)?\d{1,2}\.\d\d[A-Za-z]?|DQ|DNS|NS|DFS|SCR|NT'
-IND = re.compile(rf'^(?P<pl>\d+|-+|\*\d+)?\s*(?P<name>\D+?)\s+(?:[A-Z]\s+)?(?P<age>\d{{1,2}})\s+(?P<team>.+?)\s+(?P<seed>NT|NS|(?:\d+:)?\d+\.\d\d)\s+(?P<fin>{FIN})(?:\s+[a-zA-Z]+)?(?:\s+(?P<pts>\d+))?$')
-REL = re.compile(rf'^(?P<pl>\d+|-+|\*\d+)?\s*(?P<team>[A-Za-z][A-Za-z .&\'-]+?)\s+(?P<rel>[A-Z])\s+(?P<seed>NT|NS|(?:\d+:)?\d+\.\d\d)\s+(?P<fin>{FIN})(?:\s+(?P<pts>\d+))?$')
+TM = r'\d{1,2}:\d\d\.\d\d|\d{1,2}\.\d\d'
+# CNX result format: place, place-in-heat, heat, lane, name, age, team, time, points, cumulative, [G|S|B], [standard]
+OK = re.compile(rf'^(?P<pl>\d+) (?P<hpl>\d+) (?P<ht>\d+) (?P<ln>\d+) (?P<name>.+?) (?P<age>\d{{1,2}}) (?P<team>\S.*?) (?P<fin>{TM})(?: (?P<pts>\d+))?(?: (?P<cum>\d+))?(?: (?P<pod>[GSB]))?(?: (?P<lvl>ทองแดง|ทอง|เงิน))?$')
+OKR = re.compile(rf'^(?P<pl>\d+) (?P<hpl>\d+) (?P<ht>\d+) (?P<ln>\d+) (?P<name>.+?) (?P<fin>{TM})(?: (?P<pts>\d+))?(?: (?P<cum>\d+))?(?: (?P<pod>[GSB]))?(?: (?P<lvl>ทองแดง|ทอง|เงิน))?$')
+NOR = re.compile(r'^(?P<ht>\d+) (?P<ln>\d+) (?P<name>.+?) (?P<fin>DQ|SC|NS|DNS|DFS|DNF)(?: (?P<pts>\d+))?.*$')
+NO = re.compile(rf'^(?P<ht>\d+) (?P<ln>\d+) (?P<name>.+?) (?P<age>\d{{1,2}}) (?P<team>\S.*?) (?P<fin>DQ|SC|NS|DNS|DFS|DNF)(?: (?P<pts>\d+))?.*$')
+def ntime(t):
+    t = re.sub(r'^0+(?=\d)', '', t)          # 01:26.62 -> 1:26.62
+    if t.startswith('0:'): t = t[2:]
+    t = re.sub(r'^0(?=\d\.)', '', t)          # 09.50 -> 9.50
+    return t
 
 def lines_of(pdf):
     d = fitz.open(pdf); out = []; seq = 0
@@ -48,14 +56,19 @@ def lines_of(pdf):
 def parse(pdf):
     L = lines_of(pdf); ev = None; rows = []; last = None
     for ln in L:
-        m = re.match(r'Event (\d+) (Boys|Girls|Mixed) (.+?) (\d+) SC Meter (.+)$', ln)
+        m = re.match(r'^รายการ (\d+) (.+)$', ln) or re.match(r'^Event (\d+) (.+)$', ln)
         if m: ev = int(m[1]); continue
-        r = IND.match(ln) or REL.match(ln)
+        r = OK.match(ln) or NO.match(ln) or OKR.match(ln) or NOR.match(ln)
         if r:
-            g = r.groupdict(); g = {k: v for k, v in g.items() if v}
-            g['pl'] = int(g['pl']) if g.get('pl', '').isdigit() else None
+            g = {k: v for k, v in r.groupdict().items() if v}
+            for k in ('pl', 'hpl', 'ht', 'ln', 'pts', 'cum', 'age'):
+                if k in g: g[k] = int(g[k])
+            g['fin'] = ntime(g['fin'])
+            rm = re.match(r'^(.+?) ([A-D])$', g['name'])     # relay: "Team A"
+            if 'age' not in g and rm: g['rel'] = rm[2]
+            if 'team' not in g: g['team'] = re.sub(r' [A-D]$', '', g['name'])
             g['raw'] = ln; rows.append(g); last = g; continue
-        if last and last.get('fin') == 'DQ' and 'reason' not in last and not re.match(r'^(Event|Lane|Name|Team|Heat|Finals|R4SCM)', ln):
+        if last and last.get('fin') in ('DQ', 'DNF') and 'reason' not in last and re.match(r'^\d+\.\d+ ', ln):
             last['reason'] = ln
     return ev, rows, L
 
