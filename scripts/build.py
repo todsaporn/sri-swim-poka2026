@@ -144,7 +144,7 @@ clubs = dict(n=len(crow), done=sum(1 for no, e in events.items() if not e['relay
 _now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=7)))
 now = _now.strftime('%d/%m %H:%M')
 out = dict(events={k: v for k, v in events.items() if k in {r['ev'] for r in races}}, races=races, heats=heats,
-           evres={k: dict(nfin=v['nfin'], top=v['top']) for k, v in evres.items() if k in {r['ev'] for r in races}}, stand=stand, clubs=clubs,
+           evres={k: dict(nfin=v['nfin'], top=v['top']) for k, v in evres.items() if k in {r['ev'] for r in races}}, stand=stand, clubs=clubs, lastres={d: max([int(k) for k in RES if int(k) in events and events[int(k)]['day'] == d] or [0]) for d in {e['day'] for e in events.values()}},
            days=CFG['days_meta'], meet=dict(ts=_now.isoformat(timespec='seconds'), name=CFG['meet_name'], total=total, teams=len(teams), updated=now,
            results_url=CFG['results_url'], nres=nres, nevres=len(RES)))
 os.makedirs('site', exist_ok=True)

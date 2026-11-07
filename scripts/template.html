@@ -349,7 +349,11 @@ function resBadge(r){const x=r.res;if(!x)return '';
   if(!x.pl){return `<div class="res dq"><div class="pl">${esc(x.f||'DQ')}</div><div class="ft" style="color:var(--mut)">ไม่ได้อันดับ</div></div>`}
   const d=x.d!=null?`<div class="dl ${x.d<0?'up':'dn'}">${x.d<0?'▲ เร็วขึ้น '+(-x.d).toFixed(2):'▼ '+x.d.toFixed(2)}</div>`:(r.seed==='NT'?'<div class="dl" style="color:var(--mut)">เวลาแรก</div>':'');
   return `<div class="res">${x.nr?'<div><span class="nrb">🔥 NR</span></div>':''}${x.lv!=null?`<div class="medal" style="font-size:24px">${MED[x.lv]}</div>`:''}<div class="pl p${x.pl}" style="font-size:${x.lv!=null?'14px':'20px'}">ที่ ${x.pl}<small style="font-size:11px;color:var(--mut)">/${x.nfin}</small></div><div class="ft">${esc(x.f)}</div>${d}${x.pts?`<div class="dl" style="color:#3546b5">+${x.pts} คะแนน</div>`:''}</div>`}
-function raceCard(r,nm){const e=r.e,cls=r.m<nm-5?'past':(nm>=r.m-5&&nm<=r.m+5?'now':'');
+// a race is done if it has a result, if a later event of the same day already has results (meet runs ahead of program),
+// or if its program time is well past
+const lastResEv=DATA.lastres||{};
+const isDone=(r,nm)=>!!r.res||r.ev<(lastResEv[r.day]||0)||r.m<nm-5;
+function raceCard(r,nm){const e=r.e,cls=isDone(r,nm)&&!r.res?'past':(!isDone(r,nm)&&nm>=r.m-5&&nm<=r.m+5?'now':'');
   const who=r.relay?`ศรีอรุโณทัย ทีม ${r.relay} <span class="tag rel">ผลัด</span>`:`${esc(r.name)}${r.gap!=null&&r.gap<TIGHT?` <span class="tag warn">ห่างรายการก่อน ${r.gap} นาที</span>`:''}`;
   return `<button class="race ${cls}" data-h="${r.ev}-${r.heat}"><div class="tm">${r.t}<small>Event ${r.ev}</small></div>
   <div><div class="who"><span class="gdot ${r.g}"></span>${who}</div>
@@ -358,7 +362,7 @@ function raceCard(r,nm){const e=r.e,cls=r.m<nm-5?'past':(nm>=r.m-5&&nm<=r.m+5?'n
   ${r.res?resBadge(r):`<div class="lane"><b>${r.lane}</b><span>ลู่</span></div>`}</button>`}
 // views
 function vSchedule(){const nm=nowM();const all=R.filter(okRace);
-  const past=all.filter(r=>r.m<nm-5),list=S.showPast?all:all.filter(r=>r.m>=nm-5);
+  const past=all.filter(r=>isDone(r,nm)),list=S.showPast?all:all.filter(r=>!isDone(r,nm));
   $('#count').textContent=`เหลือ ${all.length-past.length} จาก ${all.length} รายการ`;
   let h=past.length?`<button class="pastbtn" id="pastbtn">${S.showPast?'▲ ซ่อนรายการที่แข่งไปแล้ว':'▼ แสดงรายการที่แข่งไปแล้ว'} <span>${past.length}</span></button>`:'';
   if(!list.length)return h+(all.length?'<div class="empty">แข่งครบทุกรายการตามตัวกรองแล้ว 🎉</div>':'<div class="empty">ไม่พบรายการตามตัวกรอง</div>');
@@ -425,7 +429,7 @@ document.addEventListener('click',e=>{if(e.target.closest('#mmore')){medAll=!med
 function renderNext(){const b=bkk(),nm=nowM();$('#clock').textContent=`ตอนนี้ ${b.t} น.`;
   let list,title;
   if(nm<0){list=R.slice(0,10);title='รายการแรกของทีม'}
-  else{list=R.filter(r=>r.m>=nm-3).slice(0,10);title=list.length?(list[0].day*1440-1440>nm?`รายการแรกของ ${dLabel(list[0].day)}`:'รายการถัดไปของทีม'):'จบการแข่งขันแล้ว — ดูสรุปที่แท็บผลแข่ง'}
+  else{list=R.filter(r=>!isDone(r,nm)).slice(0,10);title=list.length?(list[0].day*1440-1440>nm?`รายการแรกของ ${dLabel(list[0].day)}`:'รายการถัดไปของทีม'):'จบการแข่งขันแล้ว — ดูสรุปที่แท็บผลแข่ง'}
   $('#nexttitle').textContent=title;
   $('#nextrow').innerHTML=list.map(r=>`<button class="mini" data-h="${r.ev}-${r.heat}"><div class="tm">${r.t}${nm>0&&r.m-nm<720?` <span style="font-size:12px;color:var(--mut);font-family:'IBM Plex Sans Thai'">${r.m-nm<=0?'กำลังแข่ง':'อีก '+(r.m-nm)+' น.'}</span>`:''}</div>
    <div class="nm"><span class="gdot ${r.g}"></span> ${r.relay?'ผลัดทีม '+r.relay:esc(r.name)}</div><div class="ev">${dayList.length>1?'D'+r.day+' · ':''}${evLabel(r.e)} · ฮีต ${r.heat} ลู่ ${r.lane}</div></button>`).join('')||'<div style="color:var(--mut);font-size:14px">—</div>'}

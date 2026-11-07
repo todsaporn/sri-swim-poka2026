@@ -12,7 +12,10 @@ if sys.argv[1:]:
 else:
     watch = json.load(open('data/watch.json')) if os.path.exists('data/watch.json') else {str(i): '' for i in range(1, 213)}
     now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=7))).strftime('%Y-%m-%dT%H:%M')
-    events = [int(k) for k, t in watch.items() if not t or t <= now]
+    # the meet often runs ahead of the printed program: also probe the next events after the latest result we have
+    have = [int(k) for k in meta]
+    ahead = max(have or [0]) + 12
+    events = [int(k) for k, t in watch.items() if not t or t <= now or int(k) <= ahead]
 print('checking events:', events)
 UA = {'User-Agent': 'Mozilla/5.0 (sri-swim results bot)'}
 
