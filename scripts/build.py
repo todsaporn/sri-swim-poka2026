@@ -80,6 +80,7 @@ def medal_of(h, ev):
     if age >= 12: return {'G': 0, 'S': 1, 'B': 2}.get(h.get('pod'))
     return {'ทอง': 0, 'เงิน': 1, 'ทองแดง': 2}.get(h['lv'])
 nres = 0
+qa_unmatched = []
 for r in races:
     er = evres.get(r['ev'])
     if not er: continue
@@ -95,6 +96,7 @@ for r in races:
     else:
         r['res'] = dict(pending=True) if False else None
         if r['res'] is None: del r['res']
+        if er['our'] and r['ev'] in evres: pass
 # events to watch: all individual events in categories (gender+age) where we have a swimmer -> needed for
 # cumulative-points trophy standings; plus our relay events. Checked once the event's last heat has started.
 cats = {(events[r['ev']]['g'], events[r['ev']]['age']) for r in races if not r.get('relay')}
@@ -131,6 +133,15 @@ for (g, age) in sorted(cats):
     stand[key] = dict(g=g, age=age, nev=len(evs), done=done,
                       top=[dict(rk=t['rk'], n=t['n'], tm=t['tm'], p=t['p'], me=t['me'], gsb=t['gsb']) for t in rows if t['p'] > 0][:8],
                       our={norm(t['n']): dict(rk=t['rk'], p=t['p']) for t in rows if t['me']})
+# ---- data quality checks
+raced = {(r['ev'], norm(r.get('name') or 'Sriarunothai SC ' + r.get('relay', ''))) for r in races}
+for ev, er in evres.items():
+    for o in er['our']:
+        k = norm(o['n'])
+        if not any(e == ev and (k == n or (o['n'].strip()[-1:] in 'ABCD' and n.startswith('SriarunothaiSC'))) for e, n in raced):
+            qa_unmatched.append(dict(ev=ev, n=o['n']))
+qa = dict(unparsed=[dict(ev=int(k), l=l) for k, v in RES.items() for l in v.get('unparsed', [])],
+          unmatched=[x for x in qa_unmatched if not x['n'].startswith('Sriarunothai')])
 # ---- schedule drift: results print time vs. program end of the event (last heat start + 3 min).
 # Median of the latest 3 events of each day -> estimated real start of upcoming races.
 def _m(iso): return int(iso[11:13]) * 60 + int(iso[14:16])
@@ -166,7 +177,7 @@ clubs = dict(n=len(crow), done=sum(1 for no, e in events.items() if not e['relay
 _now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=7)))
 now = _now.strftime('%d/%m %H:%M')
 out = dict(events={k: v for k, v in events.items() if k in {r['ev'] for r in races}}, races=races, heats=heats,
-           evres={k: dict(nfin=v['nfin'], top=v['top'], c6=v.get('c6')) for k, v in evres.items() if k in {r['ev'] for r in races}}, stand=stand, clubs=clubs, drift=drift, lastres={d: max([int(k) for k in RES if int(k) in events and events[int(k)]['day'] == d] or [0]) for d in {e['day'] for e in events.values()}},
+           evres={k: dict(nfin=v['nfin'], top=v['top'], c6=v.get('c6')) for k, v in evres.items() if k in {r['ev'] for r in races}}, stand=stand, clubs=clubs, drift=drift, qa=qa, lastres={d: max([int(k) for k in RES if int(k) in events and events[int(k)]['day'] == d] or [0]) for d in {e['day'] for e in events.values()}},
            days=CFG['days_meta'], meet=dict(ts=_now.isoformat(timespec='seconds'), name=CFG['meet_name'], total=total, teams=len(teams), updated=now,
            results_url=CFG['results_url'], pdf_tpl='https://www.cnxswimming.com/wp-content/uploads/2026/11/1_{}.pdf', resev=sorted(int(k) for k in RES), nres=nres, nevres=len(RES)))
 os.makedirs('site', exist_ok=True)

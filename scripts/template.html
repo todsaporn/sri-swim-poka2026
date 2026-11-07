@@ -137,6 +137,9 @@ button{font:inherit;color:inherit;cursor:pointer}
 .empty{text-align:center;padding:40px 10px;color:var(--mut)}
 .foot{font-size:12px;color:var(--mut);text-align:center;padding:30px 16px 40px}
 .hidden{display:none!important}
+.qa{border-radius:12px;padding:9px 12px;font-size:12.5px;margin:14px 0}.qa.ok{background:#eef8f2;color:#0b6b3a}.qa.warn{background:#fff3e8;color:#8a3b0a;border:1px solid #f6c8a5}.qa code{font-size:11.5px;background:#fff;border-radius:4px;padding:0 3px;word-break:break-all}
+.olk{font-size:13px;border-radius:10px;padding:7px 10px;margin-top:8px;line-height:1.45}.olk.in{background:#fff6d6;color:#6b4d00}.olk.chance{background:#e9f7ef;color:#0b6b3a}.olk.out{background:#f3f5f7;color:#5d7084}
+
 .drift{background:#fff8e6;border:1px solid #f6e3a8;color:#5c4400;border-radius:12px;padding:8px 12px;font-size:13.5px;margin:6px 0 4px}.drift small{color:#8a6a1a}
 .sumlink{font-size:13px;font-weight:700;color:#fff;background:var(--pri);border-radius:99px;padding:5px 12px;text-decoration:none;white-space:nowrap}
 .mhead h3{flex:1}
@@ -430,6 +433,7 @@ function openHeat(k){const[ev,ht]=k.split('-').map(Number);const e=EV[ev];
 function openAth(n){const a=A[n];if(!a)return;
   $('#sheet').innerHTML=`<button class="x" onclick="closeOv()">×</button><div class="top" style="display:flex;gap:12px;align-items:center"><div class="av ${a.g}" style="width:50px;height:50px;border-radius:14px;display:grid;place-items:center;font-family:var(--disp);font-weight:600;color:#fff;font-size:20px">${a.age}</div>
   <div><h2>${esc(a.name)}</h2><div style="color:var(--mut);font-size:14px">${G[a.g]} · ${a.age} ปี · ${a.races.length} รายการ${a.med.some(x=>x)?' · '+a.med.map((n,i)=>n?MED[i]+n:'').join(' '):''}</div>${a.st.p?`<div style="font-weight:700;color:#3546b5;font-size:14px">⭐ ${a.st.p} คะแนน · อันดับ ${a.st.rk} ของรุ่น${a.catL}</div>`:''}</div></div>
+  ${(o=>o?`<div class="olk ${o.cls}">🏆 ${o.txt}</div>`:'')(outlook(a))}
   <a href="summary.html?a=${encodeURIComponent(a.name)}" class="sumlink" style="display:inline-block;margin-top:12px">📊 สรุปละเอียด + วิเคราะห์เพื่อการพัฒนา ›</a>
   <div class="tl">${a.races.map((r,i)=>`${i&&r.gap!=null&&a.races[i-1].day===r.day?`<div class="gap ${r.gap<TIGHT?'warn':''}">↓ พัก ${dur(r.gap)}</div>`:''}<div class="it"><button data-h="${r.ev}-${r.heat}">
    ${i===0||a.races[i-1].day!==r.day?(dayList.length>1?`<div style="font-size:12px;font-weight:700;color:var(--mut);margin-bottom:2px">${dLabel(r.day)}</div>`:''):''}<div style="display:flex;justify-content:space-between;gap:8px"><b class="disp" style="color:var(--pri)">${r.t} น.</b><span style="font-size:13px;color:var(--mut)">ฮีต ${r.heat}/${r.e.heats} · <b style="color:var(--ink)">ลู่ ${r.lane}</b></span></div>
@@ -479,8 +483,19 @@ function vResults(){const done=R.filter(r=>r.res&&okRace(r)).sort((a,b)=>b.m-a.m
   if(newRec.length)h+=`<div class="board"><h3>🔥 สถิติภาคใต้ใหม่ (รายการที่ทีมเราลง)</h3>${newRec.map(e=>`<button class="brow" data-h="${e.no}-${(R.find(r=>r.ev===e.no)||{}).heat}"><span><b>${evLabel(e)}</b> <small style="color:var(--mut)">${G[e.g]} ${ageLabel(e)}</small><br><small>${esc(e.rec.n)} · ${esc(e.rec.tm||'')}</small></span><span class="md" style="flex-direction:column;align-items:flex-end;gap:0"><span style="color:#c2410c">${esc(e.rec.t)}</span><small style="color:var(--mut);font-weight:500">เดิม ${esc(e.rec.old||'-')}</small></span></button>`).join('')}</div>`;
   h+=trophyHTML();
   if(CL&&CL.top.length)h+=`<div class="board"><h3>🏫 อันดับสโมสร (ถ้วย 3 อันดับแรก)</h3><div style="font-size:12px;color:var(--mut);margin-bottom:6px">รวมคะแนนรายการเดี่ยวทุกรุ่น · ผลออก ${CL.done}/${CL.nev} รายการ</div><table class="lu">${CL.top.map(c=>`<tr class="${c.me?'me':''}"><td>${c.rk<=3?'🏆'+c.rk:c.rk}</td><td><b>${esc(c.n)}</b></td><td><b>${c.p}</b> คะแนน</td></tr>`).join('')}${CL.our&&!CL.top.some(c=>c.me)?`<tr class="me"><td>${CL.our.rk}</td><td><b>${esc(CL.our.n)}</b></td><td><b>${CL.our.p}</b> คะแนน</td></tr>`:''}</table></div>`;
-  if(!done.length)return h+`<div class="empty">ยังไม่มีผลการแข่งขันตามตัวกรอง<br><small>ระบบดึงผลจาก cnxswimming.com ทุก 10 นาที</small></div>`;
-  let cd=0;done.forEach(r=>{if(r.day!==cd){cd=r.day;if(dayList.length>1)h+=`<div class="dayhd">${dLabel(r.day)}</div>`}h+=raceCard(r,-1)});return h}
+  const QA=DATA.qa||{unparsed:[],unmatched:[]};const nq=QA.unparsed.length+QA.unmatched.length;
+  const qaBox=nq?`<div class="qa warn"><b>⚠️ ตรวจข้อมูล: พบ ${nq} จุดที่ระบบอ่าน/จับคู่ไม่ได้</b>${QA.unmatched.map(x=>`<div>• ชื่อในใบผลไม่ตรงกับ startlist: <b>${esc(x.n)}</b> (Event ${x.ev}) ${pdfA(x.ev)}</div>`).join('')}${QA.unparsed.slice(0,8).map(x=>`<div>• Event ${x.ev}: <code>${esc(x.l)}</code> ${pdfA(x.ev)}</div>`).join('')}<div style="margin-top:4px">ผลของรายการเหล่านี้อาจไม่ครบ — เปิด PDF เพื่อตรวจ</div></div>`
+    :`<div class="qa ok">✓ ตรวจข้อมูลแล้ว: อ่านใบผลครบทุกบรรทัด และจับคู่ชื่อศรีอรุโณทัยได้ครบ (${DATA.meet.nevres} ใบผล)</div>`;
+  if(!done.length)return h+`<div class="empty">ยังไม่มีผลการแข่งขันตามตัวกรอง<br><small>ระบบดึงผลจาก cnxswimming.com ทุก 10 นาที</small></div>`+qaBox;
+  let cd=0;done.forEach(r=>{if(r.day!==cd){cd=r.day;if(dayList.length>1)h+=`<div class="dayhd">${dLabel(r.day)}</div>`}h+=raceCard(r,-1)});return h+qaBox}
+function outlook(a){const sc=(DATA.stand||{})[a.cat];if(!sc)return null;const left=a.races.filter(r=>!r.res&&!r.relay).length,max=left*15,p=a.st.p||0;
+  const t=sc.top||[];const p6=t[5]?t[5].p:0,p7=t[6]?t[6].p:0;
+  if(a.st.rk&&a.st.rk<=6)return {cls:'in',txt:`อยู่ในโซนถ้วย (อันดับ ${a.st.rk})${t[6]?` · นำอันดับ 7 อยู่ ${p-p7} คะแนน`:''}${left?` · เหลือ ${left} รายการ เก็บได้อีกสูงสุด ${max}`:' · แข่งครบแล้ว'}`};
+  const need=Math.max(1,p6-p+1);
+  if(!left)return {cls:'out',txt:`แข่งครบแล้ว · ห่างอันดับ 6 อยู่ ${p6-p} คะแนน`};
+  if(need>max)return {cls:'out',txt:`เหลือ ${left} รายการ (สูงสุด ${max} คะแนน) ยังไม่พอแซงอันดับ 6 (${p6} คะแนน)`};
+  const PT=[15,7,5,3,2,1];let ex;if(need<=15){let pl=1;PT.forEach((v,i)=>{if(v>=need)pl=i+1});ex=pl===1?'ได้ที่ 1 ของรายการ 1 ครั้ง':`ติดท็อป ${pl} ของรายการ 1 ครั้ง`}else ex=`ได้ที่ 1 อย่างน้อย ${Math.ceil(need/15)} รายการ`;
+  return {cls:'chance',txt:`ยังลุ้นได้! ต้องเก็บอีก ≥${need} คะแนน จาก ${left} รายการ (เช่น ${ex}) · ถ้าคู่แข่งไม่ได้คะแนนเพิ่ม`}}
 // trophy standings per category
 function trophyHTML(){const cats=[...new Set(ath.filter(okAth).map(a=>a.cat))].filter(c=>ST_[c]&&ST_[c].top.length);
   if(!cats.length)return '';

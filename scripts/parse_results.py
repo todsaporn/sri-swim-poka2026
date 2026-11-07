@@ -56,7 +56,7 @@ def lines_of(pdf):
     return out
 
 def parse(pdf):
-    L = lines_of(pdf); ev = None; rows = []; last = None; rec = None
+    L = lines_of(pdf); ev = None; rows = []; last = None; rec = None; unparsed = []
     head = ' '.join(L[:4]); printed = None
     m = re.search(r'(\d{4}-\d\d-\d\d) (\d{1,2}):(\d\d):\d\d', head)
     if m: printed = f"{m[1]}T{int(m[2]):02d}:{m[3]}"
@@ -88,19 +88,22 @@ def parse(pdf):
             if 'age' not in g and rm: g['rel'] = rm[2]
             if 'team' not in g: g['team'] = re.sub(r' [A-D]$', '', g['name'])
             g['raw'] = ln; rows.append(g); last = g; continue
+        if re.match(r'^(\d+|-{2,}) ', ln) and re.search(r'\d\.\d\d|\bDQ\b|\bNS\b|\bDNS\b|\bSC\b', ln) and not re.match(r'^\d+\) ', ln) \
+           and not (last and last.get('fin') in ('DQ', 'DNF') and 'reason' not in last and re.match(r'^\d+\.\d+ ', ln)):
+            unparsed.append(ln)
         if last and last.get('fin') in ('DQ', 'DNF') and 'reason' not in last and re.match(r'^\d+\.\d+ ', ln):
             last['reason'] = ln
-    return ev, rows, L, rec, printed
+    return ev, rows, L, rec, printed, unparsed
 
 if __name__ == '__main__':
     res = {}
     for f in sorted(glob.glob('raw/results/*.pdf'), key=lambda f: int(re.findall(r'\d+', os.path.basename(f))[0])):
         n = int(re.findall(r'\d+', os.path.basename(f))[0])
         try:
-            ev, rows, L, rec, printed = parse(f)
+            ev, rows, L, rec, printed, unparsed = parse(f)
         except Exception as e:
             print('fail', f, e); continue
         open(f[:-4] + '.txt', 'w').write('\n'.join(L))
-        res[n] = {'ev': ev or n, 'rows': rows, 'rec': rec, 'printed': printed}
+        res[n] = {'ev': ev or n, 'rows': rows, 'rec': rec, 'printed': printed, 'unparsed': unparsed}
         print(n, 'rows', len(rows))
     json.dump(res, open('data/results.json', 'w'), ensure_ascii=False, indent=0)
