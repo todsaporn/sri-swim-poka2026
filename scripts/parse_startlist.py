@@ -27,6 +27,10 @@ for it in items:
         lines[-1]['its'].append(it)
     else:
         lines.append(dict(pg=it['pg'],col=it['col'],y=it['y'],its=[it]))
+def tmin(t):
+    h,mi,ap=re.match(r'(\d+):(\d+) (AM|PM)',t).groups(); return (int(h)%12+(12 if ap=='PM' else 0))*60+int(mi)
+def fmt(m):
+    h,mi=divmod(m,60); ap='PM' if h>=12 else 'AM'; return f"{(h%12) or 12:02d}:{mi:02d} {ap}"
 ev=None; heat=None; out=[]; events={}
 for L in lines:
     its=sorted(L['its'],key=lambda i:i['x'])
@@ -36,7 +40,18 @@ for L in lines:
         ev=dict(no=int(m[1]),gender=m[2],age=m[3],dist=int(m[4]),stroke=m[5]); events[ev['no']]=ev; heat=None; continue
     m=re.match(r'Heat (\d+) of (\d+) Finals Starts at (.+)$',full)
     if m:
-        heat=dict(h=int(m[1]),of=int(m[2]),time=m[3]); continue
+        prevheat=heat if heat and ev and heat.get('ev')==ev['no'] else None
+        heat=dict(h=int(m[1]),of=int(m[2]),time=m[3],ev=ev['no'] if ev else None,step=None)
+        if prevheat: heat['step']=tmin(heat['time'])-tmin(prevheat['time'])
+        continue
+    # continuation header without start time: "Heat 8 Finals (#44 Boys 10 Year Olds ...)"
+    m=re.match(r'Heat (\d+) Finals \(#(\d+) ',full)
+    if m:
+        no=int(m[2])
+        if no in events: ev=events[no]
+        st=(heat or {}).get('step') or 2
+        last=(heat or {}).get('time','12:00 PM')
+        heat=dict(h=int(m[1]),of=max(int(m[1]),(heat or {}).get('of',0)),time=fmt(tmin(last)+max(1,st)),ev=no,step=st,est=True); continue
     if not ev or not heat: continue
     if full.startswith(('Lane','R4SCM','CNX','HY-TEK','Krabi','Meet')): continue
     relay='Relay' in ev['stroke']
