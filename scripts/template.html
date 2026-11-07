@@ -3,6 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0b4f8a">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ศรีอรุโณทัย">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>ศรีอรุโณทัย · Krabi PAO Swimming #16 · Day 1</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Prompt:wght@500;600;700&display=swap" rel="stylesheet">
@@ -129,6 +137,16 @@ button{font:inherit;color:inherit;cursor:pointer}
 .empty{text-align:center;padding:40px 10px;color:var(--mut)}
 .foot{font-size:12px;color:var(--mut);text-align:center;padding:30px 16px 40px}
 .hidden{display:none!important}
+.install{display:flex;align-items:center;gap:12px;width:100%;margin-top:16px;border:0;border-radius:16px;padding:12px 14px;background:linear-gradient(135deg,#ffd23f,#ffb703);color:#08263f;text-align:left;box-shadow:0 8px 24px rgba(255,183,3,.35);animation:cheer 2.2s ease-in-out infinite;position:relative;z-index:1}
+.install .ib{font-size:28px;line-height:1}
+.install b{display:block;font-family:var(--disp);font-size:16.5px;line-height:1.2}
+.install small{display:block;font-size:12.5px;opacity:.8;margin-top:1px}
+.install .go{margin-left:auto;background:#08263f;color:#ffd23f;font-weight:700;border-radius:99px;padding:7px 13px;font-size:13.5px;white-space:nowrap}
+@keyframes cheer{0%,100%{transform:translateY(0) scale(1)}45%{transform:translateY(-2px) scale(1.015)}55%{transform:translateY(0) scale(1)}}
+.howto{counter-reset:s;margin:12px 0 4px;padding:0;list-style:none}
+.howto li{counter-increment:s;display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line);font-size:15px}
+.howto li:before{content:counter(s);flex:0 0 26px;height:26px;border-radius:50%;background:var(--pri);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px}
+.kbd{display:inline-block;border:1px solid var(--line);border-radius:7px;padding:0 6px;background:#f6f9fb;font-weight:600}
 .fetched{position:absolute;top:-12px;right:16px;font-size:11.5px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);border-radius:99px;padding:3px 9px;display:flex;align-items:center;gap:6px;white-space:nowrap;z-index:2}
 .fetched:before{content:"";width:6px;height:6px;border-radius:50%;background:#4ade80;box-shadow:0 0 0 3px rgba(74,222,128,.25)}
 .fetched.stale:before{background:#fbbf24;box-shadow:0 0 0 3px rgba(251,191,36,.25)}
@@ -200,6 +218,7 @@ button{font:inherit;color:inherit;cursor:pointer}
   <div class="kick" id="meetname"></div>
   <h1>ทีมว่ายน้ำ ศรีอรุโณทัย</h1>
   <div class="sub" id="meetday"></div>
+  <button class="install hidden" id="install"><span class="ib">📲</span><span><b>ติดตั้งแอปเชียร์ ศรีอรุโณทัย</b><small>กดครั้งเดียว · เปิดจากหน้าจอมือถือได้เลย ผลอัปเดตสด</small></span><span class="go">ติดตั้ง ›</span></button>
   <div class="stats" id="stats"></div>
 </div></header>
 
@@ -432,6 +451,24 @@ function renderFetched(){const ts=Date.parse(DATA.meet.ts||'');const el=$('#fetc
   el.textContent=`ดึงข้อมูลล่าสุด ${hm} น.`+(ago<1?' · เมื่อกี้':ago<120?` · ${ago} นาทีที่แล้ว`:'');
   el.classList.toggle('stale',ago>25);el.title=DATA.meet.ts}
 renderFetched();setInterval(renderFetched,30000);
+// ---- install as app (PWA)
+const isStandalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+let deferredPrompt=null;
+const ua=navigator.userAgent,isIOS=/iPhone|iPad|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1),isAndroid=/Android/.test(ua);
+const inApp=/FBAN|FBAV|Line\/|Instagram|Messenger/.test(ua);
+function showInstall(){let done=false;try{done=localStorage.getItem('sri-installed')==='1'}catch(e){}if(isStandalone()||done)return;$('#install').classList.remove('hidden')}
+if('serviceWorker' in navigator&&location.protocol==='https:'){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;showInstall()});
+window.addEventListener('appinstalled',()=>{try{localStorage.setItem('sri-installed','1')}catch(e){}$('#install').classList.add('hidden')});
+if(isIOS||isAndroid||matchMedia('(pointer:coarse)').matches)showInstall();
+function howto(){let steps;
+  if(inApp)steps=[`แตะเมนู <span class="kbd">⋯</span> มุมขวาบน แล้วเลือก <b>เปิดในเบราว์เซอร์</b> (Safari / Chrome)`,'กลับมาที่หน้านี้ แล้วกดปุ่ม "ติดตั้งแอปเชียร์" อีกครั้ง'];
+  else if(isIOS)steps=[`แตะปุ่ม <b>แชร์</b> <span class="kbd">⬆︎</span> ที่แถบล่างของ Safari`,`เลื่อนลงแล้วเลือก <b>เพิ่มไปยังหน้าจอโฮม</b> (Add to Home Screen)`,'กด <b>เพิ่ม</b> มุมขวาบน — ไอคอน "ศรีอรุโณทัย" จะอยู่บนหน้าจอ'];
+  else steps=[`แตะเมนู <span class="kbd">⋮</span> มุมขวาบนของ Chrome`,`เลือก <b>ติดตั้งแอป</b> หรือ <b>เพิ่มลงในหน้าจอหลัก</b>`,'กด <b>ติดตั้ง</b> — เปิดจากไอคอนบนหน้าจอได้เลย'];
+  $('#sheet').innerHTML=`<button class="x" onclick="closeOv()">×</button><h2>📲 ติดตั้งแอปเชียร์</h2><div style="color:var(--mut);font-size:14px">เปิดดูตาราง ผลแข่ง และเหรียญของน้องๆ ได้จากหน้าจอมือถือ</div><ol class="howto">${steps.map(s=>`<li><span>${s}</span></li>`).join('')}</ol>
+  <button class="pk-b2" style="width:100%;margin-top:10px" id="instdone">ติดตั้งแล้ว ซ่อนปุ่มนี้</button>`;showOv()}
+$('#install').onclick=async()=>{if(deferredPrompt){deferredPrompt.prompt();const r=await deferredPrompt.userChoice.catch(()=>({}));deferredPrompt=null;if(r&&r.outcome==='accepted'){try{localStorage.setItem('sri-installed','1')}catch(e){}$('#install').classList.add('hidden')}}else howto()};
+document.addEventListener('click',e=>{if(e.target.closest('#instdone')){try{localStorage.setItem('sri-installed','1')}catch(err){}$('#install').classList.add('hidden');closeOv()}});
 renderMedals();renderNext();setInterval(()=>{renderNext();if(S.v==='schedule')render()},60000);route();
 $('#foot').innerHTML=`<span class="upd">อัปเดตผลล่าสุด ${DATA.meet.updated} น.</span> · ดึงผลอัตโนมัติทุก 10 นาทีจาก <a href="${DATA.meet.results_url}">cnxswimming.com</a><br>เวลาเป็นเวลาประมาณการตามโปรแกรม อาจเลื่อนตามหน้างาน · อันดับเวลาส่ง = อันดับ seed time ในรายการนั้น (NT = ไม่มีเวลาส่ง)`;
 // auto reload when new data is deployed

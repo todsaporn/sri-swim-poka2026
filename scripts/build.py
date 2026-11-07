@@ -143,4 +143,6 @@ os.makedirs('site', exist_ok=True)
 json.dump(out, open('site/data.json', 'w'), ensure_ascii=False, separators=(',', ':'))
 tpl = open('scripts/template.html').read()
 open('site/index.html', 'w').write(tpl.replace('__DATA__', json.dumps(out, ensure_ascii=False, separators=(',', ':'))))
+import shutil
+for f in os.listdir('scripts/static'): shutil.copy(os.path.join('scripts/static', f), os.path.join('site', f))
 print(f'built: {len(races)} races, {nres} with results, {len(RES)} result PDFs, updated {now}')

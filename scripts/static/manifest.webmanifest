@@ -1,0 +1,15 @@
+{
+  "name": "ศรีอรุโณทัย · ว่ายน้ำ อบจ.กระบี่ #16",
+  "short_name": "ศรีอรุโณทัย",
+  "description": "ตารางแข่ง ผลแข่ง เหรียญ และคะแนนของทีมว่ายน้ำศรีอรุโณทัย",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#082d50",
+  "theme_color": "#0b4f8a",
+  "lang": "th",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+  ]
+}
