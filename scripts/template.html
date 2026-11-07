@@ -137,6 +137,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .empty{text-align:center;padding:40px 10px;color:var(--mut)}
 .foot{font-size:12px;color:var(--mut);text-align:center;padding:30px 16px 40px}
 .hidden{display:none!important}
+.drift{background:#fff8e6;border:1px solid #f6e3a8;color:#5c4400;border-radius:12px;padding:8px 12px;font-size:13.5px;margin:6px 0 4px}.drift small{color:#8a6a1a}
 .sumlink{font-size:13px;font-weight:700;color:#fff;background:var(--pri);border-radius:99px;padding:5px 12px;text-decoration:none;white-space:nowrap}
 .mhead h3{flex:1}
 .mini-more,.mini-end{display:flex;align-items:center;justify-content:center;gap:8px;min-width:130px;color:var(--mut);font-size:13px;font-weight:600;background:#f3f7fa;border-style:dashed}
@@ -255,6 +256,7 @@ body.pulling .hero,body.pulling .next,body.pulling #medals{transition:none}
 
 <section class="wrap next"><div class="nextcard">
   <div class="nexthead"><h3 id="nexttitle">รายการถัดไป</h3><span class="pill" id="clock"></span></div>
+  <div class="drift hidden" id="nextdrift" style="margin:0 0 8px"></div>
   <div class="nextrow" id="nextrow"></div>
 </div></section>
 
@@ -360,10 +362,14 @@ function resBadge(r){const x=r.res;if(!x)return '';
 // a race is done if it has a result, if a later event of the same day already has results (meet runs ahead of program),
 // or if its program time is well past
 const lastResEv=DATA.lastres||{};
-const isDone=(r,nm)=>!!r.res||r.ev<(lastResEv[r.day]||0)||r.m<nm-5;
-function raceCard(r,nm){const e=r.e,cls=isDone(r,nm)&&!r.res?'past':(!isDone(r,nm)&&nm>=r.m-5&&nm<=r.m+5?'now':'');
+// estimated real time from schedule drift (results print time vs program)
+const DR=DATA.drift||{};const hhmm=m=>{m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')};
+R.forEach(r=>{const d=DR[r.day];r.em=r.m;r.et=null;if(d&&!r.res&&Math.abs(d.off)>=3&&r.ev>d.ev){r.em=r.m+d.off;r.et=hhmm(r.em)}});
+const driftNote=d=>{const x=DR[d];if(!x||Math.abs(x.off)<3)return '';return `⏱️ สนาม${x.off<0?'เร็ว':'ช้า'}กว่าโปรแกรม ~${Math.abs(x.off)} นาที <small>(จากผล Event ${x.ev} ออก ${x.at} น.)</small>`};
+const isDone=(r,nm)=>!!r.res||r.ev<(lastResEv[r.day]||0)||r.em<nm-5;
+function raceCard(r,nm){const e=r.e,cls=isDone(r,nm)&&!r.res?'past':(!isDone(r,nm)&&nm>=r.em-5&&nm<=r.em+5?'now':'');
   const who=r.relay?`ศรีอรุโณทัย ทีม ${r.relay} <span class="tag rel">ผลัด</span>`:`${esc(r.name)}${r.gap!=null&&r.gap<TIGHT?` <span class="tag warn">ห่างรายการก่อน ${r.gap} นาที</span>`:''}`;
-  return `<button class="race ${cls}" data-h="${r.ev}-${r.heat}"><div class="tm">${r.t}<small>Event ${r.ev}</small>${r.res||RESEV.has(r.ev)?`<div style="margin-top:4px">${pdfBtn(r.ev)}</div>`:''}</div>
+  return `<button class="race ${cls}" data-h="${r.ev}-${r.heat}"><div class="tm">${r.et?`<span title="เวลาประมาณจากความเร็วสนามจริง">~${r.et}</span><small style="text-decoration:line-through">${r.t}</small>`:r.t}<small>Event ${r.ev}</small>${r.res||RESEV.has(r.ev)?`<div style="margin-top:4px">${pdfBtn(r.ev)}</div>`:''}</div>
   <div><div class="who"><span class="gdot ${r.g}"></span>${who}</div>
   <div class="what">${evLabel(e)} · ${G[e.g]} ${ageLabel(e)} · ฮีต ${r.heat}/${e.heats}${r.res?' ลู่ '+r.lane:''} ${seedTag(r)}</div>
   ${r.res&&r.res.why?`<div class="why">${esc(r.res.why)}</div>`:''}</div>
@@ -373,8 +379,9 @@ function vSchedule(){const nm=nowM();const all=R.filter(okRace);
   const past=all.filter(r=>isDone(r,nm)),list=S.showPast?all:all.filter(r=>!isDone(r,nm));
   $('#count').textContent=`เหลือ ${all.length-past.length} จาก ${all.length} รายการ`;
   let h=past.length?`<button class="pastbtn" id="pastbtn">${S.showPast?'▲ ซ่อนรายการที่แข่งไปแล้ว':'▼ แสดงรายการที่แข่งไปแล้ว'} <span>${past.length}</span></button>`:'';
+  const dn=[...new Set(list.map(r=>r.day))].map(driftNote).filter(Boolean)[0];if(dn)h+=`<div class="drift">${dn}<br><small>เวลา ~ คือเวลาประมาณ · เวลาขีดฆ่าคือเวลาในโปรแกรม</small></div>`;
   if(!list.length)return h+(all.length?'<div class="empty">แข่งครบทุกรายการตามตัวกรองแล้ว 🎉</div>':'<div class="empty">ไม่พบรายการตามตัวกรอง</div>');
-  let cur='',cd=0;list.forEach(r=>{if(r.day!==cd){cd=r.day;cur='';if(dayList.length>1)h+=`<div class="dayhd">${dLabel(r.day)} <span>${list.filter(x=>x.day===r.day).length} รายการ</span></div>`}const hr=r.t.slice(0,2);if(hr!==cur){cur=hr;h+=`<div class="hour">${hr}:00 น.</div>`}h+=raceCard(r,nm)});return h}
+  let cur='',cd=0;list.forEach(r=>{if(r.day!==cd){cd=r.day;cur='';if(dayList.length>1)h+=`<div class="dayhd">${dLabel(r.day)} <span>${list.filter(x=>x.day===r.day).length} รายการ</span></div>`}const hr=(r.et||r.t).slice(0,2);if(hr!==cur){cur=hr;h+=`<div class="hour">${hr}:00 น.</div>`}h+=raceCard(r,nm)});return h}
 function vAthletes(){const list=ath.filter(okAth).map(a=>({a,rs:a.races.filter(r=>(!S.s||r.e.stroke===S.s)&&okDay(r))})).filter(x=>x.rs.length);
   $('#count').textContent=`${list.length} คน · กด ☆ เพื่อติดตาม`;
   if(!list.length)return'<div class="empty">ไม่พบนักกีฬาตามตัวกรอง</div>';
@@ -443,7 +450,7 @@ document.addEventListener('click',e=>{const pd=e.target.closest('[data-pdf]');if
   const a=e.target.closest('[data-a]');if(a&&!e.target.closest('.sheet'))openAth(a.dataset.a)});
 // next strip
 let nextAll=[],nextShown=0,nextNm=0;const NEXT_PAGE=10;
-const miniCard=r=>{const nm=nextNm;return `<button class="mini" data-h="${r.ev}-${r.heat}"><div class="tm">${r.t}${nm>0&&r.m-nm<720?` <span style="font-size:12px;color:var(--mut);font-family:'IBM Plex Sans Thai'">${r.m-nm<=0?'กำลังแข่ง':'อีก '+(r.m-nm)+' น.'}</span>`:''}</div>
+const miniCard=r=>{const nm=nextNm;return `<button class="mini" data-h="${r.ev}-${r.heat}"><div class="tm">${r.et?'~'+r.et:r.t}${nm>0&&r.em-nm<720?` <span style="font-size:12px;color:var(--mut);font-family:'IBM Plex Sans Thai'">${r.em-nm<=0?'ใกล้ถึงคิว':'อีก ~'+(r.em-nm)+' น.'}</span>`:''}</div>
    <div class="nm"><span class="gdot ${r.g}"></span> ${r.relay?'ผลัดทีม '+r.relay:esc(r.name)}</div><div class="ev">${dayList.length>1?'D'+r.day+' · ':''}${evLabel(r.e)} · ฮีต ${r.heat} ลู่ ${r.lane}</div></button>`};
 function appendNext(){const row=$('#nextrow');if(nextShown>=nextAll.length)return;
   const chunk=nextAll.slice(nextShown,nextShown+NEXT_PAGE);nextShown+=chunk.length;
@@ -454,6 +461,7 @@ function renderNext(){const b=bkk(),nm=nowM();nextNm=nm;$('#clock').textContent=
   if(nm<0){list=R.slice();title='รายการแรกของทีม'}
   else{list=R.filter(r=>!isDone(r,nm));title=list.length?(list[0].day*1440-1440>nm?`รายการแรกของ ${dLabel(list[0].day)}`:'รายการถัดไปของทีม'):'จบการแข่งขันแล้ว — ดูสรุปที่แท็บผลแข่ง'}
   $('#nexttitle').textContent=title+(list.length?` · ${list.length} รายการ`:'');
+  {const dn=list.length?driftNote(list[0].day):'';$('#nextdrift').innerHTML=dn;$('#nextdrift').classList.toggle('hidden',!dn)}
   const row=$('#nextrow'),keep=row.scrollLeft,want=Math.max(NEXT_PAGE,nextShown);
   nextAll=list;nextShown=0;row.innerHTML='';
   if(!list.length){row.innerHTML='<div style="color:var(--mut);font-size:14px">—</div>';return}

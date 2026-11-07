@@ -131,6 +131,20 @@ for (g, age) in sorted(cats):
     stand[key] = dict(g=g, age=age, nev=len(evs), done=done,
                       top=[dict(rk=t['rk'], n=t['n'], tm=t['tm'], p=t['p'], me=t['me'], gsb=t['gsb']) for t in rows if t['p'] > 0][:8],
                       our={norm(t['n']): dict(rk=t['rk'], p=t['p']) for t in rows if t['me']})
+# ---- schedule drift: results print time vs. program end of the event (last heat start + 3 min).
+# Median of the latest 3 events of each day -> estimated real start of upcoming races.
+def _m(iso): return int(iso[11:13]) * 60 + int(iso[14:16])
+drift = {}
+for d in {e['day'] for e in events.values()}:
+    pts = []
+    for k, v in RES.items():
+        no = int(k); e = events.get(no)
+        if not e or e['day'] != d or not v.get('printed') or v['printed'][:10] != e['last'][:10]: continue
+        pts.append((no, _m(v['printed']) - (_m(e['last']) + 3), v['printed']))
+    pts.sort()
+    if pts:
+        last3 = sorted(x[1] for x in pts[-3:])
+        drift[d] = dict(off=last3[len(last3) // 2], ev=pts[-1][0], at=pts[-1][2][11:])
 # ---- club standings (individual events only, per meet rules)
 club = {}
 for no, e in events.items():
@@ -152,7 +166,7 @@ clubs = dict(n=len(crow), done=sum(1 for no, e in events.items() if not e['relay
 _now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=7)))
 now = _now.strftime('%d/%m %H:%M')
 out = dict(events={k: v for k, v in events.items() if k in {r['ev'] for r in races}}, races=races, heats=heats,
-           evres={k: dict(nfin=v['nfin'], top=v['top'], c6=v.get('c6')) for k, v in evres.items() if k in {r['ev'] for r in races}}, stand=stand, clubs=clubs, lastres={d: max([int(k) for k in RES if int(k) in events and events[int(k)]['day'] == d] or [0]) for d in {e['day'] for e in events.values()}},
+           evres={k: dict(nfin=v['nfin'], top=v['top'], c6=v.get('c6')) for k, v in evres.items() if k in {r['ev'] for r in races}}, stand=stand, clubs=clubs, drift=drift, lastres={d: max([int(k) for k in RES if int(k) in events and events[int(k)]['day'] == d] or [0]) for d in {e['day'] for e in events.values()}},
            days=CFG['days_meta'], meet=dict(ts=_now.isoformat(timespec='seconds'), name=CFG['meet_name'], total=total, teams=len(teams), updated=now,
            results_url=CFG['results_url'], pdf_tpl='https://www.cnxswimming.com/wp-content/uploads/2026/11/1_{}.pdf', resev=sorted(int(k) for k in RES), nres=nres, nevres=len(RES)))
 os.makedirs('site', exist_ok=True)

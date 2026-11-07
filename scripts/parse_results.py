@@ -57,6 +57,12 @@ def lines_of(pdf):
 
 def parse(pdf):
     L = lines_of(pdf); ev = None; rows = []; last = None; rec = None
+    head = ' '.join(L[:4]); printed = None
+    m = re.search(r'(\d{4}-\d\d-\d\d) (\d{1,2}):(\d\d):\d\d', head)
+    if m: printed = f"{m[1]}T{int(m[2]):02d}:{m[3]}"
+    else:
+        m = re.search(r'(\d{1,2}):(\d\d) (AM|PM) (\d{4}-\d\d-\d\d)', head)
+        if m: printed = f"{m[4]}T{int(m[1]) % 12 + (12 if m[3] == 'PM' else 0):02d}:{m[2]}"
     for ln in L:
         m = re.match(r'^รายการ (\d+) (.+)$', ln) or re.match(r'^Event (\d+) (.+)$', ln)
         if m: ev = int(m[1]); continue
@@ -84,17 +90,17 @@ def parse(pdf):
             g['raw'] = ln; rows.append(g); last = g; continue
         if last and last.get('fin') in ('DQ', 'DNF') and 'reason' not in last and re.match(r'^\d+\.\d+ ', ln):
             last['reason'] = ln
-    return ev, rows, L, rec
+    return ev, rows, L, rec, printed
 
 if __name__ == '__main__':
     res = {}
     for f in sorted(glob.glob('raw/results/*.pdf'), key=lambda f: int(re.findall(r'\d+', os.path.basename(f))[0])):
         n = int(re.findall(r'\d+', os.path.basename(f))[0])
         try:
-            ev, rows, L, rec = parse(f)
+            ev, rows, L, rec, printed = parse(f)
         except Exception as e:
             print('fail', f, e); continue
         open(f[:-4] + '.txt', 'w').write('\n'.join(L))
-        res[n] = {'ev': ev or n, 'rows': rows, 'rec': rec}
+        res[n] = {'ev': ev or n, 'rows': rows, 'rec': rec, 'printed': printed}
         print(n, 'rows', len(rows))
     json.dump(res, open('data/results.json', 'w'), ensure_ascii=False, indent=0)
