@@ -76,7 +76,8 @@ for k, v in RES.items():
 # rule 16: ages 7-11 get medals per heat (last column), ages 12-14 per event place 1-3 (G/S/B column)
 def medal_of(h, ev):
     age = int(re.match(r'\d+', ev['age'])[0]) if re.match(r'\d+', ev['age']) else 0
-    if age >= 12 or ev['relay']: return {'G': 0, 'S': 1, 'B': 2}.get(h.get('pod'))
+    if ev['relay']: return (h['pl'] - 1) if h.get('pl') and h['pl'] <= 3 else None
+    if age >= 12: return {'G': 0, 'S': 1, 'B': 2}.get(h.get('pod'))
     return {'ทอง': 0, 'เงิน': 1, 'ทองแดง': 2}.get(h['lv'])
 nres = 0
 for r in races:

@@ -27176,22 +27176,299 @@
 },
 "102": {
 "ev": 102,
-"rows": [],
+"rows": [
+{
+"pl": 1,
+"team": "Psu Swimming Center",
+"rel": "A",
+"seed": "NT",
+"fin": "1:22.55",
+"rec": "NR",
+"name": "Psu Swimming Center A",
+"raw": "1 Psu Swimming Center A NT 1:22.55#",
+"swimmers": "1) Pacharaphol Moonjareon 82) Phatarakrit Intrasara 9 3) Passakorn Srangsermkhwa4) Anawin NilPhrom 8"
+},
+{
+"pl": 2,
+"team": "Phuket Swimming Club",
+"rel": "A",
+"seed": "NT",
+"fin": "1:24.80",
+"name": "Phuket Swimming Club A",
+"raw": "2 Phuket Swimming Club A NT 1:24.80",
+"swimmers": "1) Theerapat Suwanmanee 9 2) Methachai Junamorn 9 3) Shintaro Onaru 9 4) Methaphon Junamorn 9"
+},
+{
+"pl": 3,
+"team": "Hatyai Swimming Club",
+"rel": "A",
+"seed": "NT",
+"fin": "1:25.48",
+"name": "Hatyai Swimming Club A",
+"raw": "3 Hatyai Swimming Club A NT 1:25.48",
+"swimmers": "1) Phatcherpin Petkong 9 2) Chakri Sattabut 8 3) Pluempiti Jantasuwan 9 4) Cherlan Sukkaen 7"
+},
+{
+"pl": 4,
+"team": "KP White Shark",
+"rel": "A",
+"seed": "NT",
+"fin": "1:30.89",
+"name": "KP White Shark A",
+"raw": "4 KP White Shark A NT 1:30.89",
+"swimmers": "1) Anuchit Thanomsak 9 2) Kittipong Songsang 9 3) Korakrit Wannachit 8 4) Jirath Thongbang 9"
+},
+{
+"pl": 5,
+"team": "Sriarunothai Swimming Club",
+"rel": "A",
+"seed": "NT",
+"fin": "1:32.93",
+"name": "Sriarunothai Swimming Club A",
+"raw": "5 Sriarunothai Swimming Club A NT 1:32.93",
+"swimmers": "1) Natthaharit Singthong 8 2) Narawish Junyalert 7 3) Kantarakorn Junyalert 9 4) Chawaroj Chaichitatorn 9"
+},
+{
+"pl": 6,
+"team": "Piyapat",
+"rel": "A",
+"seed": "NT",
+"fin": "1:42.84",
+"name": "Piyapat A",
+"raw": "6 Piyapat A NT 1:42.84",
+"swimmers": "1) Tunnapat Srichanphet 8 2) Ekphichai Yodsurang 9 3) Nanthawat Tammasuwan 94) Sarawit Kemthong 8"
+},
+{
+"pl": 7,
+"team": "Poka Swim",
+"rel": "A",
+"seed": "NT",
+"fin": "2:17.41",
+"name": "Poka Swim A",
+"raw": "7 Poka Swim A NT 2:17.41",
+"swimmers": "1) Kannasak Khoka 8 2) Erawan Rai 5 3) Akkhrawin Dulphinijphatta4) Thanakrit Chuaybumrung 7"
+}
+],
 "rec": null
 },
 "103": {
 "ev": 103,
-"rows": [],
+"rows": [
+{
+"pl": 1,
+"team": "Psu Swimming Center",
+"rel": "A",
+"seed": "NT",
+"fin": "1:14.44",
+"name": "Psu Swimming Center A",
+"raw": "1 Psu Swimming Center A NT 1:14.44",
+"swimmers": "1) Naphatrapee Khunthong 112) Thechaya Kowitaya 10 3) Paphangkon Jindapon 11 4) Kasidit Deephan 10"
+},
+{
+"pl": 2,
+"team": "Joy to Swim",
+"rel": "A",
+"seed": "NT",
+"fin": "1:14.50",
+"name": "Joy to Swim A",
+"raw": "2 Joy to Swim A NT 1:14.50",
+"swimmers": "1) Punnawit Sompong 9 2) Apiwich Karnwijit 11 3) Puttiwat Chankal 11 4) Nopphawat Petkul 11"
+},
+{
+"pl": 3,
+"team": "Sriarunothai Swimming Club",
+"rel": "A",
+"seed": "NT",
+"fin": "1:14.71",
+"name": "Sriarunothai Swimming Club A",
+"raw": "3 Sriarunothai Swimming Club A NT 1:14.71",
+"swimmers": "1) Vachirawit Wattanasupinyo2) Chakkaphat Sisamniam 11 3) Konsaran Jitaree 10 4) Kriangkrai Khonkaen 10"
+},
+{
+"pl": 4,
+"team": "Piyapat",
+"rel": "A",
+"seed": "NT",
+"fin": "1:17.28",
+"name": "Piyapat A",
+"raw": "4 Piyapat A NT 1:17.28",
+"swimmers": "1) Nattapat Yodta 8 2) Atiwit Ratchanut 11 3) Napat Srechai 9 4) Jirayu Wingsok 10"
+},
+{
+"pl": 5,
+"team": "Takuapa Swimming",
+"rel": "A",
+"seed": "NT",
+"fin": "1:18.46",
+"name": "Takuapa Swimming A",
+"raw": "5 Takuapa Swimming A NT 1:18.46",
+"swimmers": "1) Tanyathep Thepnarong 9 2) Kanin Chuethai 11 3) Tasawat Jirutchayaton 11 4) Phichapop Geawloy 11"
+},
+{
+"pl": 6,
+"team": "Trang Municipality",
+"rel": "A",
+"seed": "NT",
+"fin": "1:19.62",
+"name": "Trang Municipality A",
+"raw": "6 Trang Municipality A NT 1:19.62",
+"swimmers": "1) Jaruvit Disaro 11 2) Thanwa . 11 3) Suraphat Keawdam 10 4) Witchaya Wiwattananon 11"
+},
+{
+"pl": 7,
+"team": "Tinnasulanon Songkhla SC",
+"rel": "A",
+"seed": "NT",
+"fin": "1:21.07",
+"name": "Tinnasulanon Songkhla SC A",
+"raw": "7 Tinnasulanon Songkhla SC A NT 1:21.07",
+"swimmers": "1) Napat Chamnan 10 2) Dhunnawat Rattananodom 3) Thanakrit Kammane 10 4) Arthywaraa Phongsakoon 8"
+},
+{
+"pl": 8,
+"team": "Phatthalung Swimming Club",
+"rel": "A",
+"seed": "NT",
+"fin": "1:24.61",
+"name": "Phatthalung Swimming Club A",
+"raw": "8 Phatthalung Swimming Club A NT 1:24.61",
+"swimmers": "1) Natapat Chantharat 10 2) Kantaphol Chiwamongkhon3) Phatthalung Saenee 9 4) Nitan Taksinthum 10"
+},
+{
+"pl": 9,
+"team": "Songkhla Province SC",
+"rel": "A",
+"seed": "NT",
+"fin": "1:25.72",
+"name": "Songkhla Province SC A",
+"raw": "9 Songkhla Province SC A NT 1:25.72",
+"swimmers": "1) Natthakit Trijutakan 11 2) Pachara Klammak 10 3) Natthachanapong Suwanno4) Kamonsak Ekkarawarodom"
+},
+{
+"pl": 10,
+"team": "Poka Swim",
+"rel": "A",
+"seed": "NT",
+"fin": "1:37.88",
+"name": "Poka Swim A",
+"raw": "10 Poka Swim A NT 1:37.88",
+"swimmers": "1) Kanjasak Khoka 10 2) Hassadin Patrak 10 3) Pacharadanai Ncapha 10 4) Elijah Villa Pongpallop 10"
+},
+{
+"pl": 11,
+"team": "Tinnasulanon Songkhla SC",
+"rel": "B",
+"seed": "NT",
+"fin": "1:52.20",
+"name": "Tinnasulanon Songkhla SC B",
+"raw": "11 Tinnasulanon Songkhla SC B NT 1:52.20",
+"swimmers": "1) Phutthakhun Khamhom 102) Peerawit Bunyamanee 10 3) Pannawit Kongnoo 10 4) Thananchai Treekaew 7"
+}
+],
 "rec": null
 },
 "106": {
 "ev": 106,
-"rows": [],
+"rows": [
+{
+"pl": 1,
+"team": "KP White Shark",
+"rel": "A",
+"seed": "NT",
+"fin": "2:03.81",
+"name": "KP White Shark A",
+"raw": "1 KP White Shark A NT 2:03.81",
+"swimmers": "1) ณิชากร จันทร์โชติ (7) 2) ดมิสา ส่องแสง (7) 3) สมปรารถนา ยั่งยืน (7) 4) ปวิณ์ธิดา แก้วละมุล (7)"
+},
+{
+"pl": 2,
+"team": "Tinnasulanon Songkhla SC",
+"rel": "A",
+"seed": "NT",
+"fin": "2:07.31",
+"name": "Tinnasulanon Songkhla SC A",
+"raw": "2 Tinnasulanon Songkhla SC A NT 2:07.31",
+"swimmers": "1) พลอยชมพู เลิศธนภัทรเดชา (7) 2) บาตูล จำนงลักษณ์ (6) 3) นริศรา ลี้สกุลพิศุทธิ์ (7) 4) ปานรดา จิตมั่น (6)"
+},
+{
+"pl": 3,
+"team": "Sriarunothai Swimming Club",
+"rel": "A",
+"seed": "NT",
+"fin": "2:13.91",
+"name": "Sriarunothai Swimming Club A",
+"raw": "3 Sriarunothai Swimming Club A NT 2:13.91",
+"swimmers": "1) สุภัสสรา เวทีภิรมย์ (6) 2) พรรชน์ชญมน รื่นรวย (6) 3) ณัฐลัดดา พิมเสน (7) 4) ชนนพร มีชัย (6)"
+}
+],
 "rec": null
 },
 "107": {
 "ev": 107,
-"rows": [],
+"rows": [
+{
+"pl": 1,
+"team": "Psu Swimming Center",
+"rel": "A",
+"seed": "NT",
+"fin": "1:26.40",
+"name": "Psu Swimming Center A",
+"raw": "1 Psu Swimming Center A NT 1:26.40",
+"swimmers": "1) บัวบูชา สุทธิกุล (9) 2) วีรันดา ทิพย์ศรี (8) 3) ญาธิดา บุญญาอภิรักษ์ (7) 4) สุภจิรา เวชสิทธิ์ (8)"
+},
+{
+"pl": 2,
+"team": "Phatthalung Swimming Club",
+"rel": "A",
+"seed": "NT",
+"fin": "1:30.75",
+"name": "Phatthalung Swimming Club A",
+"raw": "2 Phatthalung Swimming Club A NT 1:30.75",
+"swimmers": "1) ปวริศา ศรีโดน (9) 2) ศุภรภัทร เทพชนะ (9) 3) ณัฏฐ์ชญา เก้าเอี้ยน (9) 4) ธัญสิริ แผ้วพันธ์ชู (9)"
+},
+{
+"pl": 3,
+"team": "Songkhla Province SC",
+"rel": "A",
+"seed": "NT",
+"fin": "1:38.73",
+"name": "Songkhla Province SC A",
+"raw": "3 Songkhla Province SC A NT 1:38.73",
+"swimmers": "1) ณัฎฐพัชร์ สุวรรณโณ (9) 2) ธัญญ์นลิน จันทรโชติ (9) 3) มนต์รักษ์ ปริญญาสถิรกุล (8) 4) พิมพ์พิชชาภัส สุวรรณโณ (7)"
+},
+{
+"pl": 4,
+"team": "Joy to Swim",
+"rel": "A",
+"seed": "NT",
+"fin": "1:38.97",
+"name": "Joy to Swim A",
+"raw": "4 Joy to Swim A NT 1:38.97",
+"swimmers": "1) ศุภักษณา นิธิโชติรส (8) 2) ไอริญชย์ญฎา การวิจิตร (9) 3) ทัตพิชา ตันติพิศาลพงศ์ (9) 4) ปริตา แสงเพชร (7)"
+},
+{
+"pl": null,
+"team": "Sriarunothai Swimming Club",
+"rel": "A",
+"seed": "NT",
+"fin": "DQ",
+"name": "Sriarunothai Swimming Club A",
+"raw": "--- Sriarunothai Swimming Club A NT DQ 1:41.24",
+"reason": "10.1 Stroke Infraction swimmer #2: 7.3 Arm movements not simultaneous - breast",
+"swimmers": "1) ชญานุช มีชัย (9) 2) อัญญาดา วัฒนชนม์ (9) 3) พาณิภัค น้อยทรง (8) 4) พิมพ์ลภัส อินตัน (8)"
+},
+{
+"pl": null,
+"team": "Poka Swim",
+"rel": "A",
+"seed": "NT",
+"fin": "DQ",
+"name": "Poka Swim A",
+"raw": "--- Poka Swim A NT DQ 2:10.31",
+"reason": "10.1 Stroke Infraction swimmer #1: 6.5 Did not finish the race while on the back - back",
+"swimmers": "1) ณหทัย สนธิเมือง (7) 2) กุลธิดา บุญพ่อมี (7) 3) ตีลี่ซุ้ย ไลน์ (8) 4) อัยรดา ภารเจิม (9)"
+}
+],
 "rec": null
 }
 }

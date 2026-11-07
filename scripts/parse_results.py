@@ -14,6 +14,8 @@ OK = re.compile(rf'^(?P<pl>\d+) (?P<hpl>\d+) (?P<ht>\d+) (?P<ln>\d+) (?P<name>.+
 OKR = re.compile(rf'^(?P<pl>\d+) (?P<hpl>\d+) (?P<ht>\d+) (?P<ln>\d+) (?P<name>.+?) (?P<fin>{TM})(?: (?P<pts>\d+))?(?: (?P<cum>\d+))?(?: (?P<pod>[GSB]))?(?: (?P<lvl>ทองแดง|ทอง|เงิน))?(?: (?P<rec>[A-Z]+))?$')
 NOR = re.compile(r'^(?P<ht>\d+) (?P<ln>\d+) (?P<name>.+?) (?P<fin>DQ|SC|NS|DNS|DFS|DNF)(?: (?P<pts>\d+))?.*$')
 NO = re.compile(rf'^(?P<ht>\d+) (?P<ln>\d+) (?P<name>.+?) (?P<age>\d{{1,2}}) (?P<team>\S.*?) (?P<fin>DQ|SC|NS|DNS|DFS|DNF)(?: (?P<pts>\d+))?.*$')
+# HY-TEK relay results: "3 Sriarunothai Swimming Club A NT 2:13.91 [pts]"
+HYREL = re.compile(rf'^(?P<pl>\d+|-+) (?P<team>[A-Za-z][A-Za-z .&\'-]+?) (?P<rel>[A-D]) (?P<seed>NT|{TM}) (?P<fin>{TM}|DQ|DNS|NS|DFS|SCR)(?P<rec>#)?(?: (?:{TM}))?(?: (?P<pts>\d+(?:\.\d+)?))?$')
 def ntime(t):
     t = re.sub(r'^0+(?=\d)', '', t)          # 01:26.62 -> 1:26.62
     if t.startswith('0:'): t = t[2:]
@@ -60,6 +62,16 @@ def parse(pdf):
         if m: ev = int(m[1]); continue
         m = re.match(r'^สถิติ\S* \(SCM\) ([\d:.]+) นาที ท\s?ำไว้โดย (.+?) - (.+?) เมื่อ (\d{4}-\d\d-\d\d)', ln)
         if m: rec = dict(t=ntime(m[1]), n=m[2].strip(), tm=m[3].strip(), d=m[4]); continue
+        hr = HYREL.match(ln)
+        if hr:
+            g = {k: v for k, v in hr.groupdict().items() if v}
+            g['pl'] = int(g['pl']) if g.get('pl', '').isdigit() else None
+            g['name'] = g['team'] + ' ' + g['rel']; g['fin'] = ntime(g['fin'])
+            if g.get('rec') == '#': g['rec'] = 'NR'
+            if g.get('pts'): g['pts'] = int(float(g['pts']))
+            g['raw'] = ln; rows.append(g); last = g; continue
+        if last and last.get('rel') and re.match(r'^1\) ', ln):
+            last['swimmers'] = re.sub(r' [A-Z] (\d+)', r' (\1)', ln); continue
         r = OK.match(ln) or NO.match(ln) or OKR.match(ln) or NOR.match(ln)
         if r:
             g = {k: v for k, v in r.groupdict().items() if v}
