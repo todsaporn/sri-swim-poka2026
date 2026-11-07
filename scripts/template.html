@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ศรีอรุโณทัย · Krabi PAO Swimming #16 · Day 1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Prompt:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--disp:'Prompt','IBM Plex Sans Thai',system-ui,sans-serif;--bg:#f3f7fa;--card:#fff;--ink:#0d2236;--mut:#5d7084;--line:#e1e8ef;--pri:#0b4f8a;--pri2:#0e7ac4;--aqua:#14b8c4;--m:#1f6fd1;--f:#d6458a;--warn:#c2410c;--warnbg:#fff3e8;--gold:#b7860b;--r:16px}
+*{box-sizing:border-box}html,body{margin:0}
+body{font-family:'IBM Plex Sans Thai',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2,h3,.disp{font-family:'Prompt','IBM Plex Sans Thai',sans-serif;margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+.wrap{max-width:1080px;margin:0 auto;padding:0 16px}
+/* hero */
+.hero{background:radial-gradient(120% 140% at 100% 0%,#18a6c9 0%,#0b4f8a 45%,#082d50 100%);color:#fff;padding:26px 0 22px;position:relative;overflow:hidden}
+.hero:after{content:"";position:absolute;inset:auto -10% -40px -10%;height:90px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.08) 0 2px,transparent 2px 18%);transform:skewY(-3deg)}
+.kick{font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;opacity:.8}
+.hero h1{font-size:30px;line-height:1.15;margin-top:6px}
+.hero .sub{opacity:.9;margin-top:4px;font-size:14px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px;position:relative;z-index:1}
+.stat{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:10px 12px;backdrop-filter:blur(6px)}
+.stat b{display:block;font-family:var(--disp);font-size:clamp(18px,5.4vw,24px);line-height:1.1;white-space:nowrap}
+.stat span{font-size:12px;opacity:.85}
+@media(max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}.hero h1{font-size:25px}}
+/* next */
+.next{margin-top:-14px;position:relative;z-index:2}
+.nextcard{background:var(--card);border-radius:var(--r);box-shadow:0 6px 24px rgba(8,45,80,.12);padding:14px 16px}
+.nexthead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.nexthead h3{font-size:15px}
+.pill{font-size:12px;padding:2px 9px;border-radius:99px;background:#e6f6f8;color:#08707a;font-weight:600;white-space:nowrap}
+.nextrow{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.nextrow::-webkit-scrollbar{display:none}
+.mini{flex:0 0 auto;min-width:168px;border:1px solid var(--line);border-radius:12px;padding:8px 10px;background:#fbfdfe;text-align:left}
+.mini .tm{font-family:var(--disp);font-weight:600;font-size:17px;color:var(--pri)}
+.mini .nm{font-weight:600;font-size:14px;white-space:nowrap}
+.mini .ev{font-size:12px;color:var(--mut);white-space:nowrap}
+/* controls */
+.bar{position:sticky;top:0;z-index:20;background:rgba(243,247,250,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:10px 0 8px;margin-top:14px}
+.tabs{display:flex;gap:4px;background:#e3ebf2;padding:4px;border-radius:12px}
+.tab{flex:1;border:0;background:transparent;padding:8px 6px;border-radius:9px;font-weight:600;font-size:14px;color:var(--mut);white-space:nowrap}
+.tab.on{background:#fff;color:var(--pri);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.filters{display:flex;gap:8px;align-items:center;margin-top:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.filters::-webkit-scrollbar{display:none}
+.search{flex:0 0 190px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 11px;font:inherit;font-size:14px;outline:none}
+.search:focus{border-color:var(--pri2)}
+.seg{display:flex;flex:0 0 auto;gap:4px}
+.chip{border:1px solid var(--line);background:#fff;border-radius:99px;padding:5px 11px;font-size:13px;white-space:nowrap;font-weight:500}
+.chip.on{background:var(--pri);border-color:var(--pri);color:#fff}
+.chip.m.on{background:var(--m);border-color:var(--m)}.chip.f.on{background:var(--f);border-color:var(--f)}
+.sep{width:1px;height:22px;background:var(--line);flex:0 0 auto}
+.reset{border:0;background:none;color:var(--pri2);font-size:13px;font-weight:600;white-space:nowrap}
+.count{font-size:13px;color:var(--mut);margin:14px 0 8px}
+/* schedule */
+.hour{margin:18px 0 8px;display:flex;align-items:center;gap:10px;font-family:var(--disp);font-weight:600;color:var(--pri)}
+.hour:after{content:"";flex:1;height:1px;background:var(--line)}
+.race{display:grid;grid-template-columns:62px 1fr auto;gap:12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:11px 14px;margin-bottom:8px;width:100%;text-align:left;transition:transform .12s,box-shadow .12s}
+.race:hover{box-shadow:0 4px 14px rgba(8,45,80,.08);transform:translateY(-1px)}
+.race.past{opacity:.55}
+.race.now{border-color:var(--aqua);box-shadow:0 0 0 2px rgba(20,184,196,.25)}
+.race .tm{font-family:var(--disp);font-weight:600;font-size:18px;color:var(--pri);line-height:1.1}
+.race .tm small{display:block;font-family:'IBM Plex Sans Thai',system-ui,sans-serif;font-size:11px;color:var(--mut);font-weight:500}
+.race .who{font-weight:600;font-size:15px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.race .what{font-size:13px;color:var(--mut)}
+.gdot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:0 0 auto}
+.gdot.M{background:var(--m)}.gdot.F{background:var(--f)}
+.lane{text-align:center;min-width:54px}
+.lane b{display:block;font-family:var(--disp);font-size:20px;line-height:1}
+.lane span{font-size:11px;color:var(--mut)}
+.seedtag{font-size:12px;font-weight:600;padding:1px 7px;border-radius:6px;background:#eef3f8;color:var(--mut)}
+.seedtag.top{background:#fff6dc;color:var(--gold)}
+.tag{font-size:11.5px;font-weight:600;padding:1px 7px;border-radius:6px}
+.tag.warn{background:var(--warnbg);color:var(--warn)}
+.tag.rel{background:#e9f0ff;color:#3546b5}
+/* athletes */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.ath{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;text-align:left;width:100%;position:relative;transition:box-shadow .12s}
+.ath:hover{box-shadow:0 4px 14px rgba(8,45,80,.08)}
+.ath .top{display:flex;align-items:center;gap:10px}
+.av{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-family:var(--disp);font-weight:600;color:#fff;flex:0 0 auto;font-size:17px}
+.av.M{background:linear-gradient(135deg,#3a8ee6,#1f5fb8)}.av.F{background:linear-gradient(135deg,#ec6aa6,#b93374)}
+.ath .nm{font-weight:700;font-size:15.5px;line-height:1.25}
+.ath .meta{font-size:12.5px;color:var(--mut)}
+.strk{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px}
+.sk{font-size:11.5px;padding:2px 8px;border-radius:7px;background:#eef6fb;color:#0b5f8e;font-weight:500}
+.span{font-size:12.5px;color:var(--mut);margin-top:8px;display:flex;justify-content:space-between;gap:6px}
+.star{position:absolute;top:10px;right:10px;border:0;background:none;font-size:19px;line-height:1;color:#c9d3dc;padding:4px}
+.star.on{color:#f2b100}
+/* ages */
+.agegrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px}
+.agebox{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.agebox h3{font-size:17px;display:flex;justify-content:space-between;align-items:baseline}
+.agebox h3 small{font-family:'IBM Plex Sans Thai',system-ui,sans-serif;font-size:12.5px;color:var(--mut);font-weight:500}
+.sexrow{margin-top:10px}
+.sexrow .lbl{font-size:12px;font-weight:700;letter-spacing:.03em;margin-bottom:5px}
+.sexrow .lbl.M{color:var(--m)}.sexrow .lbl.F{color:var(--f)}
+.ln{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 8px;border-radius:9px;width:100%;border:0;background:#f6f9fb;margin-bottom:4px;text-align:left;font-size:14px}
+.ln:hover{background:#eaf2f8}
+.dots{display:flex;gap:3px}
+.dots i{min-width:22px;padding:0 4px;height:18px;border-radius:5px;font-style:normal;font-size:10.5px;display:grid;place-items:center;background:#e3ebf2;color:#8698aa;font-weight:600}
+.dots i.y{background:var(--pri2);color:#fff}
+.legend{font-size:12px;color:var(--mut);margin:4px 0 12px}
+/* relay */
+.relay{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:10px}
+.relay .hd{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:8px}
+/* lineup */
+.lu{width:100%;border-collapse:collapse;font-size:14px}
+.lu td{padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+.lu td:first-child{width:34px;font-family:var(--disp);font-weight:600;text-align:center;color:var(--mut)}
+.lu td:last-child{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.lu tr.me td{background:#e8f7f9}
+.lu tr.me td:first-child{color:var(--pri);border-left:3px solid var(--aqua)}
+.lu .tmn{font-size:12px;color:var(--mut)}
+/* modal */
+.ov{position:fixed;inset:0;background:rgba(6,25,45,.45);z-index:50;display:none;align-items:flex-end;justify-content:center}
+.ov.show{display:flex}
+.sheet{background:#fff;width:100%;max-width:620px;max-height:88vh;overflow:auto;border-radius:20px 20px 0 0;padding:18px 18px 28px;animation:up .2s ease-out}
+@media(min-width:700px){.ov{align-items:center}.sheet{border-radius:20px}}
+@keyframes up{from{transform:translateY(30px);opacity:0}}
+.sheet .x{float:right;border:0;background:#eef2f6;border-radius:50%;width:32px;height:32px;font-size:18px}
+.sheet h2{font-size:21px;margin-bottom:2px}
+.tl{margin-top:14px;border-left:2px solid var(--line);margin-left:6px;padding-left:16px}
+.tl .it{position:relative;margin-bottom:12px}
+.tl .it:before{content:"";position:absolute;left:-22px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--pri2);border:2px solid #fff;box-shadow:0 0 0 1px var(--pri2)}
+.tl .gap{font-size:12px;color:var(--mut);margin:-4px 0 8px}
+.tl .gap.warn{color:var(--warn);font-weight:600}
+.tl button{border:1px solid var(--line);background:#fbfdfe;border-radius:12px;padding:9px 12px;width:100%;text-align:left}
+.empty{text-align:center;padding:40px 10px;color:var(--mut)}
+.foot{font-size:12px;color:var(--mut);text-align:center;padding:30px 16px 40px}
+.hidden{display:none!important}
+.pick{flex:0 0 auto;border:1px solid var(--line);background:#fff;border-radius:10px;padding:6px 12px;font-size:14px;font-weight:600;white-space:nowrap;max-width:240px;overflow:hidden;text-overflow:ellipsis}
+.pick.on{background:#e6f6f8;border-color:var(--aqua);color:#08707a}
+.pk-x{font-size:12px;font-weight:500;opacity:.75;margin-left:4px}
+.pk-sec{margin-top:14px}.pk-sec .lbl{font-size:13px;font-weight:700;margin-bottom:6px}.pk-sec .lbl.M{color:var(--m)}.pk-sec .lbl.F{color:var(--f)}
+.pk-age{margin-bottom:10px}
+.pk-ah{border:0;background:none;font-family:var(--disp);font-weight:600;font-size:15px;padding:2px 0;margin-bottom:4px}
+.pk-ah small{font-family:'IBM Plex Sans Thai',system-ui,sans-serif;font-weight:500;font-size:12px;color:var(--pri2);margin-left:6px}
+.pk-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px}
+.pk-it{display:flex;gap:10px;align-items:center;text-align:left;border:1px solid var(--line);background:#fbfdfe;border-radius:11px;padding:8px 10px;font-size:14.5px;font-weight:600}
+.pk-it small{display:block;font-weight:400;font-size:12px;color:var(--mut)}
+.pk-it .ck{width:20px;height:20px;border-radius:6px;border:1.5px solid #b9c7d4;display:grid;place-items:center;font-size:13px;flex:0 0 auto;color:#fff}
+.pk-it.on{border-color:var(--aqua);background:#e8f7f9}.pk-it.on .ck{background:var(--aqua);border-color:var(--aqua)}
+.pk-foot{position:sticky;bottom:-28px;background:#fff;display:flex;gap:8px;padding:12px 0 4px;margin-top:8px;border-top:1px solid var(--line)}
+.pk-b1{flex:1;border:0;background:var(--pri);color:#fff;border-radius:12px;padding:11px;font-weight:700}
+.pk-b2{border:1px solid var(--line);background:#fff;border-radius:12px;padding:11px 18px;font-weight:600}
+.pastbtn{width:100%;border:1px dashed #b9c7d4;background:#fff;border-radius:12px;padding:10px;font-weight:600;font-size:14px;color:var(--pri);margin:4px 0 6px}
+.pastbtn span{background:#eef3f8;color:var(--mut);border-radius:99px;padding:1px 8px;font-size:12px;margin-left:4px}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <div class="kick" id="meetname"></div>
+  <h1>ทีมว่ายน้ำ ศรีอรุโณทัย</h1>
+  <div class="sub" id="meetday"></div>
+  <div class="stats" id="stats"></div>
+</div></header>
+
+<section class="wrap next"><div class="nextcard">
+  <div class="nexthead"><h3 id="nexttitle">รายการถัดไป</h3><span class="pill" id="clock"></span></div>
+  <div class="nextrow" id="nextrow"></div>
+</div></section>
+
+<div class="bar"><div class="wrap">
+  <div class="tabs" id="tabs">
+    <button class="tab" data-v="schedule">ตารางแข่ง</button>
+    <button class="tab" data-v="athletes">นักกีฬา</button>
+    <button class="tab" data-v="ages">รุ่นอายุ</button>
+    <button class="tab" data-v="relays">ผลัด</button>
+  </div>
+  <div class="filters" id="filters">
+    <button class="pick" id="pick"></button>
+    <div class="seg" id="fg"></div><span class="sep"></span>
+    <div class="seg" id="fa"></div><span class="sep"></span>
+    <div class="seg" id="fs"></div>
+    <button class="reset" id="reset">ล้างตัวกรอง</button>
+  </div>
+</div></div>
+
+<main class="wrap">
+  <div class="count" id="count"></div>
+  <section id="v-schedule"></section>
+  <section id="v-athletes"></section>
+  <section id="v-ages"></section>
+  <section id="v-relays"></section>
+</main>
+<div class="foot wrap">ข้อมูลจาก Meet Program (Startlist Day 1, อัปเดต 27 ต.ค. 2026) · เวลาเป็นเวลาประมาณการตามโปรแกรม อาจเลื่อนตามหน้างาน · อันดับเวลาส่ง = อันดับ seed time ในรายการนั้นทั้งหมด (NT = ไม่มีเวลาส่ง)</div>
+
+<div class="ov" id="ov"><div class="sheet" id="sheet"></div></div>
+
+<script>
+const DATA=__DATA__;
+const EV=DATA.events, R=DATA.races, H=DATA.heats;
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const mins=t=>{const[a,b]=t.split(':');return +a*60+ +b};
+const G={M:'ชาย',F:'หญิง'};
+const ST=['ฟรีสไตล์','กรรเชียง','กบ','ผีเสื้อ','เดี่ยวผสม'];
+const evLabel=e=>`${e.dist}ม. ${e.stroke}`;
+const ageLabel=e=>/ปี/.test(e.age)?`${e.age}`:`${e.age} ปี`;
+// enrich
+R.forEach(r=>{r.e=EV[r.ev];r.g=r.e.g;r.m=mins(r.t)});
+R.sort((a,b)=>a.m-b.m||a.ev-b.ev);
+const ind=R.filter(r=>!r.relay), rel=R.filter(r=>r.relay);
+const A={};
+ind.forEach(r=>{(A[r.name]??={name:r.name,age:r.age,g:r.g,races:[]}).races.push(r)});
+const ath=Object.values(A).sort((a,b)=>a.age-b.age||a.g.localeCompare(b.g)||a.name.localeCompare(b.name,'th'));
+ath.forEach(a=>{a.races.sort((x,y)=>x.m-y.m);a.minGap=Infinity;for(let i=1;i<a.races.length;i++){const g=a.races[i].m-a.races[i-1].m;a.races[i].gap=g;a.minGap=Math.min(a.minGap,g)}});
+const TIGHT=15;const dur=m=>m<60?m+' นาที':Math.floor(m/60)+' ชม.'+(m%60?' '+m%60+' นาที':'');
+// state
+const S={sel:new Set(),showPast:false,v:'schedule',g:'',a:'',s:'',fav:false};
+let favs=new Set();try{favs=new Set(JSON.parse(localStorage.getItem('sri-favs')||'[]'))}catch(e){}
+const saveFav=()=>{try{localStorage.setItem('sri-favs',JSON.stringify([...favs]))}catch(e){}};
+// header
+$('#meetname').textContent=DATA.meet.name;
+$('#meetday').textContent=`${DATA.meet.day} · จากผู้เข้าแข่งขัน ${DATA.meet.teams} ทีม`;
+const boys=ath.filter(a=>a.g==='M').length, girls=ath.length-boys;
+$('#stats').innerHTML=[
+ [ath.length,`นักกีฬา (ชาย ${boys} · หญิง ${girls})`],
+ [ind.length,'รายการเดี่ยว'],
+ [rel.length,'ทีมผลัด'],
+ [`${R[0].t}–${R[R.length-1].t}`,'ช่วงเวลาลงแข่ง']].map(([b,s])=>`<div class="stat"><b>${b}</b><span>${s}</span></div>`).join('');
+// filters
+const ages=[...new Set(ath.map(a=>a.age))].sort((a,b)=>a-b);
+const chips=(el,items,key,cls='')=>{$(el).innerHTML=items.map(([v,l,c])=>`<button class="chip ${c||cls}" data-k="${key}" data-val="${v}">${l}</button>`).join('')};
+chips('#fg',[['','ทุกเพศ'],['M','ชาย','m'],['F','หญิง','f'],['fav','★ ติดตาม']],'g');
+chips('#fa',[['','ทุกอายุ'],...ages.map(a=>[a,a+' ปี'])],'a');
+chips('#fs',[['','ทุกท่า'],...ST.map(s=>[s,s])],'s');
+document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{const k=b.dataset.k,v=b.dataset.val;
+  if(k==='g'&&v==='fav'){S.fav=!S.fav}else if(k==='g'){S.g=S.g===v?'':v}else{S[k]=S[k]==v?'':v}render()});
+$('#reset').onclick=()=>{Object.assign(S,{g:'',a:'',s:'',fav:false});S.sel.clear();render()};
+const syncChips=()=>document.querySelectorAll('.chip').forEach(b=>{const k=b.dataset.k,v=b.dataset.val;
+  b.classList.toggle('on',k==='g'&&v==='fav'?S.fav:String(S[k])===v)});
+const okAth=a=>(!S.g||a.g===S.g)&&(!S.a||a.age==S.a)&&(!S.sel.size||S.sel.has(a.name))&&(!S.fav||favs.has(a.name));
+const okRace=r=>r.relay?(!S.g||r.g===S.g)&&!S.a&&!S.sel.size&&!S.fav&&(!S.s):okAth(A[r.name])&&(!S.s||r.e.stroke===S.s);
+// clock / now (Asia/Bangkok)
+function bkk(){const p=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Bangkok',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date());const o={};p.forEach(x=>o[x.type]=x.value);return{d:`${o.year}-${o.month}-${o.day}`,m:(+o.hour%24)*60+ +o.minute,t:`${o.hour%24}:${o.minute}`}}
+const MEETDAY='2026-11-07';
+function nowM(){const b=bkk();return b.d===MEETDAY?b.m:(b.d>MEETDAY?1e9:-1)}
+// helpers
+const seedTag=r=>r.seed==='NT'?`<span class="seedtag">NT</span>`:`<span class="seedtag ${r.rank&&r.rank<=3?'top':''}">${r.seed}${r.rank?` · #${r.rank}/${r.e.seeded}`:''}</span>`;
+function raceCard(r,nm){const e=r.e,cls=r.m<nm-5?'past':(nm>=r.m-5&&nm<=r.m+5?'now':'');
+  const who=r.relay?`ศรีอรุโณทัย ทีม ${r.relay} <span class="tag rel">ผลัด</span>`:`${esc(r.name)}${r.gap!=null&&r.gap<TIGHT?` <span class="tag warn">ห่างรายการก่อน ${r.gap} นาที</span>`:''}`;
+  return `<button class="race ${cls}" data-h="${r.ev}-${r.heat}"><div class="tm">${r.t}<small>Event ${r.ev}</small></div>
+  <div><div class="who"><span class="gdot ${r.g}"></span>${who}</div>
+  <div class="what">${evLabel(e)} · ${G[e.g]} ${ageLabel(e)} · ฮีต ${r.heat}/${e.heats} ${seedTag(r)}</div></div>
+  <div class="lane"><b>${r.lane}</b><span>ลู่</span></div></button>`}
+// views
+function vSchedule(){const nm=nowM();const all=R.filter(okRace);
+  const past=all.filter(r=>r.m<nm-5),list=S.showPast?all:all.filter(r=>r.m>=nm-5);
+  $('#count').textContent=`เหลือ ${all.length-past.length} จาก ${all.length} รายการ`;
+  let h=past.length?`<button class="pastbtn" id="pastbtn">${S.showPast?'▲ ซ่อนรายการที่แข่งไปแล้ว':'▼ แสดงรายการที่แข่งไปแล้ว'} <span>${past.length}</span></button>`:'';
+  if(!list.length)return h+(all.length?'<div class="empty">แข่งครบทุกรายการตามตัวกรองแล้ว 🎉</div>':'<div class="empty">ไม่พบรายการตามตัวกรอง</div>');
+  let cur='';list.forEach(r=>{const hr=r.t.slice(0,2);if(hr!==cur){cur=hr;h+=`<div class="hour">${hr}:00 น.</div>`}h+=raceCard(r,nm)});return h}
+function vAthletes(){const list=ath.filter(okAth).map(a=>({a,rs:a.races.filter(r=>!S.s||r.e.stroke===S.s)})).filter(x=>x.rs.length);
+  $('#count').textContent=`${list.length} คน · กด ☆ เพื่อติดตาม`;
+  if(!list.length)return'<div class="empty">ไม่พบนักกีฬาตามตัวกรอง</div>';
+  return `<div class="grid">${list.map(({a,rs})=>{const strokes=a.races.map(r=>`<span class="sk">${r.e.dist} ${r.e.stroke}</span>`).join('');
+   return `<div class="ath" role="button" tabindex="0" data-a="${esc(a.name)}"><button class="star ${favs.has(a.name)?'on':''}" data-star="${esc(a.name)}" aria-label="ติดตาม">${favs.has(a.name)?'★':'☆'}</button>
+   <div class="top"><div class="av ${a.g}">${a.age}</div><div><div class="nm">${esc(a.name)}</div><div class="meta">${G[a.g]} · ${a.age} ปี · ${a.races.length} รายการ</div></div></div>
+   <div class="strk">${strokes}</div>
+   <div class="span"><span>แรก ${a.races[0].t} · สุดท้าย ${a.races.at(-1).t}</span>${a.minGap<TIGHT?`<span class="tag warn">ช่วงติด ${a.minGap} น.</span>`:''}</div></div>`}).join('')}</div>`}
+function vAges(){const list=ath.filter(okAth);
+  $('#count').textContent=`${list.length} คน แยกตามรุ่นอายุ`;
+  const by={};list.forEach(a=>(by[a.age]??=[]).push(a));
+  const keys=Object.keys(by).sort((a,b)=>a-b);
+  if(!keys.length)return'<div class="empty">ไม่พบนักกีฬาตามตัวกรอง</div>';
+  const SK=['ฟรีสไตล์','กรรเชียง','กบ','ผีเสื้อ','เดี่ยวผสม'],AB=['ฟรี','กร','กบ','ผี','IM'];
+  return `<div class="legend">ช่องสี = ลงแข่งท่านั้น, ×2 = ลง 2 ระยะ (ฟรี=ฟรีสไตล์ · กร=กรรเชียง · กบ · ผี=ผีเสื้อ · IM=เดี่ยวผสม)</div><div class="agegrid">${keys.map(k=>{const xs=by[k];
+   const rows=g=>{const ys=xs.filter(a=>a.g===g);if(!ys.length)return'';return `<div class="sexrow"><div class="lbl ${g}">${G[g]} · ${ys.length} คน</div>${ys.map(a=>{const st={};a.races.forEach(r=>st[r.e.stroke]=(st[r.e.stroke]||0)+1);
+     return `<button class="ln" data-a="${esc(a.name)}"><span>${esc(a.name)}</span><span class="dots">${SK.map((s,i)=>`<i class="${st[s]?'y':''}">${AB[i]}${st[s]>1?'×'+st[s]:''}</i>`).join('')}</span></button>`}).join('')}</div>`};
+   const n=xs.reduce((t,a)=>t+a.races.length,0);
+   return `<div class="agebox"><h3>${k} ปี <small>${xs.length} คน · ${n} รายการ</small></h3>${rows('M')}${rows('F')}</div>`}).join('')}</div>`}
+function lineup(k){return `<table class="lu">${H[k].map(x=>`<tr class="${x.me?'me':''}"><td>${x.l}</td><td><b>${esc(x.n)}</b>${x.tm?`<div class="tmn">${esc(x.tm)}${x.a?' · '+x.a+' ปี':''}</div>`:''}</td><td>${x.s}</td></tr>`).join('')}</table>`}
+function vRelays(){const list=rel.filter(r=>!S.g||r.g===S.g);
+  $('#count').textContent=`${list.length} ทีมผลัด · ผลัดผสม 4x25 ม.`+(S.a||S.sel.size||S.s||S.fav?' (ตัวกรองอายุ/นักกีฬา/ท่า ไม่ใช้กับผลัด)':'');
+  if(!list.length)return'<div class="empty">ไม่พบทีมผลัด</div>';
+  return list.map(r=>`<div class="relay"><div class="hd"><div><h3 class="disp" style="font-size:17px"><span class="gdot ${r.g}"></span> ${G[r.g]} ${r.e.age}</h3>
+   <div class="what" style="font-size:13px;color:var(--mut)">Event ${r.ev} · ${evLabel(r.e)} · ฮีต ${r.heat}/${r.e.heats} · ลู่ ${r.lane} · ${r.e.n} ทีมในรายการ</div></div><span class="pill">${r.t} น.</span></div>${lineup(r.ev+'-'+r.heat)}</div>`).join('')}
+// modal
+function openHeat(k){const[ev,ht]=k.split('-').map(Number);const e=EV[ev];
+  $('#sheet').innerHTML=`<button class="x" onclick="closeOv()">×</button><div class="kick" style="color:var(--mut)">Event ${ev} · ฮีต ${ht}/${e.heats}</div>
+  <h2>${evLabel(e)}</h2><div style="color:var(--mut);font-size:14px;margin-bottom:12px">${G[e.g]} ${ageLabel(e)} · ${R.find(r=>r.ev===ev&&r.heat===ht).t} น. · ${e.n} คนในรายการ</div>${lineup(k)}`;showOv()}
+function openAth(n){const a=A[n];if(!a)return;
+  $('#sheet').innerHTML=`<button class="x" onclick="closeOv()">×</button><div class="top" style="display:flex;gap:12px;align-items:center"><div class="av ${a.g}" style="width:50px;height:50px;border-radius:14px;display:grid;place-items:center;font-family:var(--disp);font-weight:600;color:#fff;font-size:20px">${a.age}</div>
+  <div><h2>${esc(a.name)}</h2><div style="color:var(--mut);font-size:14px">${G[a.g]} · ${a.age} ปี · ${a.races.length} รายการ</div></div></div>
+  <div class="tl">${a.races.map((r,i)=>`${i&&r.gap!=null?`<div class="gap ${r.gap<TIGHT?'warn':''}">↓ พัก ${dur(r.gap)}</div>`:''}<div class="it"><button data-h="${r.ev}-${r.heat}">
+   <div style="display:flex;justify-content:space-between;gap:8px"><b class="disp" style="color:var(--pri)">${r.t} น.</b><span style="font-size:13px;color:var(--mut)">ฮีต ${r.heat}/${r.e.heats} · <b style="color:var(--ink)">ลู่ ${r.lane}</b></span></div>
+   <div style="font-weight:600">${evLabel(r.e)}</div><div style="font-size:13px;color:var(--mut)">Event ${r.ev} · ${seedTag(r)} · ${r.e.n} คนในรุ่น</div></button></div>`).join('')}</div>
+  <div style="font-size:12px;color:var(--mut);margin-top:6px">แตะรายการเพื่อดูคู่แข่งในฮีต</div>`;showOv()}
+const showOv=()=>{$('#ov').classList.add('show');document.body.style.overflow='hidden'};
+window.closeOv=()=>{$('#ov').classList.remove('show');document.body.style.overflow=''};
+$('#ov').onclick=e=>{if(e.target.id==='ov')closeOv()};
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOv()});
+document.addEventListener('click',e=>{const pk=e.target.closest('[data-pk]');if(pk){const ns=pk.dataset.pk.split('|');const all=ns.every(n=>S.sel.has(n));ns.forEach(n=>all?S.sel.delete(n):S.sel.add(n));renderPicker();render();return}
+  if(e.target.closest('#pick')){renderPicker();showOv();return}
+  if(e.target.closest('#pkclear')){S.sel.clear();renderPicker();render();return}
+  if(e.target.closest('#pkdone')){closeOv();return}
+  if(e.target.closest('#pastbtn')){S.showPast=!S.showPast;render();return}const st=e.target.closest('[data-star]');if(st){e.stopPropagation();const n=st.dataset.star;favs.has(n)?favs.delete(n):favs.add(n);saveFav();render();return}
+  const h=e.target.closest('[data-h]');if(h){openHeat(h.dataset.h);return}
+  const a=e.target.closest('[data-a]');if(a&&!e.target.closest('.sheet'))openAth(a.dataset.a)});
+// next strip
+function renderNext(){const b=bkk(),nm=nowM();$('#clock').textContent=`ตอนนี้ ${b.t} น.`;
+  let list,title;
+  if(nm<0){list=R.slice(0,10);title='เริ่มแข่ง 7 พ.ย. — รายการแรกของทีม'}
+  else if(nm>=1e9){list=[];title='การแข่งขัน Day 1 จบแล้ว'}
+  else{list=R.filter(r=>r.m>=nm-3).slice(0,10);title=list.length?'รายการถัดไปของทีม':'ทีมลงแข่งครบทุกรายการแล้ววันนี้'}
+  $('#nexttitle').textContent=title;
+  $('#nextrow').innerHTML=list.map(r=>`<button class="mini" data-h="${r.ev}-${r.heat}"><div class="tm">${r.t}${nm>0&&nm<1e9?` <span style="font-size:12px;color:var(--mut);font-family:'IBM Plex Sans Thai'">${r.m-nm<=0?'กำลังแข่ง':'อีก '+(r.m-nm)+' น.'}</span>`:''}</div>
+   <div class="nm"><span class="gdot ${r.g}"></span> ${r.relay?'ผลัดทีม '+r.relay:esc(r.name)}</div><div class="ev">${evLabel(r.e)} · ฮีต ${r.heat} ลู่ ${r.lane}</div></button>`).join('')||'<div style="color:var(--mut);font-size:14px">—</div>'}
+// router
+const VIEWS={schedule:vSchedule,athletes:vAthletes,ages:vAges,relays:vRelays};
+function pickLabel(){const n=S.sel.size;$('#pick').classList.toggle('on',n>0);
+  $('#pick').innerHTML=n?`👤 ${n===1?esc([...S.sel][0]):n+' คน'} <span class="pk-x">เปลี่ยน</span>`:'👤 เลือกนักกีฬา ▾'}
+function renderPicker(){const n=S.sel.size;
+  const sec=g=>{const xs=ath.filter(a=>a.g===g);const by={};xs.forEach(a=>(by[a.age]??=[]).push(a));
+   return `<div class="pk-sec"><div class="lbl ${g}">${G[g]} · ${xs.length} คน</div>${Object.keys(by).sort((a,b)=>a-b).map(k=>{const ys=by[k],ns=ys.map(a=>a.name);const allOn=ns.every(x=>S.sel.has(x));
+    return `<div class="pk-age"><button class="pk-ah ${allOn?'on':''}" data-pk="${esc(ns.join('|'))}">${k} ปี <small>${allOn?'ยกเลิกทั้งรุ่น':'เลือกทั้งรุ่น'}</small></button><div class="pk-list">${ys.map(a=>`<button class="pk-it ${S.sel.has(a.name)?'on':''}" data-pk="${esc(a.name)}"><span class="ck">${S.sel.has(a.name)?'✓':''}</span><span>${esc(a.name)}<small>${a.races.length} รายการ · เริ่ม ${a.races[0].t}</small></span></button>`).join('')}</div></div>`}).join('')}</div>`};
+  $('#sheet').innerHTML=`<button class="x" onclick="closeOv()">×</button><h2>เลือกนักกีฬา</h2><div style="color:var(--mut);font-size:13.5px;margin-bottom:6px">แตะชื่อเพื่อเลือก เลือกได้หลายคน หรือแตะหัวรุ่นเพื่อเลือกทั้งรุ่น</div>
+  ${sec('M')}${sec('F')}<div class="pk-foot"><button class="pk-b2" id="pkclear">ล้าง</button><button class="pk-b1" id="pkdone">${n?`ดู ${n} คนที่เลือก`:'ดูทุกคน'}</button></div>`}
+function render(){syncChips();pickLabel();document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.v===S.v));
+  Object.keys(VIEWS).forEach(k=>{const el=$('#v-'+k);el.classList.toggle('hidden',k!==S.v);if(k===S.v)el.innerHTML=VIEWS[k]()});
+  $('#fa').classList.toggle('hidden',S.v==='relays');$('#fs').classList.toggle('hidden',S.v==='relays'||S.v==='ages')}
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{location.hash=t.dataset.v});
+function route(){const h=location.hash.slice(1);S.v=VIEWS[h]?h:'schedule';render()}
+window.addEventListener('hashchange',route);
+renderNext();setInterval(()=>{renderNext();if(S.v==='schedule')render()},60000);route();
+</script>
+</body>
+</html>

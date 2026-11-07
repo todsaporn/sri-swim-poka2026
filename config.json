@@ -1,0 +1,9 @@
+{
+  "meet_name": "Krabi PAO Swimming Championship #16",
+  "team_names": ["ศรีอรุโณทัย", "Sriarunothai SC"],
+  "results_url": "https://cnxswimming.com/results-poka2026/",
+  "days": [
+    {"n": 1, "pdf": "data/startlist_day1.pdf"}
+  ],
+  "days_meta": {"1": {"date": "2026-11-07", "label": "Day 1 · ส. 7 พ.ย."}, "2": {"date": "2026-11-08", "label": "Day 2 · อา. 8 พ.ย."}}
+}
