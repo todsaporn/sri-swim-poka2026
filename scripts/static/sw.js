@@ -1,5 +1,5 @@
 // network-first: always fresh results when online, cached copy when offline
-const C = 'sri-swim-v1';
+const C = 'sri-swim-v2';
 self.addEventListener('install', e => self.skipWaiting());
 self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
 self.addEventListener('fetch', e => {
