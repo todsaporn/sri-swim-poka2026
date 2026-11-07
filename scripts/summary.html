@@ -83,6 +83,18 @@ h3.sec{font-size:16px;margin:18px 0 8px}
 .stand td{padding:7px 6px}
 .stand tr.me td{background:#e8f7f9;font-weight:700}
 .tips{margin:0;padding:0;list-style:none}.tips li{padding:8px 0;border-bottom:1px solid var(--line);font-size:14px;line-height:1.55}.tips li:last-child{border-bottom:0}
+.slist{padding:6px 12px}
+.srow{display:grid;grid-template-columns:52px 1fr auto;gap:10px;align-items:center;padding:9px 6px;border-bottom:1px solid var(--line)}
+.srow:last-of-type{border-bottom:0}
+.srow .rk{font-family:var(--disp);font-weight:700;color:var(--mut);font-size:15px;white-space:nowrap}
+.srow.tz .rk{color:#8a6300}
+.srow .nm{min-width:0}.srow .nm b{display:block;font-weight:600;font-size:14.5px;line-height:1.3}
+.srow .nm small{display:block;color:var(--mut);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.srow .pt{font-family:var(--disp);font-weight:700;font-size:17px;text-align:right;font-variant-numeric:tabular-nums;line-height:1.1}
+.srow .pt small{display:block;font-family:'IBM Plex Sans Thai',sans-serif;font-size:10.5px;color:var(--mut);font-weight:500}
+.srow.me{background:#e8f7f9;border-radius:10px;border-bottom-color:transparent}.srow.me .nm b{color:var(--pri)}
+.cut{text-align:center;font-size:11.5px;color:#b7860b;font-weight:600;padding:4px 0;border-bottom:1px dashed #f0d77a}
+.gapnote{font-size:13px;color:var(--mut);margin-top:8px;padding:0 6px}
 .empty{text-align:center;color:var(--mut);padding:30px}
 .foot{font-size:12px;color:var(--mut);text-align:center;padding:24px 16px 40px}
 .share{border:1px solid var(--line);background:#fff;border-radius:10px;padding:6px 12px;font-size:13px;font-weight:600}
@@ -170,8 +182,9 @@ function render(){const a=A[cur];const rs=a.races,done=rs.filter(r=>r.res);
   if(Object.keys(bys).length){h+=`<h3 class="sec">อันดับเฉลี่ยแยกท่า <small style="font-weight:500;color:var(--mut);font-size:12px">(ยิ่งเต็มยิ่งอยู่หัวตาราง)</small></h3><div class="card"><div class="cmp">${Object.entries(bys).map(([k,v])=>{const p=v.reduce((t,r)=>t+(1-(r.res.pl-1)/Math.max(1,r.res.nfin-1)),0)/v.length;return `<div class="bar"><span>${k} <small style="color:var(--mut)">(${v.length})</small></span><span class="tr"><i style="width:${Math.round(p*100)}%"></i></span><span style="text-align:right;font-weight:600">ท็อป ${Math.max(1,Math.round((1-p)*100))}%</span></div>`}).join('')}</div></div>`}
   // category standings
   if(sc&&sc.top.length){const top=sc.top.slice(0,8);const mine=top.some(t=>nrm(t.n)===nrm(a.name));
-   h+=`<h3 class="sec">🏆 ลุ้นถ้วยรุ่น${a.catL}</h3><div class="card" style="padding:8px 12px"><table class="tbl stand" style="display:table"><tbody style="display:table-row-group">${top.map(t=>`<tr class="${nrm(t.n)===nrm(a.name)?'me':''}" style="display:table-row;border:0;padding:0;margin:0"><td style="display:table-cell;width:44px">${t.rk<=6?'🏆'+t.rk:t.rk}</td><td style="display:table-cell">${esc(t.n)} <small style="color:var(--mut)">${esc(t.tm)}</small></td><td class="n" style="display:table-cell">${t.p}</td></tr>`).join('')}${mine?'':`<tr class="me" style="display:table-row"><td style="display:table-cell">${a.st.rk||'–'}</td><td style="display:table-cell">${esc(a.name)}</td><td class="n" style="display:table-cell">${a.st.p}</td></tr>`}</tbody></table>
-   ${a.st.rk&&a.st.rk>6&&top[5]?`<div style="font-size:13px;color:var(--mut);margin-top:8px">ห่างโซนถ้วย (อันดับ 6) อยู่ ${top[5].p-a.st.p} คะแนน</div>`:''}</div>`}
+   const row=(rk,n,tm,p,me)=>`<div class="srow ${me?'me':''} ${rk&&rk<=6?'tz':''}"><span class="rk">${rk&&rk<=6?'🏆':''}${rk||'–'}</span><span class="nm"><b>${esc(n)}</b><small>${esc(tm)}</small></span><span class="pt">${p}<small>คะแนน</small></span></div>`;
+   h+=`<h3 class="sec">🏆 ลุ้นถ้วยรุ่น${a.catL} <small style="font-weight:500;color:var(--mut);font-size:12px">ถ้วยอันดับ 1–6</small></h3><div class="card slist">${top.map((t,i)=>(i===6?'<div class="cut">— เส้นโซนถ้วย —</div>':'')+row(t.rk,t.n,t.tm,t.p,nrm(t.n)===nrm(a.name))).join('')}${mine?'':'<div class="cut">⋯</div>'+row(a.st.rk,a.name,'ศรีอรุโณทัย',a.st.p,true)}
+   ${top[5]&&(!a.st.rk||a.st.rk>6)?`<div class="gapnote">ห่างโซนถ้วย (อันดับ 6) อยู่ <b>${top[5].p-a.st.p}</b> คะแนน${a.st.p?'':' — คะแนนได้จากการติดท็อป 6 ของรายการ (ผลรวมทุกฮีต)'}</div>`:''}</div>`}
   // races table
   h+=`<h3 class="sec">📋 ทุกรายการ</h3><div class="card" style="padding:8px 12px"><table class="tbl"><thead><tr><th>รายการ</th><th>ฮีต/ลู่</th><th>เวลาส่ง</th><th>เวลาที่ทำ</th><th>เทียบเวลาส่ง</th><th>อันดับรวม</th><th>ในฮีต</th><th>เหรียญ</th><th>คะแนน</th><th>ห่างสถิติ</th></tr></thead><tbody>`;
   rs.forEach(r=>{const x=r.res,e=r.e,rec=e.rec;const f=x&&secs(x.f),rs_=rec&&secs(rec.t);
