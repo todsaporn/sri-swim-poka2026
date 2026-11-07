@@ -10,8 +10,8 @@ def clean(t):
     return t.replace('ํ้า','้ำ').replace('ํา','ำ')
 TM = r'\d{1,2}:\d\d\.\d\d|\d{1,2}\.\d\d'
 # CNX result format: place, place-in-heat, heat, lane, name, age, team, time, points, cumulative, [G|S|B], [standard]
-OK = re.compile(rf'^(?P<pl>\d+) (?P<hpl>\d+) (?P<ht>\d+) (?P<ln>\d+) (?P<name>.+?) (?P<age>\d{{1,2}}) (?P<team>\S.*?) (?P<fin>{TM})(?: (?P<pts>\d+))?(?: (?P<cum>\d+))?(?: (?P<pod>[GSB]))?(?: (?P<lvl>ทองแดง|ทอง|เงิน))?$')
-OKR = re.compile(rf'^(?P<pl>\d+) (?P<hpl>\d+) (?P<ht>\d+) (?P<ln>\d+) (?P<name>.+?) (?P<fin>{TM})(?: (?P<pts>\d+))?(?: (?P<cum>\d+))?(?: (?P<pod>[GSB]))?(?: (?P<lvl>ทองแดง|ทอง|เงิน))?$')
+OK = re.compile(rf'^(?P<pl>\d+) (?P<hpl>\d+) (?P<ht>\d+) (?P<ln>\d+) (?P<name>.+?) (?P<age>\d{{1,2}}) (?P<team>\S.*?) (?P<fin>{TM})(?: (?P<pts>\d+))?(?: (?P<cum>\d+))?(?: (?P<pod>[GSB]))?(?: (?P<lvl>ทองแดง|ทอง|เงิน))?(?: (?P<rec>[A-Z]+))?$')
+OKR = re.compile(rf'^(?P<pl>\d+) (?P<hpl>\d+) (?P<ht>\d+) (?P<ln>\d+) (?P<name>.+?) (?P<fin>{TM})(?: (?P<pts>\d+))?(?: (?P<cum>\d+))?(?: (?P<pod>[GSB]))?(?: (?P<lvl>ทองแดง|ทอง|เงิน))?(?: (?P<rec>[A-Z]+))?$')
 NOR = re.compile(r'^(?P<ht>\d+) (?P<ln>\d+) (?P<name>.+?) (?P<fin>DQ|SC|NS|DNS|DFS|DNF)(?: (?P<pts>\d+))?.*$')
 NO = re.compile(rf'^(?P<ht>\d+) (?P<ln>\d+) (?P<name>.+?) (?P<age>\d{{1,2}}) (?P<team>\S.*?) (?P<fin>DQ|SC|NS|DNS|DFS|DNF)(?: (?P<pts>\d+))?.*$')
 def ntime(t):

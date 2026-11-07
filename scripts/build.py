@@ -16,6 +16,7 @@ def fixteam(t): return {'ศวมอ':'ศว.ม.อ','ศวมอ . .':'ศ�
 norm = lambda s: re.sub(r'[\s.]', '', s or '')
 
 events, races, heats, total, teams = {}, [], {}, 0, set()
+day_date = lambda n: CFG['days_meta'][str(n)]['date']
 for day in CFG['days']:
     js = day['pdf'].replace('.pdf', '.json')
     if not os.path.exists(js) or os.path.getmtime(js) < os.path.getmtime(day['pdf']):
@@ -30,7 +31,8 @@ for day in CFG['days']:
         events[no] = dict(no=no, day=day['n'], g='M' if ev['gender'] == 'Boys' else 'F',
             age=ev['age'].replace(' Year Olds', '').replace('& Under', 'ปีและต่ำกว่า'), dist=ev['dist'],
             stroke=TH.get(ev['stroke'], ev['stroke']), relay='Relay' in ev['stroke'], n=len(byev[no]),
-            heats=max([x['heats'] for x in byev[no]] or [0]), seeded=len(seeded))
+            heats=max([x['heats'] for x in byev[no]] or [0]), seeded=len(seeded),
+            last=day_date(day['n']) + 'T' + max([t24(x['time']) for x in byev[no]] or ['23:59']))
     for e in ents:
         if e.get('team') not in SRI: continue
         s = secs(e['seed'])
@@ -72,17 +74,43 @@ for r in races:
     else:
         r['res'] = dict(pending=True) if False else None
         if r['res'] is None: del r['res']
+# events to watch: all individual events in categories (gender+age) where we have a swimmer -> needed for
+# cumulative-points trophy standings; plus our relay events. Checked once the event's last heat has started.
+cats = {(events[r['ev']]['g'], events[r['ev']]['age']) for r in races if not r.get('relay')}
+watch = {no: e['last'] for no, e in events.items() if (not e['relay'] and (e['g'], e['age']) in cats)}
+for r in races:
+    if r.get('relay'): watch[r['ev']] = events[r['ev']]['last']
+json.dump({str(k): v for k, v in sorted(watch.items())}, open('data/watch.json', 'w'), indent=0)
+
+# ---- cumulative points standings per category (trophy race)
+stand = {}
+for (g, age) in sorted(cats):
+    evs = [no for no, e in events.items() if not e['relay'] and e['g'] == g and e['age'] == age]
+    tot = {}
+    done = 0
+    for no in evs:
+        rr = RES.get(str(no))
+        if not rr: continue
+        done += 1
+        for x in rr['rows']:
+            if not x.get('name'): continue
+            k = norm(x['name'])
+            t = tot.setdefault(k, dict(n=x['name'], tm=fixteam(x.get('team', '')), p=0, me=is_sri(x.get('team')), ev=0))
+            t['p'] += int(x.get('pts') or 0); t['ev'] += 1
+    rows = sorted([t for t in tot.values() if t['p'] > 0 or t['me']], key=lambda t: -t['p'])
+    rk, prev = 0, None
+    for i, t in enumerate(rows):
+        if t['p'] != prev: rk, prev = i + 1, t['p']
+        t['rk'] = rk if t['p'] > 0 else None
+    key = f"{g}|{age}"
+    stand[key] = dict(g=g, age=age, nev=len(evs), done=done,
+                      top=[dict(rk=t['rk'], n=t['n'], tm=t['tm'], p=t['p'], me=t['me']) for t in rows if t['p'] > 0][:8],
+                      our={norm(t['n']): dict(rk=t['rk'], p=t['p']) for t in rows if t['me']})
 now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=7))).strftime('%d/%m %H:%M')
 out = dict(events={k: v for k, v in events.items() if k in {r['ev'] for r in races}}, races=races, heats=heats,
-           evres={k: dict(nfin=v['nfin'], top=v['top']) for k, v in evres.items() if k in {r['ev'] for r in races}},
+           evres={k: dict(nfin=v['nfin'], top=v['top']) for k, v in evres.items() if k in {r['ev'] for r in races}}, stand=stand,
            days=CFG['days_meta'], meet=dict(name=CFG['meet_name'], total=total, teams=len(teams), updated=now,
            results_url=CFG['results_url'], nres=nres, nevres=len(RES)))
-# events to watch: only events our team swims in, with our latest heat start (Bangkok time)
-watch = {}
-for r in races:
-    d = CFG['days_meta'][str(r['day'])]['date'] + 'T' + r['t']
-    watch[r['ev']] = max(watch.get(r['ev'], d), d)
-json.dump(dict(sorted(watch.items())), open('data/watch.json', 'w'), indent=0)
 os.makedirs('site', exist_ok=True)
 json.dump(out, open('site/data.json', 'w'), ensure_ascii=False, separators=(',', ':'))
 tpl = open('scripts/template.html').read()

@@ -245,7 +245,8 @@ const ST=['ฟรีสไตล์','กรรเชียง','กบ','ผี
 const evLabel=e=>`${e.dist}ม. ${e.stroke}`;
 const ageLabel=e=>/ปี/.test(e.age)?`${e.age}`:`${e.age} ปี`;
 // enrich
-const DAYS=DATA.days, EVR=DATA.evres||{};
+const DAYS=DATA.days, EVR=DATA.evres||{}, ST_=DATA.stand||{};
+const nrm=s=>String(s).replace(/[\s.]/g,'');
 R.forEach(r=>{r.e=EV[r.ev];r.g=r.e.g;r.day=r.day||1;r.m=(r.day-1)*1440+mins(r.t)});
 const dayList=[...new Set(R.map(r=>r.day))].sort();
 const dLabel=d=>(DAYS[d]||{}).label||('Day '+d);
@@ -255,7 +256,8 @@ const A={};
 ind.forEach(r=>{(A[r.name]??={name:r.name,age:r.age,g:r.g,races:[]}).races.push(r)});
 const ath=Object.values(A).sort((a,b)=>a.age-b.age||a.g.localeCompare(b.g)||a.name.localeCompare(b.name,'th'));
 ath.forEach(a=>{a.races.sort((x,y)=>x.m-y.m);a.minGap=Infinity;for(let i=1;i<a.races.length;i++){if(a.races[i].day!==a.races[i-1].day)continue;const g=a.races[i].m-a.races[i-1].m;a.races[i].gap=g;a.minGap=Math.min(a.minGap,g)}
-  a.med=[0,0,0];a.pod=0;a.races.forEach(r=>{const x=r.res;if(!x)return;if(x.lv!=null)a.med[x.lv]++;if(x.pl&&x.pl<=3)a.pod++});a.nres=a.races.filter(r=>r.res).length});
+  a.med=[0,0,0];a.races.forEach(r=>{const x=r.res;if(x&&x.lv!=null)a.med[x.lv]++});
+  const ie=a.races[0].e;a.cat=a.g+'|'+ie.age;a.catL=`${G[a.g]} ${ageLabel(ie)}`;const sc=ST_[a.cat];a.st=sc&&sc.our[nrm(a.name)]||{p:0,rk:null};a.nres=a.races.filter(r=>r.res).length});
 const TIGHT=15;const dur=m=>m<60?m+' นาที':Math.floor(m/60)+' ชม.'+(m%60?' '+m%60+' นาที':'');
 // state
 const S={d:'',sel:new Set(),showPast:false,v:'schedule',g:'',a:'',s:'',fav:false};
@@ -263,7 +265,7 @@ let favs=new Set();try{favs=new Set(JSON.parse(localStorage.getItem('sri-favs')|
 const saveFav=()=>{try{localStorage.setItem('sri-favs',JSON.stringify([...favs]))}catch(e){}};
 // header
 const MED=['🥇','🥈','🥉'];
-const allMed=[0,0,0];let allPod=0;R.forEach(r=>{const x=r.res;if(!x)return;if(x.lv!=null)allMed[x.lv]++;if(x.pl&&x.pl<=3)allPod++});const nRes=R.filter(r=>r.res).length;
+const allMed=[0,0,0];let allPts=0;R.forEach(r=>{const x=r.res;if(!x)return;if(x.lv!=null)allMed[x.lv]++;if(!r.relay)allPts+=x.pts||0});const nRes=R.filter(r=>r.res).length;
 function medStat(){return nRes?[`🥇${allMed[0]} 🥈${allMed[1]} 🥉${allMed[2]}`,`เหรียญรวม (ผลออก ${nRes}/${R.length})`]:[dayList.length,'วันแข่งขัน']}
 $('#meetname').textContent=DATA.meet.name;
 $('#meetday').textContent=`${dayList.map(dLabel).join(' / ')} · ${DATA.meet.teams} ทีมเข้าแข่งขัน`;
@@ -298,7 +300,7 @@ const seedTag=r=>r.seed==='NT'?`<span class="seedtag">NT</span>`:`<span class="s
 function resBadge(r){const x=r.res;if(!x)return '';
   if(!x.pl){return `<div class="res dq"><div class="pl">${esc(x.f||'DQ')}</div><div class="ft" style="color:var(--mut)">ไม่ได้อันดับ</div></div>`}
   const d=x.d!=null?`<div class="dl ${x.d<0?'up':'dn'}">${x.d<0?'▲ เร็วขึ้น '+(-x.d).toFixed(2):'▼ '+x.d.toFixed(2)}</div>`:(r.seed==='NT'?'<div class="dl" style="color:var(--mut)">เวลาแรก</div>':'');
-  return `<div class="res">${x.lv!=null?`<div class="medal" style="font-size:24px">${MED[x.lv]}</div>`:''}<div class="pl p${x.pl}" style="font-size:${x.lv!=null?'14px':'20px'}">${x.pl<=3?'🏆 ':''}ที่ ${x.pl}<small style="font-size:11px;color:var(--mut)">/${x.nfin}</small></div><div class="ft">${esc(x.f)}</div>${d}</div>`}
+  return `<div class="res">${x.lv!=null?`<div class="medal" style="font-size:24px">${MED[x.lv]}</div>`:''}<div class="pl p${x.pl}" style="font-size:${x.lv!=null?'14px':'20px'}">ที่ ${x.pl}<small style="font-size:11px;color:var(--mut)">/${x.nfin}</small></div><div class="ft">${esc(x.f)}</div>${d}${x.pts?`<div class="dl" style="color:#3546b5">+${x.pts} คะแนน</div>`:''}</div>`}
 function raceCard(r,nm){const e=r.e,cls=r.m<nm-5?'past':(nm>=r.m-5&&nm<=r.m+5?'now':'');
   const who=r.relay?`ศรีอรุโณทัย ทีม ${r.relay} <span class="tag rel">ผลัด</span>`:`${esc(r.name)}${r.gap!=null&&r.gap<TIGHT?` <span class="tag warn">ห่างรายการก่อน ${r.gap} นาที</span>`:''}`;
   return `<button class="race ${cls}" data-h="${r.ev}-${r.heat}"><div class="tm">${r.t}<small>Event ${r.ev}</small></div>
@@ -346,10 +348,10 @@ function openHeat(k){const[ev,ht]=k.split('-').map(Number);const e=EV[ev];
   <h2>${evLabel(e)}</h2><div style="color:var(--mut);font-size:14px;margin-bottom:12px">${G[e.g]} ${ageLabel(e)} · ${R.find(r=>r.ev===ev&&r.heat===ht).t} น. (${dLabel(e.day)}) · ${e.n} คนในรายการ</div>${top3(ev)}${ourRes(ev,ht)}${lineup(k)}`;showOv()}
 function openAth(n){const a=A[n];if(!a)return;
   $('#sheet').innerHTML=`<button class="x" onclick="closeOv()">×</button><div class="top" style="display:flex;gap:12px;align-items:center"><div class="av ${a.g}" style="width:50px;height:50px;border-radius:14px;display:grid;place-items:center;font-family:var(--disp);font-weight:600;color:#fff;font-size:20px">${a.age}</div>
-  <div><h2>${esc(a.name)}</h2><div style="color:var(--mut);font-size:14px">${G[a.g]} · ${a.age} ปี · ${a.races.length} รายการ${a.med.some(x=>x)?' · '+a.med.map((n,i)=>n?MED[i]+n:'').join(' '):''}</div></div></div>
+  <div><h2>${esc(a.name)}</h2><div style="color:var(--mut);font-size:14px">${G[a.g]} · ${a.age} ปี · ${a.races.length} รายการ${a.med.some(x=>x)?' · '+a.med.map((n,i)=>n?MED[i]+n:'').join(' '):''}</div>${a.st.p?`<div style="font-weight:700;color:#3546b5;font-size:14px">⭐ ${a.st.p} คะแนน · อันดับ ${a.st.rk} ของรุ่น${a.catL}</div>`:''}</div></div>
   <div class="tl">${a.races.map((r,i)=>`${i&&r.gap!=null&&a.races[i-1].day===r.day?`<div class="gap ${r.gap<TIGHT?'warn':''}">↓ พัก ${dur(r.gap)}</div>`:''}<div class="it"><button data-h="${r.ev}-${r.heat}">
    ${i===0||a.races[i-1].day!==r.day?(dayList.length>1?`<div style="font-size:12px;font-weight:700;color:var(--mut);margin-bottom:2px">${dLabel(r.day)}</div>`:''):''}<div style="display:flex;justify-content:space-between;gap:8px"><b class="disp" style="color:var(--pri)">${r.t} น.</b><span style="font-size:13px;color:var(--mut)">ฮีต ${r.heat}/${r.e.heats} · <b style="color:var(--ink)">ลู่ ${r.lane}</b></span></div>
-   <div style="font-weight:600">${evLabel(r.e)}</div><div style="font-size:13px;color:var(--mut)">Event ${r.ev} · ${seedTag(r)} · ${r.e.n} คนในรุ่น</div>${r.res?`<div style="margin-top:6px;display:flex;gap:10px;align-items:center;font-weight:600">${r.res.pl?(r.res.lv!=null?'<span class=medal>'+MED[r.res.lv]+'</span> ':'')+(r.res.pl<=3?'🏆 ':'')+'อันดับ '+r.res.pl+'/'+r.res.nfin:'<span style=color:#c0262d>'+esc(r.res.f)+'</span>'} · ${esc(r.res.f)} ${r.res.d!=null?`<span class="${r.res.d<0?'up':'dn'}" style="font-size:12.5px">${r.res.d<0?'เร็วขึ้น '+(-r.res.d).toFixed(2)+' วิ':'ช้าลง '+r.res.d.toFixed(2)+' วิ'}</span>`:''}</div>${r.res.why?`<div class="why">${esc(r.res.why)}</div>`:''}`:''}</button></div>`).join('')}</div>
+   <div style="font-weight:600">${evLabel(r.e)}</div><div style="font-size:13px;color:var(--mut)">Event ${r.ev} · ${seedTag(r)} · ${r.e.n} คนในรุ่น</div>${r.res?`<div style="margin-top:6px;display:flex;gap:10px;align-items:center;font-weight:600">${r.res.pl?(r.res.lv!=null?'<span class=medal>'+MED[r.res.lv]+'</span> ':'')+'อันดับ '+r.res.pl+'/'+r.res.nfin+(r.res.pts?' · +'+r.res.pts+' คะแนน':''):'<span style=color:#c0262d>'+esc(r.res.f)+'</span>'} · ${esc(r.res.f)} ${r.res.d!=null?`<span class="${r.res.d<0?'up':'dn'}" style="font-size:12.5px">${r.res.d<0?'เร็วขึ้น '+(-r.res.d).toFixed(2)+' วิ':'ช้าลง '+r.res.d.toFixed(2)+' วิ'}</span>`:''}</div>${r.res.why?`<div class="why">${esc(r.res.why)}</div>`:''}`:''}</button></div>`).join('')}</div>
   <div style="font-size:12px;color:var(--mut);margin-top:6px">แตะรายการเพื่อดูคู่แข่งในฮีต</div>`;showOv()}
 const showOv=()=>{$('#ov').classList.add('show');document.body.style.overflow='hidden'};
 window.closeOv=()=>{$('#ov').classList.remove('show');document.body.style.overflow=''};
@@ -374,21 +376,31 @@ function renderNext(){const b=bkk(),nm=nowM();$('#clock').textContent=`ตอน
 // results view
 function vResults(){const done=R.filter(r=>r.res&&okRace(r)).sort((a,b)=>b.m-a.m);const all=R.filter(okRace);
   $('#count').textContent=`ผลออกแล้ว ${done.length} จาก ${all.length} รายการ · อัปเดต ${DATA.meet.updated}`;
-  const med=[0,0,0];let up=0,cmp=0,pod=0;done.forEach(r=>{const x=r.res;if(x.lv!=null)med[x.lv]++;if(x.pl&&x.pl<=3)pod++;if(x.d!=null){cmp++;if(x.d<0)up++}});
-  let h=`<div class="rbox"><div><b>${med[0]}</b><span>🥇 ทอง</span></div><div><b>${med[1]}</b><span>🥈 เงิน</span></div><div><b>${med[2]}</b><span>🥉 ทองแดง</span></div><div><b>${pod}</b><span>🏆 ติดอันดับ 1–3</span></div></div><div style="font-size:12.5px;color:var(--mut);margin:-4px 0 12px">เหรียญ = เหรียญตามเกณฑ์เวลาในใบผล · 🏆 = อันดับ 1–3 ของรุ่น · เร็วกว่าเวลาส่ง ${cmp?Math.round(up/cmp*100)+'% ('+up+'/'+cmp+')':'–'}</div>`;
+  const med=[0,0,0];let up=0,cmp=0,pod=0;done.forEach(r=>{const x=r.res;if(x.lv!=null)med[x.lv]++;if(!r.relay)pod+=x.pts||0;if(x.d!=null){cmp++;if(x.d<0)up++}});
+  let h=`<div class="rbox"><div><b>${med[0]}</b><span>🥇 ทอง</span></div><div><b>${med[1]}</b><span>🥈 เงิน</span></div><div><b>${med[2]}</b><span>🥉 ทองแดง</span></div><div><b>${pod}</b><span>⭐ คะแนนรวม</span></div></div><div style="font-size:12.5px;color:var(--mut);margin:-4px 0 12px">เหรียญ = อันดับ 1–3 ในฮีต · คะแนน = อันดับรวมของรายการ สะสมรายคนเพื่อชิงถ้วยรุ่น · เร็วกว่าเวลาส่ง ${cmp?Math.round(up/cmp*100)+'% ('+up+'/'+cmp+')':'–'}</div>`;
   const bd=ath.filter(okAth).map(a=>{const rs=a.races.filter(r=>r.res&&okDay(r)&&(!S.s||r.e.stroke===S.s));const m=[0,0,0];rs.forEach(r=>{if(r.res.lv!=null)m[r.res.lv]++});return{a,m,n:rs.length}}).filter(x=>x.m.some(v=>v)).sort((x,y)=>y.m[0]-x.m[0]||y.m[1]-x.m[1]||y.m[2]-x.m[2]);
   if(bd.length)h+=`<div class="board"><h3>ตารางเหรียญรายคน</h3>${bd.map(x=>`<button class="brow" data-a="${esc(x.a.name)}"><span><span class="gdot ${x.a.g}"></span> ${esc(x.a.name)} <small style="color:var(--mut)">${x.a.age} ปี</small></span><span class="md">${x.m.map((n,i)=>`<span style="opacity:${n?1:.3}">${MED[i]}${n}</span>`).join('')}</span></button>`).join('')}</div>`;
+  h+=trophyHTML();
   if(!done.length)return h+`<div class="empty">ยังไม่มีผลการแข่งขันตามตัวกรอง<br><small>ระบบดึงผลจาก cnxswimming.com ทุก 10 นาที</small></div>`;
   let cd=0;done.forEach(r=>{if(r.day!==cd){cd=r.day;if(dayList.length>1)h+=`<div class="dayhd">${dLabel(r.day)}</div>`}h+=raceCard(r,-1)});return h}
+// trophy standings per category
+function trophyHTML(){const cats=[...new Set(ath.filter(okAth).map(a=>a.cat))].filter(c=>ST_[c]&&ST_[c].top.length);
+  if(!cats.length)return '';
+  const order=c=>{const [g,a]=c.split('|');return (g==='M'?0:100)+(parseInt(a)||0)};cats.sort((a,b)=>order(a)-order(b));
+  return `<div class="board"><h3>🏆 ลุ้นถ้วยคะแนนรวมรายรุ่น</h3><div style="font-size:12px;color:var(--mut);margin-bottom:6px">คะแนนสะสมทุกรายการในรุ่น (ผลออกแล้ว) · แถวสีฟ้า = ศรีอรุโณทัย</div>${cats.map(c=>{const x=ST_[c];const ours=ath.filter(a=>a.cat===c);
+   const top=x.top.slice(0,5);const extra=ours.filter(a=>!top.some(t=>nrm(t.n)===nrm(a.name)));
+   return `<div style="margin:10px 0 4px;font-weight:700">${G[x.g]} ${/ปี/.test(x.age)?x.age:x.age+' ปี'} <small style="color:var(--mut);font-weight:500">ผลออก ${x.done}/${x.nev} รายการ</small></div>
+   <table class="lu">${top.map(t=>`<tr class="${t.me?'me':''}"><td>${t.rk<=3?'🏆'+t.rk:t.rk}</td><td><b>${esc(t.n)}</b><div class="tmn">${esc(t.tm)}</div></td><td><b>${t.p}</b> คะแนน</td></tr>`).join('')}
+   ${extra.map(a=>`<tr class="me"><td>${a.st.rk||'–'}</td><td><b>${esc(a.name)}</b><div class="tmn">ศรีอรุโณทัย</div></td><td><b>${a.st.p}</b> คะแนน</td></tr>`).join('')}</table>`}).join('')}</div>`}
 // medal table (home)
 let medAll=false;
-function renderMedals(){const rows=ath.map(a=>({a,m:a.med,t:a.med[0]+a.med[1]+a.med[2]})).filter(x=>x.t).sort((x,y)=>y.m[0]-x.m[0]||y.m[1]-x.m[1]||y.m[2]-x.m[2]||x.a.name.localeCompare(y.a.name,'th'));
+function renderMedals(){const rows=ath.map(a=>({a,m:a.med,t:a.med[0]+a.med[1]+a.med[2]+a.st.p})).filter(x=>x.t).sort((x,y)=>y.m[0]-x.m[0]||y.m[1]-x.m[1]||y.m[2]-x.m[2]||x.a.name.localeCompare(y.a.name,'th'));
   if(!rows.length&&!R.some(r=>r.res)){$('#medals').innerHTML='';return}
   let rk=0,prev='';const out=rows.map((x,i)=>{const k=x.m.join();if(k!==prev){rk=i+1;prev=k}return{...x,rk}});
   const show=medAll?out:out.slice(0,8);
-  $('#medals').innerHTML=`<div class="mcard"><div class="mhead"><h3>🏅 ตารางเหรียญ ศรีอรุโณทัย</h3><div class="mtot"><span class="g">🥇 ${allMed[0]}</span><span class="s">🥈 ${allMed[1]}</span><span class="b">🥉 ${allMed[2]}</span>${allPod?`<span style="background:#e9f0ff;color:#3546b5">🏆 ${allPod}</span>`:''}</div></div>
-  ${rows.length?`<div class="mlist">${show.map(x=>`<button class="mrow" data-a="${esc(x.a.name)}"><span class="rk">${x.rk}</span><span class="nm"><span class="gdot ${x.a.g}"></span> ${esc(x.a.name)}<small>${x.a.age} ปี</small></span><span class="md">${x.m.map((n,j)=>`<i style="opacity:${n?1:.25}">${MED[j]}${n}</i>`).join('')}${x.a.pod?`<i>🏆${x.a.pod}</i>`:''}</span></button>`).join('')}</div>${out.length>8?`<button class="mmore" id="mmore">${medAll?'ย่อ ▲':`ดูทั้งหมด ${out.length} คน ▼`}</button>`:''}`:'<div style="color:var(--mut);font-size:14px;margin-top:6px">ยังไม่มีเหรียญ — รอผลรายการถัดไป</div>'}
-  <div style="font-size:12px;color:var(--mut);margin-top:8px">เหรียญตามเกณฑ์เวลาในใบผล · 🏆 = อันดับ 1–3 ของรุ่น · ผลออก ${nRes}/${R.length} รายการ · อัปเดต ${DATA.meet.updated} น.</div></div>`}
+  $('#medals').innerHTML=`<div class="mcard"><div class="mhead"><h3>🏅 เหรียญ & คะแนน ศรีอรุโณทัย</h3><div class="mtot"><span class="g">🥇 ${allMed[0]}</span><span class="s">🥈 ${allMed[1]}</span><span class="b">🥉 ${allMed[2]}</span>${allPts?`<span style="background:#e9f0ff;color:#3546b5">⭐ ${allPts}</span>`:''}</div></div>
+  ${rows.length?`<div class="mlist">${show.map(x=>`<button class="mrow" data-a="${esc(x.a.name)}"><span class="rk">${x.rk}</span><span class="nm"><span class="gdot ${x.a.g}"></span> ${esc(x.a.name)}<small>${x.a.age} ปี</small></span><span class="md">${x.m.map((n,j)=>`<i style="opacity:${n?1:.25}">${MED[j]}${n}</i>`).join('')}${x.a.st.p?`<i style="color:#3546b5">⭐${x.a.st.p}${x.a.st.rk?` <small style="font-weight:500;color:var(--mut)">#${x.a.st.rk} รุ่น</small>`:''}</i>`:''}</span></button>`).join('')}</div>${out.length>8?`<button class="mmore" id="mmore">${medAll?'ย่อ ▲':`ดูทั้งหมด ${out.length} คน ▼`}</button>`:''}`:'<div style="color:var(--mut);font-size:14px;margin-top:6px">ยังไม่มีเหรียญ — รอผลรายการถัดไป</div>'}
+  <div style="font-size:12px;color:var(--mut);margin-top:8px">🥇🥈🥉 = อันดับ 1–3 ในฮีต · ⭐ = คะแนนสะสมชิงถ้วยรุ่น (#อันดับในรุ่น) · ผลออก ${nRes}/${R.length} รายการ · อัปเดต ${DATA.meet.updated} น.</div></div>`}
 // router
 const VIEWS={schedule:vSchedule,results:vResults,athletes:vAthletes,ages:vAges,relays:vRelays};
 function pickLabel(){const n=S.sel.size;$('#pick').classList.toggle('on',n>0);
