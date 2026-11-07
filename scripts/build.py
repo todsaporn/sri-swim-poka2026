@@ -51,7 +51,7 @@ for k, v in RES.items():
     rows = v['rows']
     fin = [r for r in rows if r.get('pl')]
     our = [dict(pl=r.get('pl'), n=r.get('name') or (r['team'] + ' ' + r.get('rel', '')), tm=fixteam(r.get('team', '')),
-                f=r.get('fin'), pts=int(r['pts']) if r.get('pts') else 0, why=r.get('reason', ''), pod=r.get('pod', ''))
+                f=r.get('fin'), pts=int(r['pts']) if r.get('pts') else 0, why=r.get('reason', ''), pod=r.get('pod', ''), lv=r.get('lvl', ''))
            for r in rows if is_sri(r.get('team')) or is_sri(r.get('name'))]
     top = [dict(pl=r['pl'], n=r.get('name') or (r['team'] + ' ' + r.get('rel', '')), tm=fixteam(r.get('team', '')), f=r.get('fin'),
                 me=is_sri(r.get('team'))) for r in sorted(fin, key=lambda r: r['pl'])[:3]]
@@ -66,7 +66,7 @@ for r in races:
         hit = next((o for o in er['our'] if o['n'].strip().endswith(' ' + r['relay']) or o['n'].strip().endswith(r['relay'])), None)
     if hit:
         nres += 1
-        r['res'] = dict(pl=hit['pl'], f=hit['f'], pts=hit['pts'], why=hit['why'], nfin=er['nfin'])
+        r['res'] = dict(pl=hit['pl'], f=hit['f'], pts=hit['pts'], why=hit['why'], nfin=er['nfin'], lv={'ทอง':0,'เงิน':1,'ทองแดง':2}.get(hit['lv']))
         s0, s1 = secs(r['seed']), secs(hit['f'])
         if s0 and s1: r['res']['d'] = round(s1 - s0, 2)
     else:

@@ -129,6 +129,20 @@ button{font:inherit;color:inherit;cursor:pointer}
 .empty{text-align:center;padding:40px 10px;color:var(--mut)}
 .foot{font-size:12px;color:var(--mut);text-align:center;padding:30px 16px 40px}
 .hidden{display:none!important}
+#medals{margin-top:14px}
+.mcard{background:var(--card);border-radius:var(--r);border:1px solid var(--line);padding:14px 16px;box-shadow:0 2px 10px rgba(8,45,80,.05)}
+.mhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.mhead h3{font-size:17px}
+.mtot{display:flex;gap:6px}
+.mtot span{display:flex;align-items:center;gap:4px;font-family:var(--disp);font-weight:700;font-size:18px;padding:3px 10px;border-radius:10px}
+.mtot .g{background:#fff6d6;color:#8a6300}.mtot .s{background:#eef1f4;color:#4b5866}.mtot .b{background:#fbeee4;color:#8a4a1c}
+.mlist{margin-top:10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:6px 18px}
+.mrow{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;padding:7px 4px;border:0;border-bottom:1px solid var(--line);background:none;text-align:left;font-size:14.5px;width:100%}
+.mrow .rk{font-family:var(--disp);font-weight:700;color:var(--mut);text-align:center}
+.mrow .nm small{color:var(--mut);font-size:12px;margin-left:4px}
+.mrow .md{display:flex;gap:7px;font-variant-numeric:tabular-nums;font-weight:700;font-size:13.5px}
+.mrow .md i{font-style:normal}
+.mmore{margin-top:8px;border:0;background:none;color:var(--pri2);font-weight:600;font-size:13.5px;padding:4px 0}
 .tabs{overflow-x:auto;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
 .tab{padding:8px 10px}
 .dayhd{margin:22px 0 4px;font-family:var(--disp);font-size:19px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:8px}
@@ -189,6 +203,7 @@ button{font:inherit;color:inherit;cursor:pointer}
   <div class="nextrow" id="nextrow"></div>
 </div></section>
 
+<section class="wrap" id="medals"></section>
 <div class="bar"><div class="wrap">
   <div class="tabs" id="tabs">
     <button class="tab" data-v="schedule">ตารางแข่ง</button>
@@ -240,7 +255,7 @@ const A={};
 ind.forEach(r=>{(A[r.name]??={name:r.name,age:r.age,g:r.g,races:[]}).races.push(r)});
 const ath=Object.values(A).sort((a,b)=>a.age-b.age||a.g.localeCompare(b.g)||a.name.localeCompare(b.name,'th'));
 ath.forEach(a=>{a.races.sort((x,y)=>x.m-y.m);a.minGap=Infinity;for(let i=1;i<a.races.length;i++){if(a.races[i].day!==a.races[i-1].day)continue;const g=a.races[i].m-a.races[i-1].m;a.races[i].gap=g;a.minGap=Math.min(a.minGap,g)}
-  a.med=[0,0,0];a.races.forEach(r=>{const p=r.res&&r.res.pl;if(p&&p<=3)a.med[p-1]++});a.nres=a.races.filter(r=>r.res).length});
+  a.med=[0,0,0];a.pod=0;a.races.forEach(r=>{const x=r.res;if(!x)return;if(x.lv!=null)a.med[x.lv]++;if(x.pl&&x.pl<=3)a.pod++});a.nres=a.races.filter(r=>r.res).length});
 const TIGHT=15;const dur=m=>m<60?m+' นาที':Math.floor(m/60)+' ชม.'+(m%60?' '+m%60+' นาที':'');
 // state
 const S={d:'',sel:new Set(),showPast:false,v:'schedule',g:'',a:'',s:'',fav:false};
@@ -248,8 +263,8 @@ let favs=new Set();try{favs=new Set(JSON.parse(localStorage.getItem('sri-favs')|
 const saveFav=()=>{try{localStorage.setItem('sri-favs',JSON.stringify([...favs]))}catch(e){}};
 // header
 const MED=['🥇','🥈','🥉'];
-const allMed=[0,0,0];R.forEach(r=>{const p=r.res&&r.res.pl;if(p&&p<=3)allMed[p-1]++});const nRes=R.filter(r=>r.res).length;
-function medStat(){return nRes?[`${allMed[0]}·${allMed[1]}·${allMed[2]}`,`เหรียญ ทอง·เงิน·ทองแดง (ผลออก ${nRes}/${R.length})`]:[dayList.length,'วันแข่งขัน']}
+const allMed=[0,0,0];let allPod=0;R.forEach(r=>{const x=r.res;if(!x)return;if(x.lv!=null)allMed[x.lv]++;if(x.pl&&x.pl<=3)allPod++});const nRes=R.filter(r=>r.res).length;
+function medStat(){return nRes?[`🥇${allMed[0]} 🥈${allMed[1]} 🥉${allMed[2]}`,`เหรียญรวม (ผลออก ${nRes}/${R.length})`]:[dayList.length,'วันแข่งขัน']}
 $('#meetname').textContent=DATA.meet.name;
 $('#meetday').textContent=`${dayList.map(dLabel).join(' / ')} · ${DATA.meet.teams} ทีมเข้าแข่งขัน`;
 const boys=ath.filter(a=>a.g==='M').length, girls=ath.length-boys;
@@ -283,7 +298,7 @@ const seedTag=r=>r.seed==='NT'?`<span class="seedtag">NT</span>`:`<span class="s
 function resBadge(r){const x=r.res;if(!x)return '';
   if(!x.pl){return `<div class="res dq"><div class="pl">${esc(x.f||'DQ')}</div><div class="ft" style="color:var(--mut)">ไม่ได้อันดับ</div></div>`}
   const d=x.d!=null?`<div class="dl ${x.d<0?'up':'dn'}">${x.d<0?'▲ เร็วขึ้น '+(-x.d).toFixed(2):'▼ '+x.d.toFixed(2)}</div>`:(r.seed==='NT'?'<div class="dl" style="color:var(--mut)">เวลาแรก</div>':'');
-  return `<div class="res"><div class="pl p${x.pl}">${x.pl<=3?`<span class="medal">${MED[x.pl-1]}</span>`:'ที่ '+x.pl+`<small style="font-size:11px;color:var(--mut)">/${x.nfin}</small>`}</div><div class="ft">${esc(x.f)}</div>${d}</div>`}
+  return `<div class="res">${x.lv!=null?`<div class="medal" style="font-size:24px">${MED[x.lv]}</div>`:''}<div class="pl p${x.pl}" style="font-size:${x.lv!=null?'14px':'20px'}">${x.pl<=3?'🏆 ':''}ที่ ${x.pl}<small style="font-size:11px;color:var(--mut)">/${x.nfin}</small></div><div class="ft">${esc(x.f)}</div>${d}</div>`}
 function raceCard(r,nm){const e=r.e,cls=r.m<nm-5?'past':(nm>=r.m-5&&nm<=r.m+5?'now':'');
   const who=r.relay?`ศรีอรุโณทัย ทีม ${r.relay} <span class="tag rel">ผลัด</span>`:`${esc(r.name)}${r.gap!=null&&r.gap<TIGHT?` <span class="tag warn">ห่างรายการก่อน ${r.gap} นาที</span>`:''}`;
   return `<button class="race ${cls}" data-h="${r.ev}-${r.heat}"><div class="tm">${r.t}<small>Event ${r.ev}</small></div>
@@ -301,7 +316,7 @@ function vSchedule(){const nm=nowM();const all=R.filter(okRace);
 function vAthletes(){const list=ath.filter(okAth).map(a=>({a,rs:a.races.filter(r=>(!S.s||r.e.stroke===S.s)&&okDay(r))})).filter(x=>x.rs.length);
   $('#count').textContent=`${list.length} คน · กด ☆ เพื่อติดตาม`;
   if(!list.length)return'<div class="empty">ไม่พบนักกีฬาตามตัวกรอง</div>';
-  return `<div class="grid">${list.map(({a,rs})=>{const strokes=rs.map(r=>`<span class="sk">${dayList.length>1?'D'+r.day+' ':''}${r.e.dist} ${r.e.stroke}${r.res&&r.res.pl&&r.res.pl<=3?' '+MED[r.res.pl-1]:''}</span>`).join('');
+  return `<div class="grid">${list.map(({a,rs})=>{const strokes=rs.map(r=>`<span class="sk">${dayList.length>1?'D'+r.day+' ':''}${r.e.dist} ${r.e.stroke}${r.res&&r.res.lv!=null?' '+MED[r.res.lv]:''}</span>`).join('');
    return `<div class="ath" role="button" tabindex="0" data-a="${esc(a.name)}"><button class="star ${favs.has(a.name)?'on':''}" data-star="${esc(a.name)}" aria-label="ติดตาม">${favs.has(a.name)?'★':'☆'}</button>
    <div class="top"><div class="av ${a.g}">${a.age}</div><div><div class="nm">${esc(a.name)}</div><div class="meta">${G[a.g]} · ${a.age} ปี · ${rs.length} รายการ${a.med.some(x=>x)?' · '+a.med.map((n,i)=>n?MED[i]+n:'').join(' '):''}</div></div></div>
    <div class="strk">${strokes}</div>
@@ -322,7 +337,7 @@ function vRelays(){const list=rel.filter(r=>(!S.g||r.g===S.g)&&okDay(r));
   $('#count').textContent=`${list.length} ทีมผลัด · ผลัด 4x25 ม.`+(S.a||S.sel.size||S.s||S.fav?' (ตัวกรองอายุ/นักกีฬา/ท่า ไม่ใช้กับผลัด)':'');
   if(!list.length)return'<div class="empty">ไม่พบทีมผลัด</div>';
   return list.map(r=>`<div class="relay"><div class="hd"><div><h3 class="disp" style="font-size:17px"><span class="gdot ${r.g}"></span> ${G[r.g]} ${r.e.age}</h3>
-   <div class="what" style="font-size:13px;color:var(--mut)">Event ${r.ev} · ${evLabel(r.e)} · ฮีต ${r.heat}/${r.e.heats} · ลู่ ${r.lane} · ${r.e.n} ทีมในรายการ</div>${r.res?`<div style="margin-top:4px;font-weight:700">${r.res.pl?(r.res.pl<=3?MED[r.res.pl-1]+' ':'')+'อันดับ '+r.res.pl:esc(r.res.f)} · ${esc(r.res.f)}</div>`:''}</div><span class="pill">D${r.day} · ${r.t} น.</span></div>${lineup(r.ev+'-'+r.heat)}</div>`).join('')}
+   <div class="what" style="font-size:13px;color:var(--mut)">Event ${r.ev} · ${evLabel(r.e)} · ฮีต ${r.heat}/${r.e.heats} · ลู่ ${r.lane} · ${r.e.n} ทีมในรายการ</div>${r.res?`<div style="margin-top:4px;font-weight:700">${r.res.pl?(r.res.lv!=null?MED[r.res.lv]+' ':'')+'อันดับ '+r.res.pl:esc(r.res.f)} · ${esc(r.res.f)}</div>`:''}</div><span class="pill">D${r.day} · ${r.t} น.</span></div>${lineup(r.ev+'-'+r.heat)}</div>`).join('')}
 // modal
 function top3(ev){const x=EVR[ev];if(!x||!x.top.length)return '';return `<div class="top3"><div style="font-weight:700;color:var(--mut);font-size:12px">ผลรวมทุกฮีต · เข้าเส้น ${x.nfin} คน</div>${x.top.map(t=>`<div class="${t.me?'me':''}"><span>${MED[t.pl-1]||t.pl} ${esc(t.n)} <small style="color:var(--mut)">${esc(t.tm)}</small></span><b>${esc(t.f)}</b></div>`).join('')}</div>`}
 function ourRes(ev,ht){const rs=R.filter(r=>r.ev===ev&&r.heat===ht&&r.res);if(!rs.length)return '';return `<div class="top3" style="background:#e8f7f9">${rs.map(r=>`<div class="me"><span>${r.relay?'ทีม '+r.relay:esc(r.name)}</span><b>${r.res.pl?'อันดับ '+r.res.pl+'/'+r.res.nfin:''} · ${esc(r.res.f)}</b></div>${r.res.why?`<div class="why">${esc(r.res.why)}</div>`:''}`).join('')}</div>`}
@@ -334,13 +349,14 @@ function openAth(n){const a=A[n];if(!a)return;
   <div><h2>${esc(a.name)}</h2><div style="color:var(--mut);font-size:14px">${G[a.g]} · ${a.age} ปี · ${a.races.length} รายการ${a.med.some(x=>x)?' · '+a.med.map((n,i)=>n?MED[i]+n:'').join(' '):''}</div></div></div>
   <div class="tl">${a.races.map((r,i)=>`${i&&r.gap!=null&&a.races[i-1].day===r.day?`<div class="gap ${r.gap<TIGHT?'warn':''}">↓ พัก ${dur(r.gap)}</div>`:''}<div class="it"><button data-h="${r.ev}-${r.heat}">
    ${i===0||a.races[i-1].day!==r.day?(dayList.length>1?`<div style="font-size:12px;font-weight:700;color:var(--mut);margin-bottom:2px">${dLabel(r.day)}</div>`:''):''}<div style="display:flex;justify-content:space-between;gap:8px"><b class="disp" style="color:var(--pri)">${r.t} น.</b><span style="font-size:13px;color:var(--mut)">ฮีต ${r.heat}/${r.e.heats} · <b style="color:var(--ink)">ลู่ ${r.lane}</b></span></div>
-   <div style="font-weight:600">${evLabel(r.e)}</div><div style="font-size:13px;color:var(--mut)">Event ${r.ev} · ${seedTag(r)} · ${r.e.n} คนในรุ่น</div>${r.res?`<div style="margin-top:6px;display:flex;gap:10px;align-items:center;font-weight:600">${r.res.pl?(r.res.pl<=3?'<span class=medal>'+MED[r.res.pl-1]+'</span> ':'')+'อันดับ '+r.res.pl+'/'+r.res.nfin:'<span style=color:#c0262d>'+esc(r.res.f)+'</span>'} · ${esc(r.res.f)} ${r.res.d!=null?`<span class="${r.res.d<0?'up':'dn'}" style="font-size:12.5px">${r.res.d<0?'เร็วขึ้น '+(-r.res.d).toFixed(2)+' วิ':'ช้าลง '+r.res.d.toFixed(2)+' วิ'}</span>`:''}</div>${r.res.why?`<div class="why">${esc(r.res.why)}</div>`:''}`:''}</button></div>`).join('')}</div>
+   <div style="font-weight:600">${evLabel(r.e)}</div><div style="font-size:13px;color:var(--mut)">Event ${r.ev} · ${seedTag(r)} · ${r.e.n} คนในรุ่น</div>${r.res?`<div style="margin-top:6px;display:flex;gap:10px;align-items:center;font-weight:600">${r.res.pl?(r.res.lv!=null?'<span class=medal>'+MED[r.res.lv]+'</span> ':'')+(r.res.pl<=3?'🏆 ':'')+'อันดับ '+r.res.pl+'/'+r.res.nfin:'<span style=color:#c0262d>'+esc(r.res.f)+'</span>'} · ${esc(r.res.f)} ${r.res.d!=null?`<span class="${r.res.d<0?'up':'dn'}" style="font-size:12.5px">${r.res.d<0?'เร็วขึ้น '+(-r.res.d).toFixed(2)+' วิ':'ช้าลง '+r.res.d.toFixed(2)+' วิ'}</span>`:''}</div>${r.res.why?`<div class="why">${esc(r.res.why)}</div>`:''}`:''}</button></div>`).join('')}</div>
   <div style="font-size:12px;color:var(--mut);margin-top:6px">แตะรายการเพื่อดูคู่แข่งในฮีต</div>`;showOv()}
 const showOv=()=>{$('#ov').classList.add('show');document.body.style.overflow='hidden'};
 window.closeOv=()=>{$('#ov').classList.remove('show');document.body.style.overflow=''};
 $('#ov').onclick=e=>{if(e.target.id==='ov')closeOv()};
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOv()});
-document.addEventListener('click',e=>{const pk=e.target.closest('[data-pk]');if(pk){const ns=pk.dataset.pk.split('|');const all=ns.every(n=>S.sel.has(n));ns.forEach(n=>all?S.sel.delete(n):S.sel.add(n));renderPicker();render();return}
+document.addEventListener('click',e=>{if(e.target.closest('#mmore')){medAll=!medAll;renderMedals();return}
+  const pk=e.target.closest('[data-pk]');if(pk){const ns=pk.dataset.pk.split('|');const all=ns.every(n=>S.sel.has(n));ns.forEach(n=>all?S.sel.delete(n):S.sel.add(n));renderPicker();render();return}
   if(e.target.closest('#pick')){renderPicker();showOv();return}
   if(e.target.closest('#pkclear')){S.sel.clear();renderPicker();render();return}
   if(e.target.closest('#pkdone')){closeOv();return}
@@ -358,12 +374,21 @@ function renderNext(){const b=bkk(),nm=nowM();$('#clock').textContent=`ตอน
 // results view
 function vResults(){const done=R.filter(r=>r.res&&okRace(r)).sort((a,b)=>b.m-a.m);const all=R.filter(okRace);
   $('#count').textContent=`ผลออกแล้ว ${done.length} จาก ${all.length} รายการ · อัปเดต ${DATA.meet.updated}`;
-  const med=[0,0,0];let up=0,cmp=0;done.forEach(r=>{const p=r.res.pl;if(p&&p<=3)med[p-1]++;if(r.res.d!=null){cmp++;if(r.res.d<0)up++}});
-  let h=`<div class="rbox"><div><b>${med[0]}</b><span>🥇 ทอง</span></div><div><b>${med[1]}</b><span>🥈 เงิน</span></div><div><b>${med[2]}</b><span>🥉 ทองแดง</span></div><div><b>${cmp?Math.round(up/cmp*100)+'%':'–'}</b><span>เร็วกว่าเวลาส่ง</span></div></div>`;
-  const bd=ath.filter(okAth).map(a=>{const rs=a.races.filter(r=>r.res&&okDay(r)&&(!S.s||r.e.stroke===S.s));const m=[0,0,0];rs.forEach(r=>{const p=r.res.pl;if(p&&p<=3)m[p-1]++});return{a,m,n:rs.length}}).filter(x=>x.m.some(v=>v)).sort((x,y)=>y.m[0]-x.m[0]||y.m[1]-x.m[1]||y.m[2]-x.m[2]);
+  const med=[0,0,0];let up=0,cmp=0,pod=0;done.forEach(r=>{const x=r.res;if(x.lv!=null)med[x.lv]++;if(x.pl&&x.pl<=3)pod++;if(x.d!=null){cmp++;if(x.d<0)up++}});
+  let h=`<div class="rbox"><div><b>${med[0]}</b><span>🥇 ทอง</span></div><div><b>${med[1]}</b><span>🥈 เงิน</span></div><div><b>${med[2]}</b><span>🥉 ทองแดง</span></div><div><b>${pod}</b><span>🏆 ติดอันดับ 1–3</span></div></div><div style="font-size:12.5px;color:var(--mut);margin:-4px 0 12px">เหรียญ = เหรียญตามเกณฑ์เวลาในใบผล · 🏆 = อันดับ 1–3 ของรุ่น · เร็วกว่าเวลาส่ง ${cmp?Math.round(up/cmp*100)+'% ('+up+'/'+cmp+')':'–'}</div>`;
+  const bd=ath.filter(okAth).map(a=>{const rs=a.races.filter(r=>r.res&&okDay(r)&&(!S.s||r.e.stroke===S.s));const m=[0,0,0];rs.forEach(r=>{if(r.res.lv!=null)m[r.res.lv]++});return{a,m,n:rs.length}}).filter(x=>x.m.some(v=>v)).sort((x,y)=>y.m[0]-x.m[0]||y.m[1]-x.m[1]||y.m[2]-x.m[2]);
   if(bd.length)h+=`<div class="board"><h3>ตารางเหรียญรายคน</h3>${bd.map(x=>`<button class="brow" data-a="${esc(x.a.name)}"><span><span class="gdot ${x.a.g}"></span> ${esc(x.a.name)} <small style="color:var(--mut)">${x.a.age} ปี</small></span><span class="md">${x.m.map((n,i)=>`<span style="opacity:${n?1:.3}">${MED[i]}${n}</span>`).join('')}</span></button>`).join('')}</div>`;
   if(!done.length)return h+`<div class="empty">ยังไม่มีผลการแข่งขันตามตัวกรอง<br><small>ระบบดึงผลจาก cnxswimming.com ทุก 10 นาที</small></div>`;
   let cd=0;done.forEach(r=>{if(r.day!==cd){cd=r.day;if(dayList.length>1)h+=`<div class="dayhd">${dLabel(r.day)}</div>`}h+=raceCard(r,-1)});return h}
+// medal table (home)
+let medAll=false;
+function renderMedals(){const rows=ath.map(a=>({a,m:a.med,t:a.med[0]+a.med[1]+a.med[2]})).filter(x=>x.t).sort((x,y)=>y.m[0]-x.m[0]||y.m[1]-x.m[1]||y.m[2]-x.m[2]||x.a.name.localeCompare(y.a.name,'th'));
+  if(!rows.length&&!R.some(r=>r.res)){$('#medals').innerHTML='';return}
+  let rk=0,prev='';const out=rows.map((x,i)=>{const k=x.m.join();if(k!==prev){rk=i+1;prev=k}return{...x,rk}});
+  const show=medAll?out:out.slice(0,8);
+  $('#medals').innerHTML=`<div class="mcard"><div class="mhead"><h3>🏅 ตารางเหรียญ ศรีอรุโณทัย</h3><div class="mtot"><span class="g">🥇 ${allMed[0]}</span><span class="s">🥈 ${allMed[1]}</span><span class="b">🥉 ${allMed[2]}</span>${allPod?`<span style="background:#e9f0ff;color:#3546b5">🏆 ${allPod}</span>`:''}</div></div>
+  ${rows.length?`<div class="mlist">${show.map(x=>`<button class="mrow" data-a="${esc(x.a.name)}"><span class="rk">${x.rk}</span><span class="nm"><span class="gdot ${x.a.g}"></span> ${esc(x.a.name)}<small>${x.a.age} ปี</small></span><span class="md">${x.m.map((n,j)=>`<i style="opacity:${n?1:.25}">${MED[j]}${n}</i>`).join('')}${x.a.pod?`<i>🏆${x.a.pod}</i>`:''}</span></button>`).join('')}</div>${out.length>8?`<button class="mmore" id="mmore">${medAll?'ย่อ ▲':`ดูทั้งหมด ${out.length} คน ▼`}</button>`:''}`:'<div style="color:var(--mut);font-size:14px;margin-top:6px">ยังไม่มีเหรียญ — รอผลรายการถัดไป</div>'}
+  <div style="font-size:12px;color:var(--mut);margin-top:8px">เหรียญตามเกณฑ์เวลาในใบผล · 🏆 = อันดับ 1–3 ของรุ่น · ผลออก ${nRes}/${R.length} รายการ · อัปเดต ${DATA.meet.updated} น.</div></div>`}
 // router
 const VIEWS={schedule:vSchedule,results:vResults,athletes:vAthletes,ages:vAges,relays:vRelays};
 function pickLabel(){const n=S.sel.size;$('#pick').classList.toggle('on',n>0);
@@ -380,7 +405,7 @@ function render(){syncChips();pickLabel();document.querySelectorAll('.tab').forE
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{location.hash=t.dataset.v});
 function route(){const h=location.hash.slice(1);S.v=VIEWS[h]?h:'schedule';render()}
 window.addEventListener('hashchange',route);
-renderNext();setInterval(()=>{renderNext();if(S.v==='schedule')render()},60000);route();
+renderMedals();renderNext();setInterval(()=>{renderNext();if(S.v==='schedule')render()},60000);route();
 $('#foot').innerHTML=`<span class="upd">อัปเดตผลล่าสุด ${DATA.meet.updated} น.</span> · ดึงผลอัตโนมัติทุก 10 นาทีจาก <a href="${DATA.meet.results_url}">cnxswimming.com</a><br>เวลาเป็นเวลาประมาณการตามโปรแกรม อาจเลื่อนตามหน้างาน · อันดับเวลาส่ง = อันดับ seed time ในรายการนั้น (NT = ไม่มีเวลาส่ง)`;
 // auto reload when new data is deployed
 setInterval(async()=>{try{const j=await (await fetch('data.json?'+Date.now(),{cache:'no-store'})).json();if(j.meet&&j.meet.updated!==DATA.meet.updated&&!$('#ov').classList.contains('show'))location.reload()}catch(e){}},120000);
