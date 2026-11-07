@@ -54,10 +54,12 @@ def lines_of(pdf):
     return out
 
 def parse(pdf):
-    L = lines_of(pdf); ev = None; rows = []; last = None
+    L = lines_of(pdf); ev = None; rows = []; last = None; rec = None
     for ln in L:
         m = re.match(r'^รายการ (\d+) (.+)$', ln) or re.match(r'^Event (\d+) (.+)$', ln)
         if m: ev = int(m[1]); continue
+        m = re.match(r'^สถิติ\S* \(SCM\) ([\d:.]+) นาที ท\s?ำไว้โดย (.+?) - (.+?) เมื่อ (\d{4}-\d\d-\d\d)', ln)
+        if m: rec = dict(t=ntime(m[1]), n=m[2].strip(), tm=m[3].strip(), d=m[4]); continue
         r = OK.match(ln) or NO.match(ln) or OKR.match(ln) or NOR.match(ln)
         if r:
             g = {k: v for k, v in r.groupdict().items() if v}
@@ -70,17 +72,17 @@ def parse(pdf):
             g['raw'] = ln; rows.append(g); last = g; continue
         if last and last.get('fin') in ('DQ', 'DNF') and 'reason' not in last and re.match(r'^\d+\.\d+ ', ln):
             last['reason'] = ln
-    return ev, rows, L
+    return ev, rows, L, rec
 
 if __name__ == '__main__':
     res = {}
     for f in sorted(glob.glob('raw/results/*.pdf'), key=lambda f: int(re.findall(r'\d+', os.path.basename(f))[0])):
         n = int(re.findall(r'\d+', os.path.basename(f))[0])
         try:
-            ev, rows, L = parse(f)
+            ev, rows, L, rec = parse(f)
         except Exception as e:
             print('fail', f, e); continue
         open(f[:-4] + '.txt', 'w').write('\n'.join(L))
-        res[n] = {'ev': ev or n, 'rows': rows}
+        res[n] = {'ev': ev or n, 'rows': rows, 'rec': rec}
         print(n, 'rows', len(rows))
     json.dump(res, open('data/results.json', 'w'), ensure_ascii=False, indent=0)

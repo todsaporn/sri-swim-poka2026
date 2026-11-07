@@ -52,6 +52,9 @@ for L in lines:
         st=(heat or {}).get('step') or 2
         last=(heat or {}).get('time','12:00 PM')
         heat=dict(h=int(m[1]),of=max(int(m[1]),(heat or {}).get('of',0)),time=fmt(tmin(last)+max(1,st)),ev=no,step=st,est=True); continue
+    m=re.match(r'R4SCM:\s*([\d:.]+)\s+(\d{4}-\d\d-\d\d)\s*(.*)$',full)
+    if m and ev:
+        ev['rec']=dict(t=m[1],d=m[2],n=re.sub(r' [A-Z]$','',m[3].strip())); continue
     if not ev or not heat: continue
     if full.startswith(('Lane','R4SCM','CNX','HY-TEK','Krabi','Meet')): continue
     relay='Relay' in ev['stroke']

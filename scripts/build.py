@@ -32,6 +32,7 @@ for day in CFG['days']:
             age=ev['age'].replace(' Year Olds', '').replace('& Under', 'ปีและต่ำกว่า'), dist=ev['dist'],
             stroke=TH.get(ev['stroke'], ev['stroke']), relay='Relay' in ev['stroke'], n=len(byev[no]),
             heats=max([x['heats'] for x in byev[no]] or [0]), seeded=len(seeded),
+            rec=ev.get('rec'),
             last=day_date(day['n']) + 'T' + max([t24(x['time']) for x in byev[no]] or ['23:59']))
     for e in ents:
         if e.get('team') not in SRI: continue
@@ -53,10 +54,17 @@ for k, v in RES.items():
     rows = v['rows']
     fin = [r for r in rows if r.get('pl')]
     our = [dict(pl=r.get('pl'), n=r.get('name') or (r['team'] + ' ' + r.get('rel', '')), tm=fixteam(r.get('team', '')),
-                f=r.get('fin'), pts=int(r['pts']) if r.get('pts') else 0, why=r.get('reason', ''), pod=r.get('pod', ''), lv=r.get('lvl', ''))
+                f=r.get('fin'), pts=int(r['pts']) if r.get('pts') else 0, why=r.get('reason', ''), pod=r.get('pod', ''), lv=r.get('lvl', ''), nr=r.get('rec') == 'NR')
            for r in rows if is_sri(r.get('team')) or is_sri(r.get('name'))]
     top = [dict(pl=r['pl'], n=r.get('name') or (r['team'] + ' ' + r.get('rel', '')), tm=fixteam(r.get('team', '')), f=r.get('fin'),
-                me=is_sri(r.get('team'))) for r in sorted(fin, key=lambda r: r['pl'])[:3]]
+                me=is_sri(r.get('team')), nr=r.get('rec') == 'NR') for r in sorted(fin, key=lambda r: r['pl'])[:3]]
+    nr = [r for r in fin if r.get('rec') == 'NR']
+    if ev in events:
+        if v.get('rec'): events[ev]['rec'] = dict(v['rec'])
+        if nr:
+            b = min(nr, key=lambda r: secs(r['fin']) or 1e9)
+            events[ev]['rec'] = dict(t=b['fin'], n=b.get('name', ''), tm=fixteam(b.get('team', '')), d=CFG['days_meta'][str(events[ev]['day'])]['date'],
+                                     new=True, me=is_sri(b.get('team')), old=(v.get('rec') or {}).get('t'))
     evres[ev] = dict(nfin=len(fin), our=our, top=top)
 # rule 16: ages 7-11 get medals per heat (last column), ages 12-14 per event place 1-3 (G/S/B column)
 def medal_of(h, ev):
@@ -73,7 +81,7 @@ for r in races:
         hit = next((o for o in er['our'] if o['n'].strip().endswith(' ' + r['relay']) or o['n'].strip().endswith(r['relay'])), None)
     if hit:
         nres += 1
-        r['res'] = dict(pl=hit['pl'], f=hit['f'], pts=hit['pts'], why=hit['why'], nfin=er['nfin'], lv=medal_of(hit, events[r['ev']]))
+        r['res'] = dict(pl=hit['pl'], f=hit['f'], pts=hit['pts'], why=hit['why'], nfin=er['nfin'], lv=medal_of(hit, events[r['ev']]), nr=hit['nr'])
         s0, s1 = secs(r['seed']), secs(hit['f'])
         if s0 and s1: r['res']['d'] = round(s1 - s0, 2)
     else:
