@@ -137,6 +137,9 @@ button{font:inherit;color:inherit;cursor:pointer}
 .empty{text-align:center;padding:40px 10px;color:var(--mut)}
 .foot{font-size:12px;color:var(--mut);text-align:center;padding:30px 16px 40px}
 .hidden{display:none!important}
+.pdf{display:inline-flex;align-items:center;gap:3px;vertical-align:middle;text-decoration:none;color:#c0262d;font-size:11px;font-weight:700;border:1px solid #f3c9cb;background:#fff5f5;border-radius:6px;padding:1px 5px 1px 3px;line-height:1.4;cursor:pointer}
+.pdf svg{width:13px;height:13px;flex:0 0 auto}
+.pdf:active{transform:scale(.95)}
 .rec{display:flex;align-items:center;gap:8px;background:#fff8e6;border:1px solid #f6e3a8;border-radius:12px;padding:8px 12px;font-size:13.5px;margin:0 0 10px}
 .rec b{font-variant-numeric:tabular-nums}
 .rec.new{background:#fff0ec;border-color:#f8c4b4}
@@ -355,7 +358,7 @@ const lastResEv=DATA.lastres||{};
 const isDone=(r,nm)=>!!r.res||r.ev<(lastResEv[r.day]||0)||r.m<nm-5;
 function raceCard(r,nm){const e=r.e,cls=isDone(r,nm)&&!r.res?'past':(!isDone(r,nm)&&nm>=r.m-5&&nm<=r.m+5?'now':'');
   const who=r.relay?`ศรีอรุโณทัย ทีม ${r.relay} <span class="tag rel">ผลัด</span>`:`${esc(r.name)}${r.gap!=null&&r.gap<TIGHT?` <span class="tag warn">ห่างรายการก่อน ${r.gap} นาที</span>`:''}`;
-  return `<button class="race ${cls}" data-h="${r.ev}-${r.heat}"><div class="tm">${r.t}<small>Event ${r.ev}</small></div>
+  return `<button class="race ${cls}" data-h="${r.ev}-${r.heat}"><div class="tm">${r.t}<small>Event ${r.ev}</small>${r.res||RESEV.has(r.ev)?`<div style="margin-top:4px">${pdfBtn(r.ev)}</div>`:''}</div>
   <div><div class="who"><span class="gdot ${r.g}"></span>${who}</div>
   <div class="what">${evLabel(e)} · ${G[e.g]} ${ageLabel(e)} · ฮีต ${r.heat}/${e.heats}${r.res?' ลู่ '+r.lane:''} ${seedTag(r)}</div>
   ${r.res&&r.res.why?`<div class="why">${esc(r.res.why)}</div>`:''}</div>
@@ -391,7 +394,13 @@ function vRelays(){const list=rel.filter(r=>(!S.g||r.g===S.g)&&okDay(r));
   $('#count').textContent=`${list.length} ทีมผลัด · ผลัด 4x25 ม.`+(S.a||S.sel.size||S.s||S.fav?' (ตัวกรองอายุ/นักกีฬา/ท่า ไม่ใช้กับผลัด)':'');
   if(!list.length)return'<div class="empty">ไม่พบทีมผลัด</div>';
   return list.map(r=>`<div class="relay"><div class="hd"><div><h3 class="disp" style="font-size:17px"><span class="gdot ${r.g}"></span> ${G[r.g]} ${r.e.age}</h3>
-   <div class="what" style="font-size:13px;color:var(--mut)">Event ${r.ev} · ${evLabel(r.e)} · ฮีต ${r.heat}/${r.e.heats} · ลู่ ${r.lane} · ${r.e.n} ทีมในรายการ</div>${r.res?`<div style="margin-top:4px;font-weight:700">${r.res.pl?(r.res.lv!=null?MED[r.res.lv]+' ':'')+'อันดับ '+r.res.pl:esc(r.res.f)} · ${esc(r.res.f)}</div>`:''}</div><span class="pill">D${r.day} · ${r.t} น.</span></div>${lineup(r.ev+'-'+r.heat)}</div>`).join('')}
+   <div class="what" style="font-size:13px;color:var(--mut)">Event ${r.ev} ${pdfA(r.ev)} · ${evLabel(r.e)} · ฮีต ${r.heat}/${r.e.heats} · ลู่ ${r.lane} · ${r.e.n} ทีมในรายการ</div>${r.res?`<div style="margin-top:4px;font-weight:700">${r.res.pl?(r.res.lv!=null?MED[r.res.lv]+' ':'')+'อันดับ '+r.res.pl:esc(r.res.f)} · ${esc(r.res.f)}</div>`:''}</div><span class="pill">D${r.day} · ${r.t} น.</span></div>${lineup(r.ev+'-'+r.heat)}</div>`).join('')}
+// result PDF links
+const RESEV=new Set(DATA.meet.resev||[]);
+const pdfUrl=ev=>(DATA.meet.pdf_tpl||'').replace('{}',ev);
+const PDFSVG='<svg viewBox="0 0 24 24" fill="none"><path d="M6 2h8l5 5v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z" fill="#e5484d"/><path d="M14 2v5h5" fill="#ffb3b5"/><text x="12" y="17.5" text-anchor="middle" font-size="6.2" font-weight="800" fill="#fff" font-family="Arial">PDF</text></svg>';
+const pdfBtn=(ev,label)=>RESEV.has(ev)?`<span class="pdf" role="link" tabindex="0" data-pdf="${ev}" title="ใบผลการแข่งขัน Event ${ev}">${PDFSVG}${label||'ผล'}</span>`:'';
+const pdfA=(ev,label)=>RESEV.has(ev)?`<a class="pdf" href="${pdfUrl(ev)}" target="_blank" rel="noopener">${PDFSVG}${label||'ผล'}</a>`:'';
 // records
 const yr=d=>d?String(d).slice(0,4):'';
 function recLine(e){const x=e&&e.rec;if(!x)return '';
@@ -405,19 +414,20 @@ function top3(ev){const x=EVR[ev];if(!x||!x.top.length)return '';return `<div cl
 function ourRes(ev,ht){const rs=R.filter(r=>r.ev===ev&&r.heat===ht&&r.res);if(!rs.length)return '';return `<div class="top3" style="background:#e8f7f9">${rs.map(r=>`<div class="me"><span>${r.relay?'ทีม '+r.relay:esc(r.name)}</span><b>${r.res.pl?'อันดับ '+r.res.pl+'/'+r.res.nfin:''} · ${esc(r.res.f)}</b></div>${r.res.why?`<div class="why">${esc(r.res.why)}</div>`:''}`).join('')}</div>`}
 function openHeat(k){const[ev,ht]=k.split('-').map(Number);const e=EV[ev];
   $('#sheet').innerHTML=`<button class="x" onclick="closeOv()">×</button><div class="kick" style="color:var(--mut)">Event ${ev} · ฮีต ${ht}/${e.heats}</div>
-  <h2>${evLabel(e)}</h2><div style="color:var(--mut);font-size:14px;margin-bottom:12px">${G[e.g]} ${ageLabel(e)} · ${R.find(r=>r.ev===ev&&r.heat===ht).t} น. (${dLabel(e.day)}) · ${e.n} คนในรายการ</div>${recLine(e)}${top3(ev)}${ourRes(ev,ht)}${lineup(k)}`;showOv()}
+  <h2 style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${evLabel(e)} ${pdfA(ev,'ใบผล')}</h2><div style="color:var(--mut);font-size:14px;margin-bottom:12px">${G[e.g]} ${ageLabel(e)} · ${R.find(r=>r.ev===ev&&r.heat===ht).t} น. (${dLabel(e.day)}) · ${e.n} คนในรายการ</div>${recLine(e)}${top3(ev)}${ourRes(ev,ht)}${lineup(k)}`;showOv()}
 function openAth(n){const a=A[n];if(!a)return;
   $('#sheet').innerHTML=`<button class="x" onclick="closeOv()">×</button><div class="top" style="display:flex;gap:12px;align-items:center"><div class="av ${a.g}" style="width:50px;height:50px;border-radius:14px;display:grid;place-items:center;font-family:var(--disp);font-weight:600;color:#fff;font-size:20px">${a.age}</div>
   <div><h2>${esc(a.name)}</h2><div style="color:var(--mut);font-size:14px">${G[a.g]} · ${a.age} ปี · ${a.races.length} รายการ${a.med.some(x=>x)?' · '+a.med.map((n,i)=>n?MED[i]+n:'').join(' '):''}</div>${a.st.p?`<div style="font-weight:700;color:#3546b5;font-size:14px">⭐ ${a.st.p} คะแนน · อันดับ ${a.st.rk} ของรุ่น${a.catL}</div>`:''}</div></div>
   <div class="tl">${a.races.map((r,i)=>`${i&&r.gap!=null&&a.races[i-1].day===r.day?`<div class="gap ${r.gap<TIGHT?'warn':''}">↓ พัก ${dur(r.gap)}</div>`:''}<div class="it"><button data-h="${r.ev}-${r.heat}">
    ${i===0||a.races[i-1].day!==r.day?(dayList.length>1?`<div style="font-size:12px;font-weight:700;color:var(--mut);margin-bottom:2px">${dLabel(r.day)}</div>`:''):''}<div style="display:flex;justify-content:space-between;gap:8px"><b class="disp" style="color:var(--pri)">${r.t} น.</b><span style="font-size:13px;color:var(--mut)">ฮีต ${r.heat}/${r.e.heats} · <b style="color:var(--ink)">ลู่ ${r.lane}</b></span></div>
-   <div style="font-weight:600">${evLabel(r.e)}</div><div style="font-size:13px;color:var(--mut)">Event ${r.ev} · ${seedTag(r)} · ${r.e.n} คนในรุ่น</div>${r.e.rec?`<div style="font-size:12px;color:#8a6300;margin-top:2px">${r.e.rec.new?'🔥 สถิติใหม่':'🏁 สถิติ'} ${esc(r.e.rec.t)} · ${esc(r.e.rec.n)}</div>`:''}${r.res?`<div style="margin-top:6px;display:flex;gap:2px 10px;flex-wrap:wrap;align-items:center;font-weight:600">${r.res.pl?(r.res.lv!=null?'<span class=medal>'+MED[r.res.lv]+'</span> ':'')+'อันดับ '+r.res.pl+'/'+r.res.nfin+(r.res.pts?' · +'+r.res.pts+' คะแนน':''):'<span style=color:#c0262d>'+esc(r.res.f)+'</span>'} · ${esc(r.res.f)} ${r.res.nr?' <span class="nrb">NR</span>':''}${recGap(r)}${r.res.d!=null?`<span class="${r.res.d<0?'up':'dn'}" style="font-size:12.5px">${r.res.d<0?'เร็วขึ้น '+(-r.res.d).toFixed(2)+' วิ':'ช้าลง '+r.res.d.toFixed(2)+' วิ'}</span>`:''}</div>${r.res.why?`<div class="why">${esc(r.res.why)}</div>`:''}`:''}</button></div>`).join('')}</div>
+   <div style="font-weight:600">${evLabel(r.e)}</div><div style="font-size:13px;color:var(--mut)">Event ${r.ev} ${pdfBtn(r.ev)} · ${seedTag(r)} · ${r.e.n} คนในรุ่น</div>${r.e.rec?`<div style="font-size:12px;color:#8a6300;margin-top:2px">${r.e.rec.new?'🔥 สถิติใหม่':'🏁 สถิติ'} ${esc(r.e.rec.t)} · ${esc(r.e.rec.n)}</div>`:''}${r.res?`<div style="margin-top:6px;display:flex;gap:2px 10px;flex-wrap:wrap;align-items:center;font-weight:600">${r.res.pl?(r.res.lv!=null?'<span class=medal>'+MED[r.res.lv]+'</span> ':'')+'อันดับ '+r.res.pl+'/'+r.res.nfin+(r.res.pts?' · +'+r.res.pts+' คะแนน':''):'<span style=color:#c0262d>'+esc(r.res.f)+'</span>'} · ${esc(r.res.f)} ${r.res.nr?' <span class="nrb">NR</span>':''}${recGap(r)}${r.res.d!=null?`<span class="${r.res.d<0?'up':'dn'}" style="font-size:12.5px">${r.res.d<0?'เร็วขึ้น '+(-r.res.d).toFixed(2)+' วิ':'ช้าลง '+r.res.d.toFixed(2)+' วิ'}</span>`:''}</div>${r.res.why?`<div class="why">${esc(r.res.why)}</div>`:''}`:''}</button></div>`).join('')}</div>
   <div style="font-size:12px;color:var(--mut);margin-top:6px">แตะรายการเพื่อดูคู่แข่งในฮีต</div>`;showOv()}
 const showOv=()=>{$('#ov').classList.add('show');document.body.style.overflow='hidden'};
 window.closeOv=()=>{$('#ov').classList.remove('show');document.body.style.overflow='';if(typeof pendingNew!=='undefined'&&pendingNew)checkNew()};
 $('#ov').onclick=e=>{if(e.target.id==='ov')closeOv()};
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOv()});
-document.addEventListener('click',e=>{if(e.target.closest('#mmore')){medAll=!medAll;renderMedals();return}
+document.addEventListener('click',e=>{const pd=e.target.closest('[data-pdf]');if(pd){e.preventDefault();e.stopPropagation();const w=window.open(pdfUrl(pd.dataset.pdf),'_blank','noopener');if(!w)location.href=pdfUrl(pd.dataset.pdf);return}
+  if(e.target.closest('#mmore')){medAll=!medAll;renderMedals();return}
   const pk=e.target.closest('[data-pk]');if(pk){const ns=pk.dataset.pk.split('|');const all=ns.every(n=>S.sel.has(n));ns.forEach(n=>all?S.sel.delete(n):S.sel.add(n));renderPicker();render();return}
   if(e.target.closest('#pick')){renderPicker();showOv();return}
   if(e.target.closest('#pkclear')){S.sel.clear();renderPicker();render();return}
