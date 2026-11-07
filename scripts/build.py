@@ -60,7 +60,7 @@ for k, v in RES.items():
     rows = v['rows']
     fin = [r for r in rows if r.get('pl')]
     our = [dict(pl=r.get('pl'), n=r.get('name') or (r['team'] + ' ' + r.get('rel', '')), tm=fixteam(r.get('team', '')),
-                f=r.get('fin'), pts=int(r['pts']) if r.get('pts') else 0, why=r.get('reason', ''), pod=r.get('pod', ''), lv=r.get('lvl', ''), nr=r.get('rec') == 'NR')
+                f=r.get('fin'), pts=int(r['pts']) if r.get('pts') else 0, why=r.get('reason', ''), pod=r.get('pod', ''), lv=r.get('lvl', ''), nr=r.get('rec') == 'NR', hpl=r.get('hpl'), ht=r.get('ht'))
            for r in rows if is_sri(r.get('team')) or is_sri(r.get('name'))]
     top = [dict(pl=r['pl'], n=r.get('name') or (r['team'] + ' ' + r.get('rel', '')), tm=fixteam(r.get('team', '')), f=r.get('fin'),
                 me=is_sri(r.get('team')), nr=r.get('rec') == 'NR') for r in sorted(fin, key=lambda r: r['pl'])[:3]]
@@ -71,7 +71,8 @@ for k, v in RES.items():
             b = min(nr, key=lambda r: secs(r['fin']) or 1e9)
             events[ev]['rec'] = dict(t=b['fin'], n=b.get('name', ''), tm=fixteam(b.get('team', '')), d=CFG['days_meta'][str(events[ev]['day'])]['date'],
                                      new=True, me=is_sri(b.get('team')), old=(v.get('rec') or {}).get('t'))
-    evres[ev] = dict(nfin=len(fin), our=our, top=top)
+    srt = sorted(fin, key=lambda r: r['pl'])
+    evres[ev] = dict(nfin=len(fin), our=our, top=top, c6=next((r['fin'] for r in srt if r['pl'] >= 6), None) if len(srt) >= 6 else None)
 # rule 16: ages 7-11 get medals per heat (last column), ages 12-14 per event place 1-3 (G/S/B column)
 def medal_of(h, ev):
     age = int(re.match(r'\d+', ev['age'])[0]) if re.match(r'\d+', ev['age']) else 0
@@ -87,7 +88,7 @@ for r in races:
         hit = next((o for o in er['our'] if o['n'].strip().endswith(' ' + r['relay']) or o['n'].strip().endswith(r['relay'])), None)
     if hit:
         nres += 1
-        r['res'] = dict(pl=hit['pl'], f=hit['f'], pts=hit['pts'], why=hit['why'], nfin=er['nfin'], lv=medal_of(hit, events[r['ev']]), nr=hit['nr'])
+        r['res'] = dict(pl=hit['pl'], f=hit['f'], pts=hit['pts'], why=hit['why'], nfin=er['nfin'], lv=medal_of(hit, events[r['ev']]), nr=hit['nr'], hpl=hit.get('hpl'), ht=hit.get('ht'))
         s0, s1 = secs(r['seed']), secs(hit['f'])
         if s0 and s1: r['res']['d'] = round(s1 - s0, 2)
     else:
@@ -150,13 +151,14 @@ clubs = dict(n=len(crow), done=sum(1 for no, e in events.items() if not e['relay
 _now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=7)))
 now = _now.strftime('%d/%m %H:%M')
 out = dict(events={k: v for k, v in events.items() if k in {r['ev'] for r in races}}, races=races, heats=heats,
-           evres={k: dict(nfin=v['nfin'], top=v['top']) for k, v in evres.items() if k in {r['ev'] for r in races}}, stand=stand, clubs=clubs, lastres={d: max([int(k) for k in RES if int(k) in events and events[int(k)]['day'] == d] or [0]) for d in {e['day'] for e in events.values()}},
+           evres={k: dict(nfin=v['nfin'], top=v['top'], c6=v.get('c6')) for k, v in evres.items() if k in {r['ev'] for r in races}}, stand=stand, clubs=clubs, lastres={d: max([int(k) for k in RES if int(k) in events and events[int(k)]['day'] == d] or [0]) for d in {e['day'] for e in events.values()}},
            days=CFG['days_meta'], meet=dict(ts=_now.isoformat(timespec='seconds'), name=CFG['meet_name'], total=total, teams=len(teams), updated=now,
            results_url=CFG['results_url'], pdf_tpl='https://www.cnxswimming.com/wp-content/uploads/2026/11/1_{}.pdf', resev=sorted(int(k) for k in RES), nres=nres, nevres=len(RES)))
 os.makedirs('site', exist_ok=True)
 json.dump(out, open('site/data.json', 'w'), ensure_ascii=False, separators=(',', ':'))
 tpl = open('scripts/template.html').read()
 open('site/index.html', 'w').write(tpl.replace('__DATA__', json.dumps(out, ensure_ascii=False, separators=(',', ':'))))
+open('site/summary.html', 'w').write(open('scripts/summary.html').read().replace('__DATA__', json.dumps(out, ensure_ascii=False, separators=(',', ':'))))
 import shutil
 for f in os.listdir('scripts/static'): shutil.copy(os.path.join('scripts/static', f), os.path.join('site', f))
 print(f'built: {len(races)} races, {nres} with results, {len(RES)} result PDFs, updated {now}')
