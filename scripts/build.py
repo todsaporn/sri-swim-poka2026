@@ -133,10 +133,11 @@ for i, c in enumerate(crow):
     c['rk'] = rk
 clubs = dict(n=len(crow), done=sum(1 for no, e in events.items() if not e['relay'] and str(no) in RES),
              nev=sum(1 for e in events.values() if not e['relay']), top=crow[:5], our=next((c for c in crow if c['me']), None))
-now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=7))).strftime('%d/%m %H:%M')
+_now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=7)))
+now = _now.strftime('%d/%m %H:%M')
 out = dict(events={k: v for k, v in events.items() if k in {r['ev'] for r in races}}, races=races, heats=heats,
            evres={k: dict(nfin=v['nfin'], top=v['top']) for k, v in evres.items() if k in {r['ev'] for r in races}}, stand=stand, clubs=clubs,
-           days=CFG['days_meta'], meet=dict(name=CFG['meet_name'], total=total, teams=len(teams), updated=now,
+           days=CFG['days_meta'], meet=dict(ts=_now.isoformat(timespec='seconds'), name=CFG['meet_name'], total=total, teams=len(teams), updated=now,
            results_url=CFG['results_url'], nres=nres, nevres=len(RES)))
 os.makedirs('site', exist_ok=True)
 json.dump(out, open('site/data.json', 'w'), ensure_ascii=False, separators=(',', ':'))

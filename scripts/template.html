@@ -129,6 +129,10 @@ button{font:inherit;color:inherit;cursor:pointer}
 .empty{text-align:center;padding:40px 10px;color:var(--mut)}
 .foot{font-size:12px;color:var(--mut);text-align:center;padding:30px 16px 40px}
 .hidden{display:none!important}
+.fetched{position:absolute;top:-12px;right:16px;font-size:11.5px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);border-radius:99px;padding:3px 9px;display:flex;align-items:center;gap:6px;white-space:nowrap;z-index:2}
+.fetched:before{content:"";width:6px;height:6px;border-radius:50%;background:#4ade80;box-shadow:0 0 0 3px rgba(74,222,128,.25)}
+.fetched.stale:before{background:#fbbf24;box-shadow:0 0 0 3px rgba(251,191,36,.25)}
+@media(max-width:560px){.fetched{top:-16px;right:12px;font-size:11px}.hero .kick{margin-top:18px}}
 #medals{margin-top:14px}
 .mcard{background:var(--card);border-radius:var(--r);border:1px solid var(--line);padding:14px 16px;box-shadow:0 2px 10px rgba(8,45,80,.05)}
 .mhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
@@ -191,7 +195,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 </style>
 </head>
 <body>
-<header class="hero"><div class="wrap">
+<header class="hero"><div class="wrap" style="position:relative">
+  <div class="fetched" id="fetched"></div>
   <div class="kick" id="meetname"></div>
   <h1>ทีมว่ายน้ำ ศรีอรุโณทัย</h1>
   <div class="sub" id="meetday"></div>
@@ -420,6 +425,13 @@ function render(){syncChips();pickLabel();document.querySelectorAll('.tab').forE
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{location.hash=t.dataset.v});
 function route(){const h=location.hash.slice(1);S.v=VIEWS[h]?h:'schedule';render()}
 window.addEventListener('hashchange',route);
+function renderFetched(){const ts=Date.parse(DATA.meet.ts||'');const el=$('#fetched');
+  const hm=DATA.meet.updated.split(' ')[1]||DATA.meet.updated;
+  if(isNaN(ts)){el.textContent='ดึงข้อมูล '+hm+' น.';return}
+  const ago=Math.max(0,Math.round((Date.now()-ts)/60000));
+  el.textContent=`ดึงข้อมูลล่าสุด ${hm} น.`+(ago<1?' · เมื่อกี้':ago<120?` · ${ago} นาทีที่แล้ว`:'');
+  el.classList.toggle('stale',ago>25);el.title=DATA.meet.ts}
+renderFetched();setInterval(renderFetched,30000);
 renderMedals();renderNext();setInterval(()=>{renderNext();if(S.v==='schedule')render()},60000);route();
 $('#foot').innerHTML=`<span class="upd">อัปเดตผลล่าสุด ${DATA.meet.updated} น.</span> · ดึงผลอัตโนมัติทุก 10 นาทีจาก <a href="${DATA.meet.results_url}">cnxswimming.com</a><br>เวลาเป็นเวลาประมาณการตามโปรแกรม อาจเลื่อนตามหน้างาน · อันดับเวลาส่ง = อันดับ seed time ในรายการนั้น (NT = ไม่มีเวลาส่ง)`;
 // auto reload when new data is deployed
