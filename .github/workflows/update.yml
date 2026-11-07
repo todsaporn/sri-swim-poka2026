@@ -6,6 +6,7 @@ on:
   push:
     branches: [main]
 permissions:
+  actions: write
   contents: write
   pages: write
   id-token: write
@@ -41,3 +42,21 @@ jobs:
     steps:
       - id: d
         uses: actions/deploy-pages@v4
+  # GitHub cron is unreliable on new repos -> keep a self-chaining loop alive during the meet
+  next:
+    needs: deploy
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Re-trigger in ~10 min while the meet is running
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          now=$(TZ=Asia/Bangkok date '+%Y-%m-%d %H')
+          d=${now% *}; h=${now#* }
+          if [[ ( "$d" == "2026-11-07" || "$d" == "2026-11-08" ) && 10#$h -ge 7 && 10#$h -le 22 ]]; then
+            sleep 420
+            gh workflow run update.yml --repo "$GITHUB_REPOSITORY" --ref main
+          else
+            echo "outside meet window ($now) – not re-triggering"
+          fi
