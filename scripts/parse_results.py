@@ -10,8 +10,8 @@ def clean(t):
     return t.replace('ํ้า','้ำ').replace('ํา','ำ')
 TM = r'\d{1,2}:\d\d\.\d\d|\d{1,2}\.\d\d'
 # CNX result format: place, place-in-heat, heat, lane, name, age, team, time, points, cumulative, [G|S|B], [standard]
-OK = re.compile(rf'^(?P<pl>\d+) (?P<hpl>\d+) (?P<ht>\d+) (?P<ln>\d+) (?P<name>.+?) (?P<age>\d{{1,2}}) (?P<team>\S.*?) (?P<fin>{TM})(?: (?P<pts>\d+))?(?: (?P<cum>\d+))?(?: (?P<pod>[GSB]))?(?: (?P<lvl>ทองแดง|ทอง|เงิน))?(?: (?P<rec>[A-Z]+))?$')
-OKR = re.compile(rf'^(?P<pl>\d+) (?P<hpl>\d+) (?P<ht>\d+) (?P<ln>\d+) (?P<name>.+?) (?P<fin>{TM})(?: (?P<pts>\d+))?(?: (?P<cum>\d+))?(?: (?P<pod>[GSB]))?(?: (?P<lvl>ทองแดง|ทอง|เงิน))?(?: (?P<rec>[A-Z]+))?$')
+OK = re.compile(rf'^(?P<pl>\d+) (?P<hpl>\d+) (?P<ht>\d+) (?P<ln>\d+) (?P<name>.+?) (?P<age>\d{{1,2}}) (?P<team>\S.*?) (?P<fin>{TM})(?: (?P<pts>\d+))?(?: C(?P<cum>\d+))?(?: (?P<pod>[GSB]))?(?: (?P<lvl>ทองแดง|ทอง|เงิน))?(?: (?P<rec>[A-Z]+))?$')
+OKR = re.compile(rf'^(?P<pl>\d+) (?P<hpl>\d+) (?P<ht>\d+) (?P<ln>\d+) (?P<name>.+?) (?P<fin>{TM})(?: (?P<pts>\d+))?(?: C(?P<cum>\d+))?(?: (?P<pod>[GSB]))?(?: (?P<lvl>ทองแดง|ทอง|เงิน))?(?: (?P<rec>[A-Z]+))?$')
 NOR = re.compile(r'^(?P<ht>\d+) (?P<ln>\d+) (?P<name>.+?) (?P<fin>DQ|SC|NS|DNS|DFS|DNF)(?: (?P<pts>\d+))?.*$')
 NO = re.compile(rf'^(?P<ht>\d+) (?P<ln>\d+) (?P<name>.+?) (?P<age>\d{{1,2}}) (?P<team>\S.*?) (?P<fin>DQ|SC|NS|DNS|DFS|DNF)(?: (?P<pts>\d+))?.*$')
 # HY-TEK relay results: "3 Sriarunothai Swimming Club A NT 2:13.91 [pts]"
@@ -30,7 +30,11 @@ def lines_of(pdf):
             for l in b.get('lines', []):
                 if l['bbox'][0] > 290 and ''.join(s['text'] for s in l['spans']).startswith('Event'): two = True
     for pn, p in enumerate(d):
-        its = []
+        its = []; cumx = None
+        for b in p.get_text('dict')['blocks']:
+            for l in b.get('lines', []):
+                for sp in l['spans']:
+                    if sp['text'].strip() == 'สะสม': cumx = (sp['bbox'][0] - 6, sp['bbox'][2] + 6)
         for b in p.get_text('dict')['blocks']:
             for l in b.get('lines', []):
                 for s in l['spans']:
@@ -38,7 +42,9 @@ def lines_of(pdf):
                     if not s['text']: continue
                     x0, y0, x1, y1 = s['bbox']
                     col = 1 if (two and x0 >= 297) else 0
-                    its.append((pn, col, (y0+y1)/2, x0, seq, s['text']))
+                    t = s['text']
+                    if cumx and t.strip().isdigit() and cumx[0] <= (x0 + x1) / 2 <= cumx[1]: t = 'C' + t.strip()
+                    its.append((pn, col, (y0+y1)/2, x0, seq, t))
         its.sort(key=lambda i: (i[1], i[2], i[3]))
         rows = []
         for it in its:

@@ -121,7 +121,10 @@ for (g, age) in sorted(cats):
             k = norm(x['name'])
             t = tot.setdefault(k, dict(n=x['name'], tm=fixteam(x.get('team', '')), p=0, me=is_sri(x.get('team')), ev=0, gsb=[0, 0, 0]))
             t['p'] += int(x.get('pts') or 0); t['ev'] += 1
+            if x.get('cum') is not None: t['cum'] = max(t.get('cum', 0), int(x['cum']))  # official cumulative printed on the sheet
             if x.get('pod') in ('G', 'S', 'B'): t['gsb']['GSB'.index(x['pod'])] += 1
+    for t in tot.values():
+        if t.get('cum') is not None: t['p'] = max(t['p'], t['cum'])   # trust the official 'สะสม' column
     # rules: rank by points, tie -> gold, silver, bronze (event places 1-3)
     key_ = lambda t: (-t['p'], -t['gsb'][0], -t['gsb'][1], -t['gsb'][2])
     rows = sorted([t for t in tot.values() if t['p'] > 0 or t['me']], key=key_)
