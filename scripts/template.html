@@ -161,6 +161,7 @@ button.stat:active{background:rgba(255,255,255,.22)}
 .teamlink{display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#0b4f8a,#14b8c4);color:#fff;text-decoration:none;border-radius:14px;padding:12px 14px;font-weight:700;margin-bottom:12px;font-family:var(--disp)}.teamlink small{font-family:'IBM Plex Sans Thai',sans-serif;font-weight:500;opacity:.85;font-size:12px}.teamlink span{margin-left:auto;font-size:20px}
 .who .ph,.nm .ph{margin-right:2px}.mrow .nm{display:flex;align-items:center;gap:8px;min-width:0}.mrow .nmt{min-width:0;line-height:1.3}.mrow .nmt small{display:block;margin-left:0}.pk-it .ph{margin-right:2px}
 .qa{border-radius:12px;padding:9px 12px;font-size:12.5px;margin:14px 0}.qa.ok{background:#eef8f2;color:#0b6b3a}.qa.warn{background:#fff3e8;color:#8a3b0a;border:1px solid #f6c8a5}.qa code{font-size:11.5px;background:#fff;border-radius:4px;padding:0 3px;word-break:break-all}
+.olk ul.olk-th{margin:6px 0 0;padding-left:18px}.olk ul.olk-th li{margin:2px 0}.olk-ev{margin-top:6px;font-size:12.5px}.olk.risk{background:#fff3e8;color:#7a3a07;border:1px solid #f6c8a5}.olk small{opacity:.8}
 .olk{font-size:13px;border-radius:10px;padding:7px 10px;margin-top:8px;line-height:1.45}.olk.in{background:#fff6d6;color:#6b4d00}.olk.chance{background:#e9f7ef;color:#0b6b3a}.olk.out{background:#f3f5f7;color:#5d7084}
 
 .drift{background:#fff8e6;border:1px solid #f6e3a8;color:#5c4400;border-radius:12px;padding:8px 12px;font-size:13.5px;margin:6px 0 4px}.drift small{color:#8a6a1a}
@@ -332,7 +333,7 @@ const ageLabel=e=>/ปี/.test(e.age)?`${e.age}`:`${e.age} ปี`;
 // enrich
 const CL=DATA.clubs||null;
 const DAYS=DATA.days, EVR=DATA.evres||{}, ST_=DATA.stand||{};
-const nrm=s=>String(s).replace(/[\s.]/g,'');
+const nrm=s=>String(s).replace(/[\s.\u200b]/g,'');
 R.forEach(r=>{r.e=EV[r.ev];r.g=r.e.g;r.day=r.day||1;r.m=(r.day-1)*1440+mins(r.t)});
 const dayList=[...new Set(R.map(r=>r.day))].sort();
 const dLabel=d=>(DAYS[d]||{}).label||('Day '+d);
@@ -510,14 +511,15 @@ function vResults(){const done=R.filter(r=>r.res&&okRace(r)).sort((a,b)=>b.m-a.m
     :`<div class="qa ok">✓ ตรวจข้อมูลแล้ว: อ่านใบผลครบทุกบรรทัด และจับคู่ชื่อศรีอรุโณทัยได้ครบ (${DATA.meet.nevres} ใบผล)</div>`;
   if(!done.length)return h+`<div class="empty">ยังไม่มีผลการแข่งขันตามตัวกรอง<br><small>ระบบดึงผลจาก cnxswimming.com ทุก 10 นาที</small></div>`+qaBox;
   let cd=0;done.forEach(r=>{if(r.day!==cd){cd=r.day;if(dayList.length>1)h+=`<div class="dayhd">${dLabel(r.day)}</div>`}h+=raceCard(r,-1)});return h+qaBox}
-function outlook(a){const sc=(DATA.stand||{})[a.cat];if(!sc)return null;const left=a.races.filter(r=>!r.res&&!r.relay).length,max=left*15,p=a.st.p||0;
-  const t=sc.top||[];const p6=t[5]?t[5].p:0,p7=t[6]?t[6].p:0;
-  if(a.st.rk&&a.st.rk<=6)return {cls:'in',txt:`อยู่ในโซนถ้วย (อันดับ ${a.st.rk})${t[6]?` · นำอันดับ 7 อยู่ ${p-p7} คะแนน`:''}${left?` · เหลือ ${left} รายการ เก็บได้อีกสูงสุด ${max}`:' · แข่งครบแล้ว'}`};
-  const need=Math.max(1,p6-p+1);
-  if(!left)return {cls:'out',txt:`แข่งครบแล้ว · ห่างอันดับ 6 อยู่ ${p6-p} คะแนน`};
-  if(need>max)return {cls:'out',txt:`เหลือ ${left} รายการ (สูงสุด ${max} คะแนน) ยังไม่พอแซงอันดับ 6 (${p6} คะแนน)`};
-  const PT=[15,7,5,3,2,1];let ex;if(need<=15){let pl=1;PT.forEach((v,i)=>{if(v>=need)pl=i+1});ex=pl===1?'ได้ที่ 1 ของรายการ 1 ครั้ง':`ติดท็อป ${pl} ของรายการ 1 ครั้ง`}else ex=`ได้ที่ 1 อย่างน้อย ${Math.ceil(need/15)} รายการ`;
-  return {cls:'chance',txt:`ยังลุ้นได้! ต้องเก็บอีก ≥${need} คะแนน จาก ${left} รายการ (เช่น ${ex}) · ถ้าคู่แข่งไม่ได้คะแนนเพิ่ม`}}
+function outlook(a){const sc=(DATA.stand||{})[a.cat];if(!sc)return null;const R_=(sc.risk||{})[nrm(a.name)];
+  if(!R_){return null}
+  const ev=x=>`<b>${esc(x.lbl)}</b> ${x.d===2?'D2 ':''}${x.t} น.`;
+  const mine=R_.keyev.filter(x=>!x.notme);
+  if(R_.status==='lock')return {cls:'in',txt:`🔒 <b>ได้ถ้วยแน่นอน</b> — อันดับแย่สุด #${R_.worst} แม้คู่แข่งได้ที่ 1 ทุกรายการที่เหลือ${R_.best<a.st.rk?` · ยังขยับขึ้นได้ถึง #${R_.best}`:''}${mine.length?`<div class="olk-ev">รายการที่เหลือ: ${mine.map(ev).join(' · ')}</div>`:''}`};
+  if(R_.status==='risk'){const th=R_.threats.map(t=>`<li><b>${esc(t.n)}</b> <small>${esc(t.tm)}</small> · ${t.p} คะแนน เหลือ ${t.left} รายการ (สูงสุด ${t.mx}) → แซงได้ถ้า<b>${esc(t.need)}</b></li>`).join('');
+    return {cls:'risk',txt:`⚠️ <b>อยู่ในโซนถ้วย (#${a.st.rk}) แต่ยังหลุดได้</b> — อันดับแย่สุด #${R_.worst}${R_.left?` · น้องเหลือ ${R_.left} รายการ เก็บได้อีกสูงสุด ${R_.mx-a.st.p}`:''}<ul class="olk-th">${th}</ul>${R_.keyev.length?`<div class="olk-ev">🎯 รายการชี้ขาด: ${R_.keyev.map(x=>`${ev(x)}${x.notme?' <small>(คู่แข่งลง)</small>':x.vs.length?` <small>(แข่งกับ ${x.vs.map(v=>esc(v.split(' ')[0])).join(', ')})</small>`:''}`).join(' · ')}</div>`:''}`}}
+  if(R_.status==='chance')return {cls:'chance',txt:`🎯 <b>ยังลุ้นเข้าโซนถ้วยได้</b> — ตอนนี้ #${a.st.rk||'–'} อันดับดีสุดที่เป็นไปได้ #${R_.best} · ต้อง${esc(R_.need6||'')} (อันดับ 6 มี ${R_.p6} คะแนน)${mine.length?`<div class="olk-ev">รายการที่เหลือ: ${mine.map(ev).join(' · ')}</div>`:''}`};
+  return {cls:'out',txt:R_.left?`เหลือ ${R_.left} รายการ (สูงสุด ${R_.mx} คะแนน) ยังไม่พอเข้าโซนถ้วย (อันดับ 6 มี ${R_.p6} คะแนน)`:`แข่งครบแล้ว · อันดับ 6 มี ${R_.p6} คะแนน`}}
 // trophy standings per category
 function trophyHTML(){const cats=[...new Set(ath.filter(okAth).map(a=>a.cat))].filter(c=>ST_[c]&&ST_[c].top.length);
   if(!cats.length)return '';
@@ -525,7 +527,7 @@ function trophyHTML(){const cats=[...new Set(ath.filter(okAth).map(a=>a.cat))].f
   return `<div class="board" id="b-trophy"><h3>🏆 ลุ้นถ้วยคะแนนรวมรายรุ่น</h3><div style="font-size:12px;color:var(--mut);margin-bottom:6px">ถ้วยนักกีฬายอดเยี่ยม อันดับ 1–6 ต่อรุ่น · คะแนนจากรายการเดี่ยว (ที่1=15 · ทำลายสถิติ=50, 2=7, 3=5, 4=3, 5=2, 6=1) · คะแนนเท่ากันดูจำนวนทอง เงิน ทองแดง · แถวสีฟ้า = ศรีอรุโณทัย</div>${cats.map(c=>{const x=ST_[c];const ours=ath.filter(a=>a.cat===c);
    const top=x.top.slice(0,6);const extra=ours.filter(a=>!top.some(t=>nrm(t.n)===nrm(a.name)));
    return `<div style="margin:10px 0 4px;font-weight:700">${G[x.g]} ${/ปี/.test(x.age)?x.age:x.age+' ปี'} <small style="color:var(--mut);font-weight:500">ผลออก ${x.done}/${x.nev} รายการ</small></div>
-   <table class="lu">${top.map(t=>`<tr class="${t.me?'me':''}"><td>${t.rk<=6?'🏆'+t.rk:t.rk}</td><td><b>${esc(t.n)}</b><div class="tmn">${esc(t.tm)}</div></td><td><b>${t.p}</b> คะแนน</td></tr>`).join('')}
+   <table class="lu">${top.map(t=>`<tr class="${t.me?'me':''}"><td>${t.rk<=6?'🏆'+t.rk:t.rk}</td><td><b>${esc(t.n)}</b><div class="tmn">${esc(t.tm)}</div></td><td><b>${t.p}</b> คะแนน${(x.left||{})[nrm(t.n)]?`<div class="tmn">เหลือ ${x.left[nrm(t.n)]} · สูงสุด ${t.p+15*x.left[nrm(t.n)]}</div>`:'<div class="tmn">แข่งครบ</div>'}</td></tr>`).join('')}
    ${extra.map(a=>`<tr class="me"><td>${a.st.rk||'–'}</td><td><b>${esc(a.name)}</b><div class="tmn">ศรีอรุโณทัย</div></td><td><b>${a.st.p}</b> คะแนน</td></tr>`).join('')}</table>`}).join('')}</div>`}
 // medal table (home)
 let medAll=false;const medOpen=new Set();
@@ -600,13 +602,13 @@ function renderStats(){const nm=nowM(),today=nm<0?1:Math.min(dayList[dayList.len
   const pct=Math.round(nRes/R.length*100),leftToday=R.filter(r=>r.day===today&&!isDone(r,nm)).length;
   const medT=[0,0,0];R.filter(r=>r.day===today&&r.res&&r.res.lv!=null).forEach(r=>medT[r.res.lv]++);const mt=medT[0]+medT[1]+medT[2];
   const cl=CL&&CL.our,third=CL&&CL.top[2],gap3=cl&&third&&cl.rk>3?third.p-cl.p:0;
-  const inZ=ath.filter(a=>a.st.rk&&a.st.rk<=6).length,ch=ath.filter(a=>{const o=outlook(a);if(!o||o.cls!=='chance')return false;const sc=DATA.stand[a.cat],p6=sc&&sc.top[5]?sc.top[5].p:0;return p6-(a.st.p||0)+1<=15}).length;
+  const inZ=ath.filter(a=>a.st.rk&&a.st.rk<=6).length;const rs_=a=>((DATA.stand[a.cat]||{}).risk||{})[nrm(a.name)]||{};const ch=ath.filter(a=>rs_(a).status==='chance').length;const lk=ath.filter(a=>rs_(a).status==='lock').length,rk_=ath.filter(a=>rs_(a).status==='risk').length;
   const T=(go,b,s,extra)=>`<button class="stat" data-go="${go}"><b>${b}</b><span>${s}</span>${extra||''}<i class="sgo">›</i></button>`;
   $('#stats').innerHTML=
    T('schedule',`${pct}%`,`ผลออก ${nRes}/${R.length} · ${leftToday?`D${today} เหลือ ${leftToday} รายการ`:'จบวันนี้แล้ว'}`,`<span class="sbar"><i style="width:${pct}%"></i></span>`)+
    T('results',`🥇${allMed[0]} 🥈${allMed[1]} 🥉${allMed[2]}`,`เหรียญรวม${mt&&dayList.length>1?` · D${today} +${mt}`:''}`)+
    T('b-club',cl?`#${cl.rk}<small>/${CL.n}</small>`:'–',cl?`อันดับสโมสร · ${cl.p} คะแนน${gap3?` · ห่างที่ 3 อีก ${gap3}`:cl.rk<=3?' · โซนถ้วย 🏆':''}`:'อันดับสโมสร')+
-   T('b-trophy',`🏆 ${inZ}<small> คน</small>`,`อยู่ในโซนถ้วยนักกีฬา${ch?` · ลุ้นได้อีก ${ch} คน (ขาดไม่เกิน 15 คะแนน)`:''}`)}
+   T('b-trophy',`🏆 ${inZ}<small> คน</small>`,`โซนถ้วย: 🔒 แน่นอน ${lk}${rk_?` · ⚠️ เสี่ยง ${rk_}`:''}${ch?` · 🎯 ลุ้นเข้า ${ch}`:''}`)}
 document.addEventListener('click',e=>{const g=e.target.closest('[data-go]');if(!g)return;const v=g.dataset.go;
   if(v==='schedule'||v==='results'){location.hash=v;setTimeout(()=>document.querySelector('.bar').scrollIntoView({behavior:'smooth'}),60);return}
   location.hash='results';setTimeout(()=>{const el=document.getElementById(v);el&&el.scrollIntoView({behavior:'smooth',block:'start'})},120)});

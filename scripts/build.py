@@ -19,9 +19,10 @@ def secs(s):
 def t24(t):
     h, m, ap = re.match(r'(\d+):(\d+) (AM|PM)', t).groups(); h = int(h) % 12 + (12 if ap == 'PM' else 0); return f'{h:02d}:{m}'
 def fixteam(t): return {'ศวมอ':'ศว.ม.อ','ศวมอ . .':'ศว.ม.อ','ทบมหาราช':'ทบ4 มหาราช'}.get(t, t)
-norm = lambda s: re.sub(r'[\s.]', '', s or '')
+norm = lambda s: re.sub(r'[\s.\u200b]', '', s or '')
 
 events, races, heats, total, teams = {}, [], {}, 0, set()
+ALL_ENTS = []
 day_date = lambda n: CFG['days_meta'][str(n)]['date']
 for day in CFG['days']:
     js = day['pdf'].replace('.pdf', '.json')
@@ -29,6 +30,7 @@ for day in CFG['days']:
         subprocess.run([sys.executable, 'scripts/parse_startlist.py', day['pdf'], js], check=True)
     D = json.load(open(js)); E = {int(k): v for k, v in D['events'].items()}
     ents = [e for e in D['entries'] if e.get('team') or e.get('name')]
+    ALL_ENTS.extend(dict(e, day=day['n']) for e in ents if e.get('name'))
     total += len(ents); teams |= {e['team'] for e in ents if e.get('name')}
     byev = collections.defaultdict(list); byheat = collections.defaultdict(list)
     for e in ents: byev[e['ev']].append(e); byheat[(e['ev'], e['heat'])].append(e)
@@ -136,6 +138,57 @@ for (g, age) in sorted(cats):
     stand[key] = dict(g=g, age=age, nev=len(evs), done=done,
                       top=[dict(rk=t['rk'], n=t['n'], tm=t['tm'], p=t['p'], me=t['me'], gsb=t['gsb']) for t in rows if t['p'] > 0][:8],
                       our={norm(t['n']): dict(rk=t['rk'], p=t['p']) for t in rows if t['me']})
+    # ---- what can still happen: remaining individual events per athlete in this category
+    PT = [15, 7, 5, 3, 2, 1]
+    rem = {}; who = {}
+    for e in ALL_ENTS:
+        ev_ = events.get(e['ev'])
+        if not ev_ or ev_['relay'] or ev_['g'] != g or ev_['age'] != age or str(e['ev']) in RES: continue
+        k = norm(e['name']); who[k] = (e['name'], fixteam(e['team']), is_sri(e['team']))
+        rem.setdefault(k, []).append(dict(ev=e['ev'], d=e['day'], t=t24(e['time']), lbl=f"{ev_['dist']}ม. {ev_['stroke']}"))
+    allp = {norm(t['n']): t for t in rows}
+    for k, (n, tm, me) in who.items():
+        if k not in allp: allp[k] = dict(n=n, tm=tm, p=0, me=me, gsb=[0, 0, 0])
+    left = {k: len(rem.get(k, [])) for k in allp}
+    stand[key]['left'] = {norm(t['n']): left.get(norm(t['n']), 0) for t in stand[key]['top']}
+    def place_for(need):
+        if need <= 0: return 'เสมอ/ดูเหรียญ'
+        if need > 15: return f'ได้ที่ 1 อย่างน้อย {-(-need // 15)} รายการ'
+        pl = max(i + 1 for i, v in enumerate(PT) if v >= need); return 'ได้ที่ 1' if pl == 1 else f'ติดท็อป {pl}'
+    risk = {}
+    for k, o in stand[key]['our'].items():
+        me = allp.get(k)
+        if not me: continue
+        pA, kA = me['p'], left.get(k, 0)
+        kme = key_(me) if me['p'] > 0 else (0, 0, 0, 0)
+        above = [t for kk, t in allp.items() if kk != k and t['p'] > 0 and key_(t) < kme]
+        threats = []
+        for kk, t in allp.items():
+            if kk == k or t in above: continue
+            mx = t['p'] + 15 * left.get(kk, 0)
+            if left.get(kk, 0) and (mx > pA or (mx == pA and pA > 0)):
+                threats.append(dict(n=t['n'], tm=t['tm'], p=t['p'], left=left[kk], mx=mx, need=place_for(pA - t['p']),
+                                    ev=[x['ev'] for x in rem.get(kk, [])]))
+        catch = [t for t in above if t['p'] < pA + 15 * kA or (t['p'] == pA + 15 * kA)]
+        worst = len(above) + len(threats) + 1
+        best = len(above) - len(catch) + 1
+        rk = o['rk'] or 999
+        status = 'lock' if worst <= 6 else ('risk' if rk <= 6 else ('chance' if best <= 6 else 'out'))
+        mine_ev = rem.get(k, [])
+        key_ev = []
+        for x in mine_ev:
+            vs = [t['n'] for t in threats if x['ev'] in t['ev']]
+            key_ev.append(dict(x, vs=vs))
+        for t in threats:
+            for e_ in rem.get(norm(t['n']), []):
+                if e_['ev'] not in [y['ev'] for y in key_ev]: key_ev.append(dict(e_, vs=[t['n']], notme=True))
+                elif t['n'] not in next(y for y in key_ev if y['ev'] == e_['ev'])['vs']: next(y for y in key_ev if y['ev'] == e_['ev'])['vs'].append(t['n'])
+        key_ev.sort(key=lambda x: (x['d'], x['t']))
+        sixth = sorted([t for t in allp.values() if t['p'] > 0], key=key_)[5:6]
+        risk[k] = dict(status=status, worst=worst, best=best, left=kA, mx=pA + 15 * kA,
+                       threats=sorted(threats, key=lambda t: -t['mx'])[:6], keyev=key_ev[:8],
+                       need6=(place_for(sixth[0]['p'] - pA) + (' (คะแนนเท่ากันวัดจำนวนเหรียญ)' if sixth[0]['p'] - pA in PT else '') if sixth and rk > 6 else None), p6=(sixth[0]['p'] if sixth else 0))
+    stand[key]['risk'] = risk
 # ---- data quality checks
 raced = {(r['ev'], norm(r.get('name') or 'Sriarunothai SC ' + r.get('relay', ''))) for r in races}
 for ev, er in evres.items():

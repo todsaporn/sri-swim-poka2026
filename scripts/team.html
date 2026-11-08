@@ -71,7 +71,7 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const G={M:'ชาย',F:'หญิง'},MED=['🥇','🥈','🥉'];
 const EV=DATA.events,R=DATA.races,ST=DATA.stand||{},CL=DATA.clubs,DAYS=DATA.days;
-const nrm=s=>String(s).replace(/[\s.]/g,'');
+const nrm=s=>String(s).replace(/[\s.\u200b]/g,'');
 const ageL=e=>/ปี/.test(e.age)?e.age:e.age+' ปี';
 const evL=e=>`${e.dist}ม. ${e.stroke}`;
 R.forEach(r=>{r.e=EV[r.ev]});
