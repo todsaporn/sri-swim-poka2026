@@ -120,7 +120,7 @@
   .ph-age{position:absolute;bottom:-3px;left:-3px;background:#fff;color:#0d2236;font-size:10px;font-weight:700;border-radius:99px;padding:0 5px;line-height:15px;box-shadow:0 1px 3px rgba(0,0,0,.2);font-family:'IBM Plex Sans Thai',sans-serif}
   .ph-cam{position:absolute;right:-4px;bottom:-4px;width:24px;height:24px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:12px;box-shadow:0 1px 4px rgba(0,0,0,.25);color:#0b4f8a}
   [data-photo]{cursor:pointer}
-  .crop-ov{position:fixed;inset:0;z-index:100;background:rgba(6,20,35,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#fff;font-family:'IBM Plex Sans Thai',system-ui,sans-serif;padding:18px;touch-action:none}
+  .crop-ov{position:fixed;inset:0;z-index:400;isolation:isolate;transform:translateZ(0);-webkit-transform:translateZ(0);background:rgba(6,20,35,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#fff;font-family:'IBM Plex Sans Thai',system-ui,sans-serif;padding:18px;touch-action:none}
   .crop-ov h3{margin:0;font-family:'Prompt',sans-serif;font-size:18px}
   .crop-stage{position:relative;width:min(80vw,320px);height:min(80vw,320px);border-radius:18px;overflow:hidden;background:#0b1b2b;touch-action:none}
   .crop-stage canvas{width:100%;height:100%;display:block}
@@ -217,8 +217,14 @@
     x.fillStyle = lc || '#4a5a6a'; x.font = "600 22px 'IBM Plex Sans Thai', sans-serif"; x.fillText(label, cx, cy + r + 32);
   }
   async function shareCard(info) {
-    // landscape certificate, A4 ratio
-    try { await document.fonts.ready } catch (e) { }
+    // open the overlay first so the tap always gets visible feedback (iOS paints late)
+    const ov = document.createElement('div'); ov.className = 'crop-ov card-ov';
+    ov.innerHTML = `<h3>ประกาศนียบัตร ${esc(info.name)}</h3><div class="crop-hint" style="opacity:.9"><span style="display:inline-block;width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;animation:ptrspin .8s linear infinite;vertical-align:middle;margin-right:6px"></span>กำลังสร้างใบประกาศ…</div><div class="crop-btns"><button class="no">ปิด</button></div>`;
+    document.body.appendChild(ov); document.body.style.overflow = 'hidden';
+    let closed = false; ov.querySelector('.no').onclick = () => { closed = true; ov.remove(); document.body.style.overflow = '' };
+    if (!document.getElementById('ptrspin-kf')) { const k = document.createElement('style'); k.id = 'ptrspin-kf'; k.textContent = '@keyframes ptrspin{to{transform:rotate(1turn)}}'; document.head.appendChild(k) }
+    await new Promise(r => requestAnimationFrame(() => setTimeout(r, 30)));
+    try { await Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 2500))]) } catch (e) { }
     const W = 1754, H = 1240, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
     const F = (w, s) => `${w} ${s}px Prompt, 'IBM Plex Sans Thai', sans-serif`, T = (w, s) => `${w} ${s}px 'IBM Plex Sans Thai', sans-serif`;
     const ST = info.style || 'B', DARK = ST === 'B', SPLIT = ST === 'C';
@@ -285,13 +291,12 @@
     x.fillStyle = DARK ? '#8fa6bd' : '#8a98a8'; x.font = T(400, 18); x.fillText('ข้อมูลผลการแข่งขันจากใบผลทางการของการแข่งขัน · จัดทำโดยชมรมเพื่อเป็นที่ระลึก', CX, H - 82);
     const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', .92));
     const url = URL.createObjectURL(blob), file = new File([blob], `SSC-ประกาศนียบัตร-${info.name.split(' ')[0]}.jpg`, { type: 'image/jpeg' });
-    const ov = document.createElement('div'); ov.className = 'crop-ov card-ov';
+    if (closed) { URL.revokeObjectURL(url); return }
     const canShare = navigator.canShare && navigator.canShare({ files: [file] });
     ov.innerHTML = `<h3>ประกาศนียบัตร ${esc(info.name)}</h3><img class="card-img" src="${url}" alt="">
       <div class="crop-hint">${canShare ? 'กด "แชร์" เพื่อส่งเข้าไลน์/เฟซบุ๊ก หรือบันทึกลงคลังรูป' : 'กดค้างที่รูปเพื่อบันทึก หรือกด "ดาวน์โหลด"'}${PH[info.name] ? '' : '<br>💡 เพิ่มรูปน้องได้โดยแตะที่รูปโปรไฟล์'}</div>
       <div class="crop-btns"><button class="no">ปิด</button>${canShare ? '<button class="ok sh">แชร์</button>' : `<a class="ok" style="flex:1;text-align:center;border-radius:12px;padding:12px;font-weight:700;background:#14b8c4;color:#062033;text-decoration:none" href="${url}" download="${file.name}">ดาวน์โหลด</a>`}</div>`;
-    document.body.appendChild(ov);
-    ov.querySelector('.no').onclick = () => { ov.remove(); URL.revokeObjectURL(url) };
+    ov.querySelector('.no').onclick = () => { ov.remove(); document.body.style.overflow = ''; URL.revokeObjectURL(url) };
     const sh = ov.querySelector('.sh'); if (sh) sh.onclick = () => navigator.share({ files: [file], title: info.name }).catch(() => { });
   }
 
