@@ -2,6 +2,7 @@
 (function () {
   const DB = 'sri-photos', ST = 'p';
   const PH = {};                 // name -> dataURL (in-memory cache)
+  const META = {};               // name -> {t: cloud updated_at, cloud: bool}
   const listeners = [];
   let db = null;
 
@@ -20,20 +21,80 @@
       db = await openDB();
       await new Promise(res => {
         const tx = db.transaction(ST, 'readonly'), st = tx.objectStore(ST), cur = st.openCursor();
-        cur.onsuccess = () => { const c = cur.result; if (c) { PH[c.key] = c.value; c.continue() } else res() };
+        cur.onsuccess = () => { const c = cur.result; if (c) { const v = c.value; if (typeof v === 'string') { PH[c.key] = v; META[c.key] = { t: '', cloud: false } } else { PH[c.key] = v.img; META[c.key] = { t: v.t || '', cloud: !!v.cloud } } c.continue() } else res() };
         cur.onerror = () => res();
       });
     } catch (e) { /* private mode etc: photos just won't persist */ }
     listeners.forEach(f => f());
+    await syncCloud();
+    setInterval(syncCloud, 120000);
   }
-  function put(name, url) {
-    if (url) PH[name] = url; else delete PH[name];
+  // ---------- shared cloud (Supabase) ----------
+  const CL = () => (typeof DATA !== 'undefined' && DATA.cloud && DATA.cloud.url) ? DATA.cloud : null;
+  const hdr = c => ({ apikey: c.key, Authorization: 'Bearer ' + c.key, 'Content-Type': 'application/json' });
+  function store(name) {
+    try { if (!db) return; const tx = db.transaction(ST, 'readwrite'), st = tx.objectStore(ST);
+      PH[name] ? st.put({ img: PH[name], t: (META[name] || {}).t || '', cloud: !!(META[name] || {}).cloud }, name) : st.delete(name) } catch (e) { }
+  }
+  let cloudOK = null;
+  async function syncCloud() {
+    const c = CL(); if (!c) return;
     try {
-      if (!db) return;
-      const tx = db.transaction(ST, 'readwrite'), st = tx.objectStore(ST);
-      url ? st.put(url, name) : st.delete(name);
-    } catch (e) { }
-    listeners.forEach(f => f());
+      const r = await fetch(c.url + '/rest/v1/photos?select=athlete,updated_at', { headers: hdr(c), cache: 'no-store' });
+      if (!r.ok) throw new Error(r.status);
+      const list = await r.json(); cloudOK = true;
+      const remote = {}; list.forEach(x => remote[x.athlete] = x.updated_at);
+      const need = list.filter(x => !META[x.athlete] || !META[x.athlete].cloud || META[x.athlete].t !== x.updated_at).map(x => x.athlete);
+      let changed = false;
+      // removed in cloud -> remove local cloud copies
+      Object.keys(META).forEach(n => { if (META[n].cloud && !remote[n]) { delete PH[n]; delete META[n]; store(n); changed = true } });
+      for (let i = 0; i < need.length; i += 8) {
+        const chunk = need.slice(i, i + 8), q = chunk.map(n => '"' + n.replace(/"/g, '') + '"').join(',');
+        const rr = await fetch(c.url + '/rest/v1/photos?select=athlete,img,updated_at&athlete=in.(' + encodeURIComponent(q) + ')', { headers: hdr(c), cache: 'no-store' });
+        if (!rr.ok) continue;
+        (await rr.json()).forEach(x => { PH[x.athlete] = x.img; META[x.athlete] = { t: x.updated_at, cloud: true }; store(x.athlete); changed = true });
+      }
+      if (changed) listeners.forEach(f => f());
+      offerUpload();
+    } catch (e) { cloudOK = false }
+  }
+  async function rpc(fn, body) {
+    const c = CL(); const r = await fetch(c.url + '/rest/v1/rpc/' + fn, { method: 'POST', headers: hdr(c), body: JSON.stringify(body) });
+    if (!r.ok) throw new Error('net');
+    return r.json().catch(() => null);
+  }
+  async function upload(name, img) {
+    if (!CL()) return 'local';
+    try { await rpc('set_photo', { p_athlete: name, p_img: img }); return 'cloud' } catch (e) { return 'fail' }
+  }
+  function toast(t) { const d = document.createElement('div'); d.textContent = t; d.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#0d2236;color:#fff;padding:10px 16px;border-radius:12px;z-index:120;font:600 14px IBM Plex Sans Thai,sans-serif;box-shadow:0 6px 20px rgba(0,0,0,.3);max-width:90vw;text-align:center'; document.body.appendChild(d); setTimeout(() => d.remove(), 2800) }
+  let offered = false;
+  function offerUpload() {
+    if (offered || !cloudOK) return;
+    const local = Object.keys(PH).filter(n => !(META[n] || {}).cloud);
+    if (!local.length) return; offered = true;
+    let dismissed = false; try { dismissed = sessionStorage.getItem('sri-offer') === '1' } catch (e) { }
+    if (dismissed) return;
+    const bar = document.createElement('div');
+    bar.style.cssText = 'position:fixed;left:12px;right:12px;bottom:14px;z-index:90;background:#0b4f8a;color:#fff;border-radius:16px;padding:12px 14px;display:flex;gap:10px;align-items:center;box-shadow:0 10px 30px rgba(8,45,80,.35);font:14px IBM Plex Sans Thai,sans-serif;max-width:640px;margin:0 auto';
+    bar.innerHTML = `<span style="flex:1">📤 มีรูปในเครื่องนี้ ${local.length} รูปที่คนอื่นยังไม่เห็น (${local.map(n => esc(n.split(' ')[0])).join(', ')})</span><button style="border:0;border-radius:10px;padding:8px 12px;font:inherit;font-weight:700;background:#ffd23f;color:#08263f;cursor:pointer">แชร์ให้ทุกคน</button><button aria-label="ปิด" style="border:0;background:none;color:#fff;font-size:18px;cursor:pointer">×</button>`;
+    document.body.appendChild(bar);
+    const [b1, b2] = bar.querySelectorAll('button');
+    b2.onclick = () => { bar.remove(); try { sessionStorage.setItem('sri-offer', '1') } catch (e) { } };
+    b1.onclick = async () => {
+      b1.disabled = true; b1.textContent = 'กำลังส่ง…'; let ok = 0;
+      for (const n of local) { const r = await upload(n, PH[n]); if (r === 'cloud') { META[n] = { t: '', cloud: true }; store(n); ok++ } else if (r === 'local') break }
+      bar.remove(); toast(ok ? `✓ แชร์แล้ว ${ok} รูป ทุกเครื่องจะเห็นภายใน 2 นาที` : 'ยังไม่ได้แชร์รูป'); syncCloud();
+    };
+  }
+  async function put(name, url) {
+    const prev = PH[name], prevM = META[name];
+    if (url) PH[name] = url; else delete PH[name];
+    META[name] = { t: '', cloud: false }; store(name); listeners.forEach(f => f());
+    if (!CL()) return;
+    const r = await upload(name, url || null);
+    if (r === 'cloud') { if (url) { META[name] = { t: '', cloud: true }; store(name) } else delete META[name]; toast(url ? '✓ บันทึกรูปแล้ว ทุกเครื่องจะเห็นภายใน 2 นาที' : '✓ ลบรูปแล้ว'); syncCloud() }
+    else toast('⚠️ อัปขึ้นไม่สำเร็จ เก็บไว้ในเครื่องก่อน ลองใหม่ภายหลัง');
   }
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const initials = n => { const m = String(n).trim().match(/^[\u0e40-\u0e44]?[\u0e01-\u0e2eA-Za-z][\u0e31\u0e34-\u0e3a\u0e47-\u0e4e]*/); return m ? m[0] : String(n).slice(0, 1) };
@@ -91,7 +152,7 @@
     const ov = document.createElement('div'); ov.className = 'crop-ov';
     ov.innerHTML = `<h3>ครอปรูป ${esc(name)}</h3><div class="crop-stage"><canvas width="640" height="640"></canvas><div class="crop-mask"></div></div>
       <input type="range" class="crop-zoom" min="1" max="4" step="0.01" value="1" aria-label="ซูม">
-      <div class="crop-hint">ลากเพื่อเลื่อน · ใช้สองนิ้วหรือแถบด้านบนเพื่อซูม<br>รูปเก็บไว้ในเครื่องนี้เท่านั้น ไม่ได้อัปโหลดขึ้นเว็บ</div>
+      <div class="crop-hint">ลากเพื่อเลื่อน · ใช้สองนิ้วหรือแถบด้านบนเพื่อซูม<br>รูปจะแชร์ให้ทุกคนในแอปเห็น</div>
       <div class="crop-btns"><button class="no">ยกเลิก</button><button class="ok">บันทึกรูป</button></div>${has ? '<button class="crop-del">ลบรูปเดิม</button>' : ''}`;
     document.body.appendChild(ov);
     const cv = ov.querySelector('canvas'), cx = cv.getContext('2d'), zoomEl = ov.querySelector('.crop-zoom'), W = cv.width;
@@ -198,5 +259,6 @@
     e.preventDefault(); e.stopPropagation(); editPhoto(p.dataset.photo);
   }, true);
 
-  window.Photos = { avatar, editPhoto, shareCard, has: n => !!PH[n], onChange: f => listeners.push(f), ready: loadAll() };
+  window.Photos = { avatar, editPhoto, shareCard, has: n => !!PH[n], onChange: f => listeners.push(f), sync: () => syncCloud() };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', loadAll); else setTimeout(loadAll, 0);
 })();
