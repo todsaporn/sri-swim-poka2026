@@ -121,9 +121,9 @@ button{font:inherit;color:inherit;cursor:pointer}
 .lu tr.me td:first-child{color:var(--pri);border-left:3px solid var(--aqua)}
 .lu .tmn{font-size:12px;color:var(--mut)}
 /* modal */
-.ov{position:fixed;inset:0;background:rgba(6,25,45,.45);z-index:50;display:none;align-items:flex-end;justify-content:center}
+.ov{position:fixed;inset:0;background:rgba(6,25,45,.45);z-index:200;isolation:isolate;transform:translateZ(0);-webkit-transform:translateZ(0);display:none;align-items:flex-end;justify-content:center}
 .ov.show{display:flex}
-.sheet{background:#fff;width:100%;max-width:620px;max-height:88vh;overflow:auto;border-radius:20px 20px 0 0;padding:18px 18px 28px;animation:up .2s ease-out}
+.sheet{background:#fff;width:100%;max-width:620px;max-height:88vh;max-height:88dvh;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;position:relative;z-index:1;border-radius:20px 20px 0 0;padding:18px 18px 28px;animation:up .2s ease-out}
 @media(min-width:700px){.ov{align-items:center}.sheet{border-radius:20px}}
 @keyframes up{from{transform:translateY(30px);opacity:0}}
 .sheet .x{float:right;border:0;background:#eef2f6;border-radius:50%;width:32px;height:32px;font-size:18px}
@@ -154,7 +154,7 @@ button.stat:active{background:rgba(255,255,255,.22)}
 .mrow .chev{color:var(--mut);font-size:12px;transition:transform .2s;opacity:.7}
 .mrow2.open .chev{transform:rotate(180deg)}
 .mdet{display:none;padding:0 6px 12px 34px;font-size:13.5px}
-.mrow2.open .mdet{display:block;animation:up .18s ease-out}
+.mrow2.open .mdet{display:block}
 .mgrid{display:grid;grid-template-columns:repeat(4,auto);justify-content:start;gap:4px 14px;font-variant-numeric:tabular-nums}
 .mline{color:var(--mut);margin-top:4px}
 .mopen{margin-top:8px;border:0;background:var(--pri);color:#fff;border-radius:99px;padding:6px 12px;font-weight:700;font-size:12.5px}
@@ -459,7 +459,9 @@ function openAth(n){const a=A[n];if(!a)return;
    ${i===0||a.races[i-1].day!==r.day?(dayList.length>1?`<div style="font-size:12px;font-weight:700;color:var(--mut);margin-bottom:2px">${dLabel(r.day)}</div>`:''):''}<div style="display:flex;justify-content:space-between;gap:8px"><b class="disp" style="color:var(--pri)">${r.t} น.</b><span style="font-size:13px;color:var(--mut)">ฮีต ${r.heat}/${r.e.heats} · <b style="color:var(--ink)">ลู่ ${r.lane}</b></span></div>
    <div style="font-weight:600">${evLabel(r.e)}</div><div style="font-size:13px;color:var(--mut)">Event ${r.ev} ${pdfBtn(r.ev)} · ${seedTag(r)} · ${r.e.n} คนในรุ่น</div>${r.e.rec?`<div style="font-size:12px;color:#8a6300;margin-top:2px">${r.e.rec.new?'🔥 สถิติใหม่':'🏁 สถิติ'} ${esc(r.e.rec.t)} · ${esc(r.e.rec.n)}</div>`:''}${r.res?`<div style="margin-top:6px;display:flex;gap:2px 10px;flex-wrap:wrap;align-items:center;font-weight:600">${r.res.pl?(r.res.lv!=null?'<span class=medal>'+MED[r.res.lv]+'</span> ':'')+'อันดับ '+r.res.pl+'/'+r.res.nfin+(r.res.pts?' · +'+r.res.pts+' คะแนน':''):'<span style=color:#c0262d>'+esc(r.res.f)+'</span>'} · ${esc(r.res.f)} ${r.res.nr?' <span class="nrb">NR</span>':''}${recGap(r)}${r.res.d!=null?`<span class="${r.res.d<0?'up':'dn'}" style="font-size:12.5px">${r.res.d<0?'เร็วขึ้น '+(-r.res.d).toFixed(2)+' วิ':'ช้าลง '+r.res.d.toFixed(2)+' วิ'}</span>`:''}</div>${r.res.why?`<div class="why">${esc(r.res.why)}</div>`:''}`:''}</button></div>`).join('')}</div>
   <div style="font-size:12px;color:var(--mut);margin-top:6px">แตะรายการเพื่อดูคู่แข่งในฮีต</div>`;showOv()}
-const showOv=()=>{$('#ov').classList.add('show');document.body.style.overflow='hidden'};
+const showOv=()=>{const o=$('#ov');o.classList.add('show');document.body.style.overflow='hidden';$('#sheet').scrollTop=0;
+  // iOS Safari sometimes leaves part of the sheet unpainted: force a reflow/repaint on the next frames
+  requestAnimationFrame(()=>{o.style.display='none';void o.offsetHeight;o.style.display='';requestAnimationFrame(()=>{o.style.transform='translateZ(0) scale(1)'})})};
 window.closeOv=()=>{$('#ov').classList.remove('show');document.body.style.overflow='';if(typeof pendingNew!=='undefined'&&pendingNew)checkNew()};
 $('#ov').onclick=e=>{if(e.target.id==='ov')closeOv()};
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOv()});
@@ -527,6 +529,7 @@ function trophyHTML(){const cats=[...new Set(ath.filter(okAth).map(a=>a.cat))].f
    ${extra.map(a=>`<tr class="me"><td>${a.st.rk||'–'}</td><td><b>${esc(a.name)}</b><div class="tmn">ศรีอรุโณทัย</div></td><td><b>${a.st.p}</b> คะแนน</td></tr>`).join('')}</table>`}).join('')}</div>`}
 // medal table (home)
 let medAll=false;const medOpen=new Set();
+document.addEventListener('click',e=>{if(e.target.closest('.mopen')){medOpen.clear();document.querySelectorAll('.mrow2.open').forEach(x=>x.classList.remove('open'))}},true);
 document.addEventListener('click',e=>{const mx=e.target.closest('[data-mx]');if(!mx)return;e.stopPropagation();const n=mx.dataset.mx;medOpen.has(n)?medOpen.delete(n):medOpen.add(n);mx.parentElement.classList.toggle('open',medOpen.has(n))},true);
 function renderMedals(){const rows=ath.map(a=>({a,m:a.med,t:a.med[0]+a.med[1]+a.med[2]+a.st.p})).sort((x,y)=>y.m[0]-x.m[0]||y.m[1]-x.m[1]||y.m[2]-x.m[2]||(y.a.st.p||0)-(x.a.st.p||0)||x.a.name.localeCompare(y.a.name,'th'));
   if(!rows.length&&!R.some(r=>r.res)){$('#medals').innerHTML='';return}
