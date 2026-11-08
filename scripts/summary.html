@@ -155,7 +155,7 @@ function render(){const a=A[cur];const rs=a.races,done=rs.filter(r=>r.res);
   const best=done.filter(r=>r.res.pl).sort((x,y)=>x.res.pl/x.res.nfin-y.res.pl/y.res.nfin)[0];
   const bigImp=done.filter(r=>r.res.d!=null).sort((x,y)=>x.res.d-y.res.d)[0];
   const sc=ST[a.cat];
-  let h=`<div class="card"><div class="head">${Photos.avatar(a.name,a.g,64,{edit:true})}<div style="flex:1"><h2>${esc(a.name)}</h2><div class="meta">${a.catL} · ${rs.length} รายการ (D1 ${rs.filter(r=>r.day===1).length} · D2 ${rs.filter(r=>r.day===2).length}) · ผลออก ${done.length}</div></div><div style="display:flex;flex-direction:column;gap:6px"><button class="share" id="card" style="background:#14b8c4;border-color:#14b8c4;color:#062033">🖼️ การ์ด</button><button class="share" id="share">🔗 ลิงก์</button></div></div>
+  let h=`<div class="card"><div class="head">${Photos.avatar(a.name,a.g,64,{edit:true})}<div style="flex:1"><h2>${esc(a.name)}</h2><div class="meta">${a.catL} · ${rs.length} รายการ (D1 ${rs.filter(r=>r.day===1).length} · D2 ${rs.filter(r=>r.day===2).length}) · ผลออก ${done.length}</div></div><div style="display:flex;flex-direction:column;gap:6px"><button class="share" id="card" style="background:#14b8c4;border-color:#14b8c4;color:#062033">📜 ใบประกาศ</button><button class="share" id="share">🔗 ลิงก์</button></div></div>
   <div class="kpis"><div class="kpi"><b>${MED[0]}${med[0]} ${MED[1]}${med[1]} ${MED[2]}${med[2]}</b><span>เหรียญ</span></div>
    <div class="kpi"><b style="color:#3546b5">⭐ ${a.st.p||pts}</b><span>คะแนนสะสม</span></div>
    <div class="kpi ${a.st.rk&&a.st.rk<=6?'tro':''}"><b>${a.st.rk?(a.st.rk<=6?'🏆 ':'')+'#'+a.st.rk:'–'}</b><span>อันดับในรุ่น${sc?` (ผลออก ${sc.done}/${sc.nev})`:''}</span></div>
@@ -214,7 +214,7 @@ function render(){const a=A[cur];const rs=a.races,done=rs.filter(r=>r.res);
 function cardInfo(a){const done=a.races.filter(r=>r.res&&r.res.pl);const med=[0,0,0];a.races.forEach(r=>{if(r.res&&r.res.lv!=null)med[r.res.lv]++});
   const best=done.slice().sort((x,y)=>(x.res.lv??9)-(y.res.lv??9)||x.res.pl/x.res.nfin-y.res.pl/y.res.nfin);
   return {name:a.name,g:a.g,cat:`${a.catL} · ${a.races.length} รายการ`,catShort:a.catL.replace(/^ชาย |^หญิง /,''),meet:DATA.meet.name,date:Object.values(DAYS).map(d=>d.label).join(' / '),med,pts:a.st.p,rk:a.st.rk,logo:'logo.png',
-    results:best.slice(0,5).map(r=>({ev:`${r.e.dist}ม. ${r.e.stroke}`,time:r.res.f,place:`ที่ ${r.res.pl}/${r.res.nfin}`,medal:r.res.lv!=null?MED[r.res.lv]:''}))}}
+    catL:a.catL,dates:'ระหว่างวันที่ 7–8 พฤศจิกายน 2569',prov:!!((DATA.stand||{})[a.cat]&&DATA.stand[a.cat].done<DATA.stand[a.cat].nev),results:best.slice(0,6).map(r=>({ev:`${r.e.dist}ม. ${r.e.stroke}`,time:r.res.f,place:`ที่ ${r.res.pl}/${r.res.nfin}`,medal:r.res.lv!=null?MED[r.res.lv]:''}))}}
 document.addEventListener('click',e=>{if(e.target.closest('#card'))Photos.shareCard(cardInfo(A[cur]))});
 Photos.onChange(()=>{renderPick();render()});
 cur=pick();renderPick();render();

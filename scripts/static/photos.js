@@ -132,7 +132,7 @@
   .crop-btns .ok{background:#14b8c4;color:#062033}.crop-btns .no{background:rgba(255,255,255,.12);color:#fff}
   .crop-del{background:none;border:0;color:#ffb4b4;font:inherit;font-size:13px;cursor:pointer;text-decoration:underline}
   .crop-hint{font-size:12.5px;opacity:.75;text-align:center;max-width:320px}
-  .card-ov .card-img{max-width:min(86vw,420px);max-height:62vh;border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+  .card-ov .card-img{max-width:min(94vw,900px);max-height:70vh;border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
   `;
   const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
 
@@ -206,53 +206,88 @@
 
   // ---------- share card ----------
   function rr(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath() }
+  function wrap(x, text, maxW) { const words = String(text).split(/(\s+)/), lines = []; let cur = '';
+    for (const w of words) { const t = cur + w; if (x.measureText(t).width > maxW && cur.trim()) { lines.push(cur.trim()); cur = w.trimStart() } else cur = t }
+    if (cur.trim()) lines.push(cur.trim()); return lines }
+  function disc(x, cx, cy, r, c1, c2, label, n, lc) {
+    const g = x.createRadialGradient(cx - r * .35, cy - r * .35, r * .1, cx, cy, r); g.addColorStop(0, c1); g.addColorStop(1, c2);
+    x.save(); x.shadowColor = 'rgba(0,0,0,.18)'; x.shadowBlur = 10; x.shadowOffsetY = 4; x.beginPath(); x.arc(cx, cy, r, 0, 7); x.fillStyle = g; x.fill(); x.restore();
+    x.beginPath(); x.arc(cx, cy, r - 7, 0, 7); x.strokeStyle = 'rgba(255,255,255,.55)'; x.lineWidth = 3; x.stroke();
+    x.fillStyle = '#fff'; x.textAlign = 'center'; x.font = "700 46px Prompt, 'IBM Plex Sans Thai', sans-serif"; x.fillText(String(n), cx, cy + 16);
+    x.fillStyle = lc || '#4a5a6a'; x.font = "600 22px 'IBM Plex Sans Thai', sans-serif"; x.fillText(label, cx, cy + r + 32);
+  }
   async function shareCard(info) {
-    // info: {name,g,age,cat,meet,date,med:[g,s,b],pts,rk,results:[{ev,time,place,nfin,medal,d}],logo}
+    // landscape certificate, A4 ratio
     try { await document.fonts.ready } catch (e) { }
-    const W = 1080, H = 1350, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
-    const gr = x.createLinearGradient(0, 0, W, H); gr.addColorStop(0, '#082d50'); gr.addColorStop(.55, '#0b4f8a'); gr.addColorStop(1, '#14b8c4');
-    x.fillStyle = gr; x.fillRect(0, 0, W, H);
-    // waves
-    x.globalAlpha = .08; x.strokeStyle = '#fff'; x.lineWidth = 18;
-    for (let k = 0; k < 5; k++) { x.beginPath(); for (let i = 0; i <= W; i += 10) x.lineTo(i, 1180 + k * 40 + Math.sin(i / 70 + k) * 16); x.stroke() }
-    x.globalAlpha = 1;
+    const W = 1754, H = 1240, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
     const F = (w, s) => `${w} ${s}px Prompt, 'IBM Plex Sans Thai', sans-serif`, T = (w, s) => `${w} ${s}px 'IBM Plex Sans Thai', sans-serif`;
-    try { const lg = await loadImg(info.logo || 'logo.png'); x.drawImage(lg, 60, 52, 110, 110) } catch (e) { }
-    x.fillStyle = '#fff'; x.font = F(700, 44); x.fillText('ทีมว่ายน้ำ ศรีอรุโณทัย', 190, 105);
-    x.font = T(500, 28); x.globalAlpha = .85; x.fillText(info.meet || '', 190, 148); x.globalAlpha = 1;
-    // photo
-    const cx = W / 2, cy = 380, R = 150;
-    x.save(); x.beginPath(); x.arc(cx, cy, R + 10, 0, 7); x.fillStyle = 'rgba(255,255,255,.9)'; x.fill(); x.restore();
-    x.save(); x.beginPath(); x.arc(cx, cy, R, 0, 7); x.clip();
-    if (PH[info.name]) { try { const im = await loadImg(PH[info.name]); x.drawImage(im, cx - R, cy - R, R * 2, R * 2) } catch (e) { } }
-    else { const g2 = x.createLinearGradient(cx - R, cy - R, cx + R, cy + R); g2.addColorStop(0, info.g === 'F' ? '#f08bb8' : '#5aa2ee'); g2.addColorStop(1, info.g === 'F' ? '#b93374' : '#1f5fb8'); x.fillStyle = g2; x.fillRect(cx - R, cy - R, R * 2, R * 2); x.fillStyle = '#fff'; x.font = F(700, 110); x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(initials(info.name), cx, cy + 6); x.textAlign = 'left'; x.textBaseline = 'alphabetic' }
+    const ST = info.style || 'B', DARK = ST === 'B', SPLIT = ST === 'C';
+    const NAVY = DARK ? '#f6e7b8' : '#0b3a66', GOLD = DARK ? '#d9b25a' : '#c99a2e', INK = DARK ? '#e8eef5' : '#33475b', MUT = DARK ? '#b9c6d4' : '#4a5a6a', ACC = DARK ? '#7fd3ff' : '#0e7ac4';
+    // paper
+    let g = x.createLinearGradient(0, 0, W, H); if (DARK) { g.addColorStop(0, '#071f3a'); g.addColorStop(.6, '#0b3a66'); g.addColorStop(1, '#0e5a8a') } else { g.addColorStop(0, '#fffdf7'); g.addColorStop(1, '#eef6fb') } x.fillStyle = g; x.fillRect(0, 0, W, H);
+    if (SPLIT) { g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#0b4f8a'); g.addColorStop(1, '#14b8c4'); x.fillStyle = g; x.beginPath(); x.moveTo(0, 0); x.lineTo(640, 0); x.bezierCurveTo(560, 400, 700, 800, 600, H); x.lineTo(0, H); x.closePath(); x.fill() }
+    // water waves bottom
+    for (let k = 0; k < 4; k++) { x.beginPath(); x.moveTo(0, H); for (let i = 0; i <= W; i += 8) x.lineTo(i, H - 120 + k * 26 + Math.sin(i / 90 + k * 1.3) * 14); x.lineTo(W, H); x.closePath();
+      x.fillStyle = ['rgba(20,184,196,.10)', 'rgba(14,122,196,.10)', 'rgba(11,79,138,.10)', 'rgba(11,58,102,.12)'][k]; x.fill() }
+    // frame
+    if (!SPLIT) { x.strokeStyle = DARK ? '#d9b25a' : NAVY; x.lineWidth = 16; rr(x, 34, 34, W - 68, H - 68, 26); x.stroke() }
+    if (!SPLIT) { x.strokeStyle = GOLD; x.lineWidth = 3; rr(x, 62, 62, W - 124, H - 124, 16); x.stroke();
+    x.lineWidth = 1.5; rr(x, 72, 72, W - 144, H - 144, 12); x.stroke() }
+    // corner ornaments
+    (SPLIT ? [] : [[72, 72, 1, 1], [W - 72, 72, -1, 1], [72, H - 72, 1, -1], [W - 72, H - 72, -1, -1]]).forEach(([ox, oy, sx, sy]) => {
+      x.save(); x.translate(ox, oy); x.scale(sx, sy); x.strokeStyle = GOLD; x.lineWidth = 3;
+      for (let k = 0; k < 3; k++) { x.beginPath(); x.arc(0, 0, 40 + k * 16, 0, Math.PI / 2); x.stroke() } x.restore() });
+    // logos
+    try { const lg = await loadImg(info.logo || 'logo.png'); x.save(); x.shadowColor = 'rgba(0,0,0,.15)'; x.shadowBlur = 12; x.drawImage(lg, SPLIT ? 235 : 120, SPLIT ? 70 : 105, SPLIT ? 150 : 170, SPLIT ? 150 : 170); x.restore() } catch (e) { }
+    try { const ml = await loadImg('meet-logo.png'); const mw = SPLIT ? 260 : 330, mh = mw * ml.height / ml.width; SPLIT ? x.drawImage(ml, 1180 - mw / 2, 882, mw, mh) : x.drawImage(ml, W - 120 - mw, 92, mw, mh) } catch (e) { }
+    // heading
+    x.textAlign = 'center'; const CX = SPLIT ? 1180 : W / 2;
+    x.fillStyle = ACC; x.font = T(600, 30); x.fillText('ชมรมว่ายน้ำโรงเรียนศรีอรุโณทัย', CX, 150);
+    x.fillStyle = NAVY; x.font = F(700, 78); x.fillText('ประกาศนียบัตร', CX, 238);
+    x.strokeStyle = GOLD; x.lineWidth = 3; x.beginPath(); x.moveTo(CX - 230, 268); x.lineTo(CX - 30, 268); x.moveTo(CX + 30, 268); x.lineTo(CX + 230, 268); x.stroke();
+    x.save(); x.translate(CX, 268); x.rotate(Math.PI / 4); x.fillStyle = GOLD; x.fillRect(-8, -8, 16, 16); x.restore();
+    x.fillStyle = MUT; x.font = T(500, 30); x.fillText('มอบให้ไว้เพื่อแสดงว่า', CX, 325);
+    // photo (left)
+    const PX = SPLIT ? 310 : 330, PY = SPLIT ? 440 : 600, PR = SPLIT ? 180 : 165;
+    x.save(); x.beginPath(); x.arc(PX, PY, PR + 14, 0, 7); g = x.createLinearGradient(PX - PR, PY - PR, PX + PR, PY + PR); g.addColorStop(0, '#f3d27a'); g.addColorStop(1, '#b8861f'); x.fillStyle = g; x.shadowColor = 'rgba(0,0,0,.2)'; x.shadowBlur = 18; x.fill(); x.restore();
+    x.save(); x.beginPath(); x.arc(PX, PY, PR, 0, 7); x.clip();
+    if (PH[info.name]) { try { const im = await loadImg(PH[info.name]); x.drawImage(im, PX - PR, PY - PR, PR * 2, PR * 2) } catch (e) { } }
+    else { g = x.createLinearGradient(PX - PR, PY - PR, PX + PR, PY + PR); g.addColorStop(0, info.g === 'F' ? '#f08bb8' : '#5aa2ee'); g.addColorStop(1, info.g === 'F' ? '#b93374' : '#1f5fb8'); x.fillStyle = g; x.fillRect(PX - PR, PY - PR, PR * 2, PR * 2); x.fillStyle = '#fff'; x.font = F(700, 120); x.textBaseline = 'middle'; x.fillText(initials(info.name), PX, PY + 8); x.textBaseline = 'alphabetic' }
     x.restore();
-    x.textAlign = 'center'; x.fillStyle = '#fff'; x.font = F(700, 64); x.fillText(info.name, cx, 610);
-    x.font = T(500, 32); x.globalAlpha = .9; x.fillText(info.cat || '', cx, 660); x.globalAlpha = 1;
-    // medals + points
-    const boxes = [['🥇', info.med[0]], ['🥈', info.med[1]], ['🥉', info.med[2]], ['⭐', info.pts || 0]];
-    const bw = 200, gap = 22, bx0 = (W - (bw * 4 + gap * 3)) / 2;
-    boxes.forEach(([e, n], i) => { const bx = bx0 + i * (bw + gap); x.fillStyle = 'rgba(255,255,255,.14)'; rr(x, bx, 700, bw, 120, 26); x.fill(); x.font = T(400, 52); x.fillStyle = '#fff'; x.fillText(e, bx + 62, 782); x.font = F(700, 54); x.fillText(String(n), bx + 140, 782) });
-    if (info.rk) { x.font = F(700, 34); x.fillStyle = info.rk <= 6 ? '#ffd23f' : '#fff'; x.fillText(`${info.rk <= 6 ? '🏆 ' : ''}อันดับ ${info.rk} คะแนนสะสมรุ่น${info.catShort || ''}`, cx, 878) }
-    // results
-    x.textAlign = 'left';
-    const rs = (info.results || []).slice(0, 5); let y = 905;
-    x.fillStyle = 'rgba(255,255,255,.95)'; rr(x, 60, y, W - 120, Math.max(1, rs.length) * 62 + 30, 26); x.fill();
-    y += 56;
-    if (!rs.length) { x.fillStyle = '#5d7084'; x.font = T(500, 30); x.fillText('รอผลการแข่งขัน', 100, y) }
-    rs.forEach(r => {
-      x.fillStyle = '#0d2236'; x.font = T(600, 31); x.fillText(r.ev, 100, y);
-      x.textAlign = 'right'; x.font = F(700, 34); x.fillText(r.time, W - 250, y);
-      x.font = T(600, 28); x.fillStyle = '#5d7084'; x.fillText(r.place, W - 100, y); x.textAlign = 'left';
-      if (r.medal) { x.font = T(400, 34); x.fillText(r.medal, W - 240, y) }
-      y += 62;
-    });
-    x.textAlign = 'center'; x.fillStyle = 'rgba(255,255,255,.85)'; x.font = T(500, 26); x.fillText(info.date || '', cx, H - 40);
+    // name + text (right block)
+    const RX = SPLIT ? 1180 : 1060, RW = SPLIT ? 980 : 1060;
+    x.fillStyle = DARK ? '#ffffff' : '#0b3a66'; x.font = F(700, 86); let ns = 86; while (x.measureText(info.name).width > RW && ns > 50) { ns -= 4; x.font = F(700, ns) } x.fillText(info.name, RX, 425);
+    x.fillStyle = ACC; x.font = T(600, 32); x.fillText(`นักกีฬารุ่น${info.catL || ''} · ทีมว่ายน้ำศรีอรุโณทัย`, RX, 475);
+    x.fillStyle = INK; x.font = T(500, 28);
+    let y = 530; wrap(x, `ได้เข้าร่วม${info.meet || ''}`, RW - 40).forEach(l => { x.fillText(l, RX, y); y += 40 });
+    if (info.dates) { x.fillText(info.dates, RX, y); y += 40 }
+    // achievements
+    y += 20; const discs = [['เหรียญทอง', info.med[0], '#ffe07a', '#c8901a'], ['เหรียญเงิน', info.med[1], '#eef2f6', '#8b98a6'], ['เหรียญทองแดง', info.med[2], '#f3b58a', '#9a5525']];
+    const n = discs.length + 1;
+    if (SPLIT) { const gx = [200, 420], gy = [760, 930]; discs.concat([['คะแนนสะสม', info.pts || 0, '#8fb2ff', '#3546b5']]).forEach((d, i) => { disc(x, gx[i % 2], gy[Math.floor(i / 2)], 50, d[2], d[3], '', d[1]); x.fillStyle = '#fff'; x.font = T(600, 22); x.textAlign = 'center'; x.fillText(d[0], gx[i % 2], gy[Math.floor(i / 2)] + 82) }); y += 10 }
+    else { const gap = 190, x0 = RX - gap * (n - 1) / 2;
+      discs.forEach((d, i) => disc(x, x0 + i * gap, y + 46, 46, d[2], d[3], d[0], d[1], MUT));
+      disc(x, x0 + 3 * gap, y + 46, 46, '#8fb2ff', '#3546b5', 'คะแนนสะสม', info.pts || 0, MUT); y += 160 }
+    if (info.rk) { x.textAlign = 'center'; x.fillStyle = info.rk <= 6 ? (DARK ? '#ffd23f' : '#8a6300') : MUT; x.font = F(700, 30); x.fillText(`${info.rk <= 6 ? '🏆 ' : ''}อันดับ ${info.rk} คะแนนสะสมรุ่น${info.catL || ''}${info.prov ? ' (ระหว่างแข่ง)' : ''}`, RX, y); y += 20 }
+    // best results (two columns)
+    const rs = (info.results || []).slice(0, 6);
+    if (rs.length) { y += 34; const colW = SPLIT ? 440 : 450, cols = rs.length > 3 ? 2 : 1, rows = Math.ceil(rs.length / cols), bx = RX - (cols * colW + (cols - 1) * 30) / 2;
+      x.fillStyle = 'rgba(255,255,255,.85)'; rr(x, bx - 24, y - 14, cols * colW + (cols - 1) * 30 + 48, rows * 42 + 24, 18); x.fill(); x.strokeStyle = 'rgba(11,58,102,.12)'; x.lineWidth = 2; x.stroke();
+      rs.forEach((r, i) => { const cx0 = bx + Math.floor(i / rows) * (colW + 30), yy = y + 24 + (i % rows) * 42;
+        x.textAlign = 'left'; x.fillStyle = '#0d2236'; x.font = T(600, 24); x.fillText(r.ev, cx0, yy);
+        x.textAlign = 'right'; x.font = F(700, 25); x.fillText(r.time, cx0 + colW - 100, yy); x.fillStyle = '#5d7084'; x.font = T(500, 22); x.fillText(r.place, cx0 + colW, yy) });
+      x.textAlign = 'center' }
+    // signatures
+    const SY = H - 150;
+    (SPLIT ? [[930, 'หัวหน้าผู้ฝึกสอน'], [1430, 'ประธานชมรมว่ายน้ำฯ']] : [[W * .22, 'หัวหน้าผู้ฝึกสอน'], [W * .78, 'ประธานชมรมว่ายน้ำโรงเรียนศรีอรุโณทัย']]).forEach(([sx, t]) => {
+      x.strokeStyle = '#8a98a8'; x.lineWidth = 1.5; x.setLineDash([6, 6]); x.beginPath(); x.moveTo(sx - 190, SY); x.lineTo(sx + 190, SY); x.stroke(); x.setLineDash([]);
+      x.fillStyle = MUT; x.font = T(500, 22); x.textAlign = 'center'; x.fillText(t, sx, SY + 34) });
+    x.fillStyle = DARK ? '#8fa6bd' : '#8a98a8'; x.font = T(400, 18); x.fillText('ข้อมูลผลการแข่งขันจากใบผลทางการของการแข่งขัน · จัดทำโดยชมรมเพื่อเป็นที่ระลึก', CX, H - 82);
     const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', .92));
-    const url = URL.createObjectURL(blob), file = new File([blob], `SSC-${info.name.split(' ')[0]}.jpg`, { type: 'image/jpeg' });
+    const url = URL.createObjectURL(blob), file = new File([blob], `SSC-ประกาศนียบัตร-${info.name.split(' ')[0]}.jpg`, { type: 'image/jpeg' });
     const ov = document.createElement('div'); ov.className = 'crop-ov card-ov';
     const canShare = navigator.canShare && navigator.canShare({ files: [file] });
-    ov.innerHTML = `<h3>การ์ดแชร์ ${esc(info.name)}</h3><img class="card-img" src="${url}" alt="">
+    ov.innerHTML = `<h3>ประกาศนียบัตร ${esc(info.name)}</h3><img class="card-img" src="${url}" alt="">
       <div class="crop-hint">${canShare ? 'กด "แชร์" เพื่อส่งเข้าไลน์/เฟซบุ๊ก หรือบันทึกลงคลังรูป' : 'กดค้างที่รูปเพื่อบันทึก หรือกด "ดาวน์โหลด"'}${PH[info.name] ? '' : '<br>💡 เพิ่มรูปน้องได้โดยแตะที่รูปโปรไฟล์'}</div>
       <div class="crop-btns"><button class="no">ปิด</button>${canShare ? '<button class="ok sh">แชร์</button>' : `<a class="ok" style="flex:1;text-align:center;border-radius:12px;padding:12px;font-weight:700;background:#14b8c4;color:#062033;text-decoration:none" href="${url}" download="${file.name}">ดาวน์โหลด</a>`}</div>`;
     document.body.appendChild(ov);
