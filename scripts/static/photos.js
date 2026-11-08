@@ -138,8 +138,14 @@
 
   function pickFile() {
     return new Promise(res => {
+      // iOS Safari only fires 'change' reliably when the input is attached to the document
       const i = document.createElement('input'); i.type = 'file'; i.accept = 'image/*';
-      i.onchange = () => res(i.files && i.files[0]); i.click();
+      i.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
+      document.body.appendChild(i);
+      const done = f => { i.remove(); res(f) };
+      i.addEventListener('change', () => done(i.files && i.files[0]), { once: true });
+      i.addEventListener('cancel', () => done(null), { once: true });
+      i.click();
     });
   }
   function loadImg(src) { return new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = src }) }
@@ -148,7 +154,7 @@
     const has = !!PH[name];
     const f = await pickFile(); if (!f) return;
     const url = URL.createObjectURL(f); let im;
-    try { im = await loadImg(url) } catch (e) { URL.revokeObjectURL(url); return }
+    try { im = await loadImg(url) } catch (e) { URL.revokeObjectURL(url); toast('เปิดรูปนี้ไม่ได้ ลองเลือกรูปอื่น (JPG/PNG)'); return }
     const ov = document.createElement('div'); ov.className = 'crop-ov';
     ov.innerHTML = `<h3>ครอปรูป ${esc(name)}</h3><div class="crop-stage"><canvas width="640" height="640"></canvas><div class="crop-mask"></div></div>
       <input type="range" class="crop-zoom" min="1" max="4" step="0.01" value="1" aria-label="ซูม">
