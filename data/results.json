@@ -53271,5 +53271,212 @@
 },
 "printed": "2026-11-08T16:57",
 "unparsed": []
+},
+"204": {
+"ev": 204,
+"rows": [
+{
+"pl": 1,
+"team": "Psu Swimming Center",
+"rel": "A",
+"seed": "NT",
+"fin": "1:11.84",
+"rec": "NR",
+"name": "Psu Swimming Center A",
+"raw": "1 Psu Swimming Center A NT 1:11.84#",
+"swimmers": "1) ภาสกร สร้างเสริมความดี (8) 2) ภัทรกฤช อินทสระ (9) 3) พชรพล มูลเจริญ (8) 4) อนาวิน นิลพรหม (8)"
+},
+{
+"pl": 2,
+"team": "Hatyai Swimming Club",
+"rel": "A",
+"seed": "NT",
+"fin": "1:13.19",
+"name": "Hatyai Swimming Club A",
+"raw": "2 Hatyai Swimming Club A NT 1:13.19",
+"swimmers": "1) จักรี สัตบุตร (8) 2) ปลื้มปิติ จันทสุวรรณ์ (9) 3) เฌอลัล สุขแก่น (7) 4) ภัชเฌอปินก์ เพชรคง (9)"
+},
+{
+"pl": 3,
+"team": "KP White Shark",
+"rel": "A",
+"seed": "NT",
+"fin": "1:15.75",
+"name": "KP White Shark A",
+"raw": "3 KP White Shark A NT 1:15.75",
+"swimmers": "1) อนุชิต ถนอมศักดิ์ (9) 2) จิรัฎฐ์ ทองบาง (9) 3) กิตติพงศ์ ส่องแสง (9) 4) กรกฤต วรรณชิต (8)"
+},
+{
+"pl": 4,
+"team": "Sriarunothai Swimming Club",
+"rel": "A",
+"seed": "NT",
+"fin": "1:15.77",
+"name": "Sriarunothai Swimming Club A",
+"raw": "4 Sriarunothai Swimming Club A NT 1:15.77",
+"swimmers": "1) ชะวโรจน์ ชัยชิตาทร (9) 2) นราวิชญ์ จรรยาเลิศ (7) 3) ณัฏฐหฤษฎ์ สิงห์ทอง (8) 4) กันทรากร จรรยาเลิศ (9)"
+},
+{
+"pl": 5,
+"team": "Piyapat",
+"rel": "A",
+"seed": "NT",
+"fin": "1:28.08",
+"name": "Piyapat A",
+"raw": "5 Piyapat A NT 1:28.08",
+"swimmers": "1) ศิรวิชญ์ เข็มทอง (8) 2) ตุนณพัฒน์ ศรีจันทร์เพ็ชร (8) 3) นันทวัฒน์ ธรรมสุวรรน์ (9) 4) เอกพิชัย ยอดสุรางค์ (9)"
+},
+{
+"pl": 6,
+"team": "Poka Swim",
+"rel": "A",
+"seed": "NT",
+"fin": "1:54.28",
+"name": "Poka Swim A",
+"raw": "6 Poka Swim A NT 1:54.28",
+"swimmers": "1) กัณณศักดิ์ ขอค้า (8) 2) ชนสิษฎ์ บูชากร (8) 3) ธนกฤต ช่วยบำรุง (7) 4) อัครวินท์ ดุลพินิจพัฒนา (8)"
+},
+{
+"pl": null,
+"team": "Phuket Swimming Club",
+"rel": "A",
+"seed": "NT",
+"fin": "DQ",
+"name": "Phuket Swimming Club A",
+"raw": "--- Phuket Swimming Club A NT DQ 1:13.23",
+"swimmers": "1) เมธพนธ์ จุลอมร (9) 2) ชินทาโร่ โอนารุ (9) 3) ธีรภัทร สุวรรณมณี (9) 4) เมธชัย จุลอมร (9)"
+}
+],
+"rec": null,
+"printed": "2026-11-08T17:14",
+"unparsed": []
+},
+"205": {
+"ev": 205,
+"rows": [
+{
+"pl": 1,
+"team": "Psu Swimming Center",
+"rel": "A",
+"seed": "NT",
+"fin": "1:03.57",
+"name": "Psu Swimming Center A",
+"raw": "1 Psu Swimming Center A NT 1:03.57",
+"swimmers": "1) ปภังกร จินดาพล (11) 2) กษิดิศ ดีพันธ์ (10) 3) ธีร์ชย โกวิทยา (10) 4) นภัสรพี ขุนทอง (11)"
+},
+{
+"pl": 2,
+"team": "Joy to Swim",
+"rel": "A",
+"seed": "NT",
+"fin": "1:05.44",
+"name": "Joy to Swim A",
+"raw": "2 Joy to Swim A NT 1:05.44",
+"swimmers": "1) อภิวิชญ์ การวิจิตร (11) 2) ปุณณวิช สมพงศ์ (9) 3) พุทธิวัฒน์ ชาญกล (11) 4) นภวัต เพ็ชรกุล (11)"
+},
+{
+"pl": 3,
+"team": "Sriarunothai Swimming Club",
+"rel": "A",
+"seed": "NT",
+"fin": "1:07.63",
+"name": "Sriarunothai Swimming Club A",
+"raw": "3 Sriarunothai Swimming Club A NT 1:07.63",
+"swimmers": "1) วชิรวิชญ์ วัฒนสุภิญโญ (10) 2) จักรภัทร ศรีสำเนียม (11) 3) เกรียงไกร ขอนแก่น (10) 4) กรณ์ศรันย์ จิตต์อารี (10)"
+},
+{
+"pl": 4,
+"team": "Piyapat",
+"rel": "A",
+"seed": "NT",
+"fin": "1:07.84",
+"name": "Piyapat A",
+"raw": "4 Piyapat A NT 1:07.84",
+"swimmers": "1) ณัฐภัทร ยศถา (8) 2) อติวิชญ์ ราชนุช (11) 3) จิรายุ วิ่งสุข (10) 4) นภัทร ศรีชาย (9)"
+},
+{
+"pl": 5,
+"team": "Trang Municipality",
+"rel": "A",
+"seed": "NT",
+"fin": "1:08.56",
+"name": "Trang Municipality A",
+"raw": "5 Trang Municipality A NT 1:08.56",
+"swimmers": "1) ธันวา . 11 2) จารุวิทย์ ดิสโร (11) 3) เบญจมินทร์ นิโคลัส แบร์รี่ (10) 4) วิชญะ วิวัฒนานนท์ (11)"
+},
+{
+"pl": 6,
+"team": "Takuapa Swimming",
+"rel": "A",
+"seed": "NT",
+"fin": "1:09.06",
+"name": "Takuapa Swimming A",
+"raw": "6 Takuapa Swimming A NT 1:09.06",
+"swimmers": "1) ทศวรรษ จิรัฏฐ์ชยธร (11) 2) คณิน เชื้อไทย (11) 3) ธัญเทพ เทพณรงค์ (9) 4) พิชาภพ แก้วลอย (11)"
+},
+{
+"pl": 7,
+"team": "Tinnasulanon Songkhla SC",
+"rel": "A",
+"seed": "NT",
+"fin": "1:09.67",
+"name": "Tinnasulanon Songkhla SC A",
+"raw": "7 Tinnasulanon Songkhla SC A NT 1:09.67",
+"swimmers": "1) ธนกฤต คำมณี (10) 2) นภัทร ชำนาญ (10) 3) อธิวรา พงษ์ศกร (8) 4) ตุลย์ณวัฒน์ รัตนโนดม (10)"
+},
+{
+"pl": 8,
+"team": "Phatthalung Swimming Club",
+"rel": "A",
+"seed": "NT",
+"fin": "1:10.22",
+"name": "Phatthalung Swimming Club A",
+"raw": "8 Phatthalung Swimming Club A NT 1:10.22",
+"swimmers": "1) ณฐภัทร จันทรัตน์ (10) 2) กันตพล ชีวมงคลกานต์ (10) 3) พัทลุง เสนีย์ (9) 4) นิธาน ทักษิณธรรม (10)"
+},
+{
+"pl": 9,
+"team": "Songkhla Province SC",
+"rel": "A",
+"seed": "NT",
+"fin": "1:14.21",
+"name": "Songkhla Province SC A",
+"raw": "9 Songkhla Province SC A NT 1:14.21",
+"swimmers": "1) ณัฏฐกิตติ์ ไตรจุฑากาญจน์ (11) 2) พชร กลํ่ามาก (10) 3) อิทธิพัทธ์ นุ้ยกุล (10) 4) ณัฐ์ธชนพงศ์ สุวรรณโณ (11)"
+},
+{
+"pl": 10,
+"team": "Poka Swim",
+"rel": "A",
+"seed": "NT",
+"fin": "1:22.25",
+"name": "Poka Swim A",
+"raw": "10 Poka Swim A NT 1:22.25",
+"swimmers": "1) หัสดิน เพชรรัก (10) 2) กรรจศักดิ์ ขอค้า (10) 3) พชรดนัย หง้าฝา (10) 4) เอไลจา วิลล่า พงศ์พัลลภ (10)"
+},
+{
+"pl": null,
+"team": "Tankun Swimming Club Ran",
+"rel": "A",
+"seed": "NT",
+"fin": "DQ",
+"name": "Tankun Swimming Club Ran A",
+"raw": "--- Tankun Swimming Club Ran A NT DQ 1:21.09",
+"swimmers": "1) พงศ์พิพัฒน์ พันธรักษ์ (11) 2) พิภัช เพ็ชรเจริญ (10) 3) ธชย เฉยกลาง (10) 4) กรกฎ จันทร์บูรณะศิริ (9)"
+},
+{
+"pl": null,
+"team": "Tinnasulanon Songkhla SC",
+"rel": "B",
+"seed": "NT",
+"fin": "DQ",
+"name": "Tinnasulanon Songkhla SC B",
+"raw": "--- Tinnasulanon Songkhla SC B NT DQ 1:40.44",
+"swimmers": "1) พีรวิชญ์ บุญญามณี (10) 2) ธนัญชัย ตรีแก้ว (7) 3) พุทธคุณ คำหอม (10) 4) ปัณณวิชญ์ คงหนู (10)"
+}
+],
+"rec": null,
+"printed": "2026-11-08T17:13",
+"unparsed": []
 }
 }
