@@ -288,7 +288,14 @@
     (SPLIT ? [[930, 'หัวหน้าผู้ฝึกสอน'], [1430, 'ประธานชมรมว่ายน้ำฯ']] : [[W * .22, 'หัวหน้าผู้ฝึกสอน'], [W * .78, 'ประธานชมรมว่ายน้ำโรงเรียนศรีอรุโณทัย']]).forEach(([sx, t]) => {
       x.strokeStyle = '#8a98a8'; x.lineWidth = 1.5; x.setLineDash([6, 6]); x.beginPath(); x.moveTo(sx - 190, SY); x.lineTo(sx + 190, SY); x.stroke(); x.setLineDash([]);
       x.fillStyle = MUT; x.font = T(500, 22); x.textAlign = 'center'; x.fillText(t, sx, SY + 34) });
-    x.fillStyle = DARK ? '#8fa6bd' : '#8a98a8'; x.font = T(400, 18); x.fillText('ข้อมูลผลการแข่งขันจากใบผลทางการของการแข่งขัน · จัดทำโดยชมรมเพื่อเป็นที่ระลึก', CX, H - 82);
+    // organiser credit (small, bottom centre) — club certificate, not an official one
+    { const sz = 58, gy = H - 205; x.font = T(500, 19);
+      const l1 = 'การแข่งขันจัดโดย องค์การบริหารส่วนจังหวัดกระบี่', l2 = 'สนามแข่งขัน โรงเรียนโภคาพาณิชย์นุกูลมูลนิธิ';
+      const tw = Math.max(x.measureText(l1).width, x.measureText(l2).width), gw = sz * 2 + 10 + 18 + tw, gx = CX - gw / 2;
+      let k = 0;
+      for (const f of ['seal-pao.png', 'seal-school.png']) { try { const im = await loadImg(f); x.save(); x.shadowColor = 'rgba(0,0,0,.25)'; x.shadowBlur = 6; x.drawImage(im, gx + k * (sz + 10), gy, sz, sz); x.restore() } catch (e) { } k++ }
+      x.textAlign = 'left'; x.fillStyle = MUT; x.fillText(l1, gx + sz * 2 + 28, gy + 24); x.fillText(l2, gx + sz * 2 + 28, gy + 50); x.textAlign = 'center' }
+    x.fillStyle = DARK ? '#8fa6bd' : '#8a98a8'; x.font = T(400, 18); x.fillText('ข้อมูลผลการแข่งขันจากใบผลทางการ · ใบประกาศนี้จัดทำโดยชมรมว่ายน้ำโรงเรียนศรีอรุโณทัยเพื่อเป็นที่ระลึก', CX, H - 82);
     const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', .92));
     const url = URL.createObjectURL(blob), file = new File([blob], `SSC-ประกาศนียบัตร-${info.name.split(' ')[0]}.jpg`, { type: 'image/jpeg' });
     if (closed) { URL.revokeObjectURL(url); return }
