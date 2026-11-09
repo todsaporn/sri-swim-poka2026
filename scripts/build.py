@@ -104,7 +104,7 @@ for k, v in RES.items():
 # rule 16: ages 7-11 get medals per heat (last column), ages 12-14 per event place 1-3 (G/S/B column)
 def medal_of(h, ev):
     age = int(re.match(r'\d+', ev['age'])[0]) if re.match(r'\d+', ev['age']) else 0
-    if ev['relay']: return (h['pl'] - 1) if h.get('pl') and h['pl'] <= 3 else None
+    if ev['relay']: return (h['hpl'] - 1) if h.get('hpl') and h['hpl'] <= 3 else None   # relays (all ≤11 ปี): medal by heat place
     if age >= 12: return {'G': 0, 'S': 1, 'B': 2}.get(h.get('pod'))
     return {'ทอง': 0, 'เงิน': 1, 'ทองแดง': 2}.get(h['lv'])
 nres = 0
@@ -116,6 +116,17 @@ for r in races:
     hit = next((o for o in er['our'] if norm(o['n']) == key), None)
     if not hit and r.get('relay'):
         hit = next((o for o in er['our'] if o['n'].strip().endswith(' ' + r['relay']) or o['n'].strip().endswith(r['relay'])), None)
+    if hit and r.get('relay') and hit.get('pl'):
+        # relay results have no heat-place column -> derive from finish times of teams in the same heat
+        rows_ = RES.get(str(r['ev']), {}).get('rows', [])
+        def tfin(nm):
+            k = re.sub(r'[^a-z]', '', nm.lower())
+            for x in rows_:
+                kk = re.sub(r'[^a-z]', '', (x.get('team', '') + x.get('rel', '')).lower())
+                base = k[:-1]
+                if kk and kk[-1:] == k[-1:] and kk[:-1].startswith(base[:min(10, len(base))]): return secs(x.get('fin'))
+        mine_t = secs(hit['f']); others = [tfin(x['n']) for x in heats.get(f"{r['ev']}-{r['heat']}", []) if not x['me']]
+        if mine_t: hit = dict(hit, hpl=1 + sum(1 for t in others if t and t < mine_t))
     if hit:
         nres += 1
         r['res'] = dict(pl=hit['pl'], f=hit['f'], pts=hit['pts'], why=hit['why'], nfin=er['nfin'], lv=medal_of(hit, events[r['ev']]), nr=hit['nr'], sw=hit.get('sw', []), whyth=dq_th(hit['why'], hit.get('sw', []), events[r['ev']]), hpl=hit.get('hpl'), ht=hit.get('ht'))
