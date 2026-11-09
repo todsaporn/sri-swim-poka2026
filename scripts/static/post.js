@@ -323,47 +323,85 @@
   const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
   function toast(t) { const d = document.createElement('div'); d.textContent = t; d.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#0d2236;color:#fff;padding:10px 16px;border-radius:12px;z-index:500;font:600 14px IBM Plex Sans Thai,sans-serif;box-shadow:0 6px 20px rgba(0,0,0,.3);max-width:90vw;text-align:center'; document.body.appendChild(d); setTimeout(() => d.remove(), 2800) }
 
-  async function open(name) {
-    fonts();
+  function shell() {
     const ov = document.createElement('div'); ov.className = 'pf-ov'; document.body.appendChild(ov); document.body.style.overflow = 'hidden';
-    const close = () => { ov.remove(); document.body.style.overflow = '' };
-    ov.innerHTML = `<div class="pf-in"><h3>โพสต์แสดงความยินดี</h3><div><span class="pf-spin"></span>กำลังโหลด…</div><button class="pf-b x">ปิด</button></div>`;
+    const close = () => { ov.remove(); document.body.style.overflow = ''; listeners.forEach(f => f()) };
+    return [ov, close];
+  }
+  const listeners = [];
+  const prefix = i => (i.g === 'F' ? 'ด.ญ.' : 'ด.ช.') + i.disp;
+
+  // ---- profile information (class, profile photo, poster photo) with explicit save ----
+  async function editProfile(name, after) {
+    fonts();
+    const [ov, close] = shell();
+    ov.innerHTML = `<div class="pf-in"><h3>👤 ข้อมูลโปรไฟล์</h3><div><span class="pf-spin"></span>กำลังโหลด…</div><button class="pf-b x">ปิด</button></div>`;
     ov.querySelector('.x').onclick = close;
-    await ready; let cur = await postOf(name);
-    const info0 = gather(name);
-    const form = () => {
-      ov.innerHTML = `<div class="pf-in"><h3>📣 โพสต์แสดงความยินดี<br><span style="font-size:15px;opacity:.85">${esc((info0.g === 'F' ? 'ด.ญ.' : 'ด.ช.') + info0.disp)} · ${esc(info0.catL)}</span></h3>
-        <div><label>ชั้นเรียน (เว้นว่างได้ ถ้าไม่ต้องการแสดง)</label><input type="text" id="pf-cls" maxlength="16" placeholder="เช่น ป.5/1" value="${esc(clsOf(name))}"></div>
-        <div><label>รูปน้องสำหรับโพสต์ (รูปยืนเต็มตัว)</label><div class="pf-ph"><div class="pf-th">${cur ? `<img src="${cur}" alt="">` : '🧒'}</div>
-          <div style="display:flex;flex-direction:column;gap:6px;flex:1"><button class="pf-b gold" id="pf-pick">${cur ? 'เปลี่ยนรูป' : 'เลือกรูป'}</button>${cur ? '<button class="pf-b del" id="pf-del">ลบรูปนี้</button>' : ''}</div></div></div>
-        <div class="pf-hint">✨ <b>สวยที่สุด:</b> รูปตัดพื้นหลังแล้ว (PNG พื้นใส)<br>iPhone: เปิดรูปในแอปรูปภาพ → กดค้างที่ตัวน้องจนมีขอบเรืองแสง → <b>แชร์ → บันทึกภาพ</b> แล้วกลับมาเลือกรูปนั้น<br>รูปธรรมดาก็ใช้ได้ จะแสดงในกรอบมุมโค้ง · ถ้าไม่มีรูป จะใช้รูปโปรไฟล์หรือภาพแทน<br>ข้อมูลและรูปจะแชร์ให้ทุกเครื่องในแอปเห็น</div>
-        <div class="pf-row"><button class="pf-b x">ปิด</button><button class="pf-b ok" id="pf-go">สร้างโพสต์</button></div></div>`;
-      ov.querySelectorAll('.x').forEach(b => b.onclick = close);
-      ov.querySelector('#pf-pick').onclick = async () => { const f = await pickFile(); if (!f) return; const b = ov.querySelector('#pf-pick'); b.disabled = true; b.innerHTML = '<span class="pf-spin"></span>กำลังเตรียมรูป';
-        try { const u = await prepPhoto(f); const okc = await savePost(name, u); cur = u; toast(okc ? '✓ บันทึกรูปแล้ว' : '✓ บันทึกรูปไว้ในเครื่องนี้'); } catch (e) { toast('เปิดรูปนี้ไม่ได้ ลองรูปอื่น (JPG/PNG)') } form() };
-      const d = ov.querySelector('#pf-del'); if (d) d.onclick = async () => { await savePost(name, null); cur = null; toast('ลบรูปแล้ว'); form() };
-      ov.querySelector('#pf-go').onclick = async () => { const v = ov.querySelector('#pf-cls').value; await saveCls(name, v); result() };
+    await ready;
+    const info0 = gather(name), saved = await postOf(name);
+    let cls = clsOf(name), post = saved, dirty = false;
+    const prof = () => (window.Photos && Photos.get && Photos.get(name)) || null;
+    const draw = () => {
+      const pp = prof();
+      ov.innerHTML = `<div class="pf-in"><h3>👤 ข้อมูลโปรไฟล์<br><span style="font-size:15px;opacity:.85">${esc(prefix(info0))} · ${esc(info0.catL)}</span></h3>
+        <div><label>รูปโปรไฟล์ (วงกลม ใช้ทั่วแอป)</label><div class="pf-ph"><div class="pf-th" style="width:96px;height:96px;border-radius:50%">${pp ? `<img src="${pp}" alt="" style="width:100%;height:100%;object-fit:cover">` : '🙂'}</div>
+          <div style="flex:1"><button class="pf-b gold" id="pf-prof" style="width:100%">${pp ? 'เปลี่ยนรูปโปรไฟล์' : 'เพิ่มรูปโปรไฟล์'}</button></div></div></div>
+        <div><label>ชั้นเรียน (เว้นว่างได้ ถ้าไม่ต้องการแสดง)</label><input type="text" id="pf-cls" maxlength="16" placeholder="เช่น ป.5/1" value="${esc(cls)}"></div>
+        <div><label>รูปสำหรับโพสต์ Facebook (รูปยืนเต็มตัว)</label><div class="pf-ph"><div class="pf-th">${post ? `<img src="${post}" alt="">` : '🧒'}</div>
+          <div style="display:flex;flex-direction:column;gap:6px;flex:1"><button class="pf-b gold" id="pf-pick">${post ? 'เปลี่ยนรูป' : 'เลือกรูป'}</button>${post ? '<button class="pf-b del" id="pf-del">ลบรูปนี้</button>' : ''}</div></div></div>
+        <div class="pf-hint">✨ <b>สวยที่สุด:</b> รูปตัดพื้นหลังแล้ว (PNG พื้นใส)<br>iPhone: เปิดรูปในแอปรูปภาพ → กดค้างที่ตัวน้องจนมีขอบเรืองแสง → <b>แชร์ → บันทึกภาพ</b> แล้วกลับมาเลือกรูปนั้น<br>รูปธรรมดาก็ใช้ได้ จะแสดงในกรอบมุมโค้ง · ไม่มีรูป จะใช้รูปโปรไฟล์แทน<br>ข้อมูลเป็นของชมรม ใครก็แก้ให้กันได้ · บันทึกแล้วทุกเครื่องเห็น</div>
+        <div class="pf-row"><button class="pf-b x">ยกเลิก</button><button class="pf-b ok" id="pf-save">💾 บันทึก</button></div></div>`;
+      const ci = ov.querySelector('#pf-cls'); ci.oninput = () => { cls = ci.value; dirty = true };
+      ov.querySelector('.x').onclick = () => { if (dirty && !confirmLeave()) return; close() };
+      ov.querySelector('#pf-prof').onclick = () => { cls = ci.value; if (window.Photos) Photos.editPhoto(name) };
+      ov.querySelector('#pf-pick').onclick = async () => { cls = ci.value; const f = await pickFile(); if (!f) return; const b = ov.querySelector('#pf-pick'); b.disabled = true; b.innerHTML = '<span class="pf-spin"></span>กำลังเตรียมรูป';
+        try { post = await prepPhoto(f); dirty = true } catch (e) { toast('เปิดรูปนี้ไม่ได้ ลองรูปอื่น (JPG/PNG)') } draw() };
+      const d = ov.querySelector('#pf-del'); if (d) d.onclick = () => { cls = ci.value; post = null; dirty = true; draw() };
+      ov.querySelector('#pf-save').onclick = async () => {
+        cls = ci.value; const b = ov.querySelector('#pf-save'); b.disabled = true; b.innerHTML = '<span class="pf-spin"></span>กำลังบันทึก';
+        let okAll = true;
+        okAll = (await saveCls(name, cls)) && okAll;
+        if (post !== saved) okAll = (await savePost(name, post)) && okAll;
+        toast(okAll || !cloud ? '✓ บันทึกข้อมูลโปรไฟล์แล้ว' : '⚠️ บันทึกไว้ในเครื่องนี้ ยังไม่ขึ้นระบบ ลองใหม่ภายหลัง');
+        close(); if (after) after();
+      };
     };
-    const result = async () => {
-      ov.innerHTML = `<div class="pf-in"><h3>📣 โพสต์แสดงความยินดี</h3><div><span class="pf-spin"></span>กำลังสร้างภาพ…</div></div>`;
-      const info = gather(name), c = await render(info, await photoObj(cur));
-      const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', .92)), url = URL.createObjectURL(blob);
-      const file = new File([blob], `SSC-ยินดี-${info.disp.split(' ')[0]}.jpg`, { type: 'image/jpeg' }), cap = caption(info);
-      const canShare = !!(navigator.canShare && navigator.canShare({ files: [file] }));
-      ov.innerHTML = `<div class="pf-in"><h3>📣 ${esc((info.g === 'F' ? 'ด.ญ.' : 'ด.ช.') + info.disp)}</h3><img class="pf-img" src="${url}" alt="">
-        <div class="pf-row">${canShare ? '<button class="pf-b ok" id="pf-sh">แชร์รูป</button>' : ''}<a class="pf-b ${canShare ? '' : 'ok'}" style="text-align:center;text-decoration:none" href="${url}" download="${file.name}">ดาวน์โหลด</a></div>
-        <div><label>ข้อความสำหรับโพสต์</label><textarea class="pf-cap" id="pf-cap">${esc(cap)}</textarea></div>
-        <button class="pf-b" id="pf-copy">📋 คัดลอกข้อความ</button>
-        <div class="pf-hint">ขั้นตอนโพสต์: คัดลอกข้อความ → แชร์รูปเข้า Facebook → วางข้อความ</div>
-        <div class="pf-row"><button class="pf-b" id="pf-edit">✏️ แก้ชั้น/รูป</button><button class="pf-b x">ปิด</button></div></div>`;
-      ov.querySelector('.x').onclick = () => { URL.revokeObjectURL(url); close() };
-      ov.querySelector('#pf-edit').onclick = () => { URL.revokeObjectURL(url); form() };
-      ov.querySelector('#pf-copy').onclick = async () => { const t = ov.querySelector('#pf-cap').value; try { await navigator.clipboard.writeText(t); toast('✓ คัดลอกข้อความแล้ว') } catch (e) { const ta = ov.querySelector('#pf-cap'); ta.select(); document.execCommand('copy'); toast('✓ คัดลอกแล้ว') } };
-      const sh = ov.querySelector('#pf-sh'); if (sh) sh.onclick = async () => { try { await navigator.clipboard.writeText(ov.querySelector('#pf-cap').value) } catch (e) { } navigator.share({ files: [file] }).catch(() => { }) };
-    };
-    form();
+    const confirmLeave = () => confirm('ยังไม่ได้บันทึก ต้องการปิดหรือไม่?');
+    // refresh the profile-photo thumbnail after the crop dialog saves
+    if (window.Photos) Photos.onChange(() => { if (document.body.contains(ov)) draw() });
+    draw();
   }
 
-  document.addEventListener('click', e => { const b = e.target.closest('[data-post]'); if (!b) return; e.preventDefault(); e.stopPropagation(); open(b.dataset.post) }, true);
-  window.Post = { open, render, gather, caption, _photo: photoObj };
+  // ---- poster: rendered straight away, like the old certificate ----
+  async function showPost(name) {
+    fonts();
+    const [ov, close] = shell();
+    ov.innerHTML = `<div class="pf-in"><h3>📣 โพสต์แสดงความยินดี</h3><div><span class="pf-spin"></span>กำลังสร้างภาพ…</div><button class="pf-b x">ปิด</button></div>`;
+    let closed = false; ov.querySelector('.x').onclick = () => { closed = true; close() };
+    await ready;
+    const info = gather(name), c = await render(info, await photoObj(await postOf(name)));
+    if (closed) return;
+    const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', .92)), url = URL.createObjectURL(blob);
+    const file = new File([blob], `SSC-ยินดี-${info.disp.split(' ')[0]}.jpg`, { type: 'image/jpeg' }), cap = caption(info);
+    const canShare = !!(navigator.canShare && navigator.canShare({ files: [file] }));
+    const miss = [!info.cls && 'ชั้นเรียน', !POST[name] && 'รูปเต็มตัว'].filter(Boolean);
+    ov.innerHTML = `<div class="pf-in"><h3>📣 ${esc(prefix(info))}</h3><img class="pf-img" src="${url}" alt="">
+      ${miss.length ? `<div class="pf-hint">💡 ยังไม่มี${miss.join('และ')} — เพิ่มได้ที่ <b>👤 ข้อมูลโปรไฟล์</b></div>` : ''}
+      <div class="pf-row">${canShare ? '<button class="pf-b ok" id="pf-sh">แชร์รูป</button>' : ''}<a class="pf-b ${canShare ? '' : 'ok'}" style="text-align:center;text-decoration:none" href="${url}" download="${file.name}">ดาวน์โหลด</a></div>
+      <div><label>ข้อความสำหรับโพสต์</label><textarea class="pf-cap" id="pf-cap">${esc(cap)}</textarea></div>
+      <button class="pf-b" id="pf-copy">📋 คัดลอกข้อความ</button>
+      <div class="pf-hint">ขั้นตอนโพสต์: คัดลอกข้อความ → แชร์รูปเข้า Facebook → วางข้อความ</div>
+      <div class="pf-row"><button class="pf-b" id="pf-edit">👤 ข้อมูลโปรไฟล์</button><button class="pf-b x">ปิด</button></div></div>`;
+    const done = () => { URL.revokeObjectURL(url); close() };
+    ov.querySelector('.x').onclick = done;
+    ov.querySelector('#pf-edit').onclick = () => { done(); editProfile(name, () => showPost(name)) };
+    ov.querySelector('#pf-copy').onclick = async () => { const t = ov.querySelector('#pf-cap').value; try { await navigator.clipboard.writeText(t); toast('✓ คัดลอกข้อความแล้ว') } catch (e) { const ta = ov.querySelector('#pf-cap'); ta.select(); document.execCommand('copy'); toast('✓ คัดลอกแล้ว') } };
+    const sh = ov.querySelector('#pf-sh'); if (sh) sh.onclick = async () => { try { await navigator.clipboard.writeText(ov.querySelector('#pf-cap').value) } catch (e) { } navigator.share({ files: [file] }).catch(() => { }) };
+  }
+
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-post]'), p = e.target.closest('[data-profile]'); if (!b && !p) return;
+    e.preventDefault(); e.stopPropagation(); b ? showPost(b.dataset.post) : editProfile(p.dataset.profile);
+  }, true);
+  window.Post = { open: showPost, showPost, editProfile, render, gather, caption, cls: clsOf, ready, onChange: f => listeners.push(f), _photo: photoObj };
 })();
