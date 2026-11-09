@@ -312,6 +312,6 @@
     e.preventDefault(); e.stopPropagation(); editPhoto(p.dataset.photo);
   }, true);
 
-  window.Photos = { avatar, editPhoto, shareCard, has: n => !!PH[n], onChange: f => listeners.push(f), sync: () => syncCloud() };
+  window.Photos = { avatar, editPhoto, shareCard, get: n => PH[n] || null, has: n => !!PH[n], onChange: f => listeners.push(f), sync: () => syncCloud() };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', loadAll); else setTimeout(loadAll, 0);
 })();

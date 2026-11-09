@@ -328,7 +328,7 @@ body.pulling .hero,body.pulling .next,body.pulling #medals{transition:none}
 
 <div class="ov" id="ov"><div class="sheet" id="sheet"></div></div>
 
-<script src="photos.js"></script>
+<script src="photos.js"></script><script src="post.js"></script>
 <script>
 const DATA=__DATA__;
 const EV=DATA.events, R=DATA.races, H=DATA.heats;
@@ -472,7 +472,7 @@ function openAth(n){const a=A[n];if(!a)return;
   $('#sheet').innerHTML=`<button class="x" onclick="closeOv()">×</button><div class="top" style="display:flex;gap:12px;align-items:center">${AV(a.name,a.g,64,{edit:true})}
   <div><h2>${esc(a.name)}</h2><div style="color:var(--mut);font-size:14px">${G[a.g]} · ${a.age} ปี · ${a.races.length} รายการ${a.med.some(x=>x)?' · '+a.med.map((n,i)=>n?MED[i]+n:'').join(' '):''}</div>${a.st.p?`<div style="font-weight:700;color:#3546b5;font-size:14px">⭐ ${a.st.p} คะแนน · อันดับ ${a.st.rk} ของรุ่น${a.catL}</div>`:''}</div></div>
   ${(o=>o?`<div class="olk ${o.cls}">🏆 ${o.txt}</div>`:'')(outlook(a))}
-  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><a href="summary.html?a=${encodeURIComponent(a.name)}" class="sumlink">📊 สรุปละเอียด + วิเคราะห์ ›</a><button class="sumlink" style="border:0;background:#14b8c4;color:#062033" data-card="${esc(a.name)}">📜 ประกาศนียบัตร</button></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><a href="summary.html?a=${encodeURIComponent(a.name)}" class="sumlink">📊 สรุปละเอียด + วิเคราะห์ ›</a><button class="sumlink" style="border:0;background:#14b8c4;color:#062033" data-post="${esc(a.name)}">📣 โพสต์แสดงความยินดี</button></div>
   ${(rs=>rs.length?`<div class="relmine"><b>🤝 ผลัด</b>${rs.map(r=>{const i=r.res.sw.indexOf(a.name),med=/ผสม/.test(r.e.stroke),L=['กรรเชียง','กบ','ผีเสื้อ','ฟรีสไตล์'];return `<div>D${r.day} ${r.e.stroke} ${r.e.age} · คนที่ ${i+1} (${med?L[i]:'ฟรีสไตล์'}) · ${r.res.pl?(r.res.lv!=null?MED[r.res.lv]+' ':'')+'อันดับ '+r.res.pl+'/'+r.res.nfin+' · '+esc(r.res.f):'<span style="color:#c0262d">DQ'+(r.res.whyth&&r.res.whyth.includes(a.name)?' (คนที่ถูกขานฟาวล์)':'')+'</span>'}</div>`}).join('')}</div>`:'')(rel.filter(r=>r.res&&r.res.sw&&r.res.sw.includes(a.name)))}
   <div class="tl">${a.races.map((r,i)=>`${i&&r.gap!=null&&a.races[i-1].day===r.day?`<div class="gap ${r.gap<TIGHT?'warn':''}">↓ พัก ${dur(r.gap)}</div>`:''}<div class="it"><button data-h="${r.ev}-${r.heat}">
    ${i===0||a.races[i-1].day!==r.day?(dayList.length>1?`<div style="font-size:12px;font-weight:700;color:var(--mut);margin-bottom:2px">${dLabel(r.day)}</div>`:''):''}<div style="display:flex;justify-content:space-between;gap:8px"><b class="disp" style="color:var(--pri)">${r.t} น.</b><span style="font-size:13px;color:var(--mut)">ฮีต ${r.heat}/${r.e.heats} · <b style="color:var(--ink)">ลู่ ${r.lane}</b></span></div>
