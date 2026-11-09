@@ -180,16 +180,15 @@
     { // "[swimmer] การแข่งขันว่ายน้ำ อบจ.กระบี่" as one centred unit, kept clear of the seals
       let k = 1; const unit = () => { x.font = K(800, 44 * k, 1); const a = x.measureText('การแข่งขันว่ายน้ำ').width; x.font = K(800, 72 * k, 1); const b = x.measureText('อบจ.กระบี่').width; return [a, b, 110 * k + a + 18 * k + b] };
       let [a, b, t] = unit(); while (t > 640 && k > .6) { k -= .03;[a, b, t] = unit() }
-      const x0 = CX - t / 2, by = 226; swimmer(x, x0 + 50 * k, by - 22 * k, 42 * k, '#1565c0');
+      const x0 = CX - t / 2, by = 196; swimmer(x, x0 + 50 * k, by - 22 * k, 42 * k, '#1565c0');
       x.textAlign = 'left'; x.fillStyle = NAVY; x.font = K(800, 44 * k, 1); x.fillText('การแข่งขันว่ายน้ำ', x0 + 110 * k, by);
       x.font = K(800, 72 * k, 1); g = x.createLinearGradient(0, by - 60, 0, by + 6); g.addColorStop(0, '#1e6fd8'); g.addColorStop(1, '#0a2f78');
       const bx = x0 + 110 * k + a + 18 * k; x.save(); x.lineWidth = 9; x.strokeStyle = '#fff'; x.lineJoin = 'round'; x.strokeText('อบจ.กระบี่', bx, by); x.restore(); x.fillStyle = g; x.fillText('อบจ.กระบี่', bx, by); x.textAlign = 'center' }
-    x.fillStyle = '#0d4fb0'; fit(x, 'SWIMMING CHAMPIONSHIP', 800, 46, 640, 1); x.fillText('SWIMMING CHAMPIONSHIP', CX, 278);
-    { const y = 296, w = 640; x.save(); x.shadowColor = 'rgba(0,0,0,.2)'; x.shadowBlur = 8; x.shadowOffsetY = 3; g = x.createLinearGradient(0, y, 0, y + 54); g.addColorStop(0, '#3dbb4f'); g.addColorStop(1, '#16803a'); x.fillStyle = g;
-      x.beginPath(); x.moveTo(CX - w / 2 + 18, y); x.lineTo(CX + w / 2 + 6, y); x.lineTo(CX + w / 2 - 18, y + 54); x.lineTo(CX - w / 2 - 6, y + 54); x.closePath(); x.fill(); x.restore();
-      x.fillStyle = '#fff'; fit(x, 'ชิงแชมป์ภาคใต้ ครั้งที่ 16 ประจำปี 2569', 800, 34, 590, 1); x.fillText('ชิงแชมป์ภาคใต้ ครั้งที่ 16 ประจำปี 2569', CX, y + 39) }
+    { const y = 214, w = 780, t = 'SWIMMING CHAMPIONSHIP · ชิงแชมป์ภาคใต้ ครั้งที่ 16 ประจำปี 2569'; x.save(); x.shadowColor = 'rgba(0,0,0,.2)'; x.shadowBlur = 8; x.shadowOffsetY = 3; g = x.createLinearGradient(0, y, 0, y + 48); g.addColorStop(0, '#3dbb4f'); g.addColorStop(1, '#16803a'); x.fillStyle = g;
+      x.beginPath(); x.moveTo(CX - w / 2 + 16, y); x.lineTo(CX + w / 2 + 6, y); x.lineTo(CX + w / 2 - 16, y + 48); x.lineTo(CX - w / 2 - 6, y + 48); x.closePath(); x.fill(); x.restore();
+      x.fillStyle = '#fff'; fit(x, t, 800, 28, w - 50, 1); x.fillText(t, CX, y + 34) }
     // date | venue, centred as one unit
-    { const y = 394, t1 = 'วันที่ 7-8 พฤศจิกายน 2569', t2 = 'สระว่ายน้ำ โรงเรียนโภคาพาณิชย์นุกูลมูลนิธิ จ.กระบี่';
+    { const y = 298, t1 = 'วันที่ 7-8 พฤศจิกายน 2569', t2 = 'สระว่ายน้ำ โรงเรียนโภคาพาณิชย์นุกูลมูลนิธิ จ.กระบี่';
       x.font = K(700, 23, 1); const w1 = x.measureText(t1).width; x.font = K(500, 20); const w2 = x.measureText(t2).width;
       const tot = 40 + w1 + 34 + 30 + w2, x0 = CX - tot / 2; x.textAlign = 'left';
       x.strokeStyle = NAVY; x.lineWidth = 3; rr(x, x0, y - 25, 30, 28, 5); x.stroke(); x.fillStyle = NAVY; x.fillRect(x0, y - 25, 30, 8); for (let i = 0; i < 3; i++) for (let j = 0; j < 2; j++) x.fillRect(x0 + 5 + i * 8, y - 12 + j * 7, 4, 4);
@@ -202,12 +201,15 @@
     const hasMed = info.medals.length > 0, head = hasMed ? 'รางวัลที่ได้' : 'รายการที่เข้าร่วมแข่งขัน';
     const rows = info.medals.map(m => ({ v: m.ev, lv: m.lv })).concat(info.part.map(d => ({ v: d.ev, p: 1 })));
     if (!rows.length) rows.push({ v: 'ร่วมแข่งขันด้วยความมุ่งมั่น' });
-    const cols = rows.length <= 3 ? 1 : rows.length <= 10 ? 2 : 3, nr = Math.ceil(rows.length / cols);
-    const troph = info.rk && info.rk <= 6, TOP = 430;
-    const rh = Math.min(cols === 1 ? 62 : 54, Math.max(40, (BOT - TOP - 520) / nr));
-    const listH = nr * rh + 24;
-    const rest = 64 + 12 + 80 + 14 + 54 + (troph ? 14 + 48 : 0) + 22 + 50 + 12 + listH;  // ribbon..list (ribbon overlaps circle)
-    let r = Math.max(80, Math.min(138, (BOT - TOP - rest - 16) / 2));
+    const cols = rows.length <= 3 ? 1 : rows.length <= 8 ? 2 : 3, nr = Math.ceil(rows.length / cols);
+    const troph = info.rk && info.rk <= 6, TOP = 318;
+    // the portrait gets the space first (target ≈ 1.5/4 of the poster height), the list adapts
+    const restNoList = 64 + 12 + 80 + 14 + 54 + (troph ? 14 + 48 : 0) + 22 + 50 + 12 + 24;
+    let r = 250, rh = cols === 1 ? 54 : 46;
+    const fitList = () => BOT - TOP - 16 - 2 * r - restNoList;
+    while (nr * rh > fitList() && r > 150) r -= 5;
+    while (nr * rh > fitList() && rh > 34) rh -= 1;
+    const listH = nr * rh + 24, rest = restNoList - 24 + listH;
     const used = 2 * r + 16 + rest, y0 = TOP + Math.max(0, (BOT - TOP - used) / 2);
     // portrait
     const cy = y0 + r + 8;
