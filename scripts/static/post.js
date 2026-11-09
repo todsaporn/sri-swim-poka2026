@@ -69,8 +69,9 @@
     const st = ((DATA.stand || {})[cat] || {}).our || {}, me = st[nrm(n)] || {};
     const all = ind.concat(rel).map(r => ({ r, e: EV[r.ev] }));
     const medals = all.filter(x => x.r.res && x.r.res.lv != null).sort((a, b) => a.r.res.lv - b.r.res.lv || a.e.relay - b.e.relay || a.r.ev - b.r.ev).map(x => ({ lv: x.r.res.lv, ev: evName(x.e) }));
+    const part = all.filter(x => !(x.r.res && x.r.res.lv != null)).sort((a, b) => a.r.ev - b.r.ev).map(x => ({ ev: evName(x.e) }));
     const done = ind.filter(r => r.res && r.res.pl).sort((a, b) => a.ev - b.ev).map(r => ({ pl: r.res.pl, ev: evName(EV[r.ev]), t: r.res.f }));
-    return { name: n, disp: dispName(n), g, catL: `รุ่น ${ageL(e0.age)}${G[g]}`, medals, done, rk: me.rk, cls: clsOf(n) };
+    return { name: n, disp: dispName(n), g, catL: `รุ่น ${ageL(e0.age)}${G[g]}`, medals, part, done, rk: me.rk, cls: clsOf(n) };
   }
 
   // ---------- fonts ----------
@@ -128,6 +129,98 @@
     x.restore();
   }
 
+  // ---------- centred layout (no full-body photo: round portrait in the middle) ----------
+  async function centered(x, info, W, H, NAVY, GREEN) {
+    const CX = W / 2; let g;
+    const footY = 1205, BOT = footY - 22;
+    // title: compact, centred
+    { // "[swimmer] การแข่งขันว่ายน้ำ อบจ.กระบี่" as one centred unit, kept clear of the seals
+      let k = 1; const unit = () => { x.font = K(800, 44 * k, 1); const a = x.measureText('การแข่งขันว่ายน้ำ').width; x.font = K(800, 72 * k, 1); const b = x.measureText('อบจ.กระบี่').width; return [a, b, 110 * k + a + 18 * k + b] };
+      let [a, b, t] = unit(); while (t > 640 && k > .6) { k -= .03;[a, b, t] = unit() }
+      const x0 = CX - t / 2, by = 226; swimmer(x, x0 + 50 * k, by - 22 * k, 42 * k, '#1565c0');
+      x.textAlign = 'left'; x.fillStyle = NAVY; x.font = K(800, 44 * k, 1); x.fillText('การแข่งขันว่ายน้ำ', x0 + 110 * k, by);
+      x.font = K(800, 72 * k, 1); g = x.createLinearGradient(0, by - 60, 0, by + 6); g.addColorStop(0, '#1e6fd8'); g.addColorStop(1, '#0a2f78');
+      const bx = x0 + 110 * k + a + 18 * k; x.save(); x.lineWidth = 9; x.strokeStyle = '#fff'; x.lineJoin = 'round'; x.strokeText('อบจ.กระบี่', bx, by); x.restore(); x.fillStyle = g; x.fillText('อบจ.กระบี่', bx, by); x.textAlign = 'center' }
+    x.fillStyle = '#0d4fb0'; fit(x, 'SWIMMING CHAMPIONSHIP', 800, 46, 640, 1); x.fillText('SWIMMING CHAMPIONSHIP', CX, 278);
+    { const y = 296, w = 640; x.save(); x.shadowColor = 'rgba(0,0,0,.2)'; x.shadowBlur = 8; x.shadowOffsetY = 3; g = x.createLinearGradient(0, y, 0, y + 54); g.addColorStop(0, '#3dbb4f'); g.addColorStop(1, '#16803a'); x.fillStyle = g;
+      x.beginPath(); x.moveTo(CX - w / 2 + 18, y); x.lineTo(CX + w / 2 + 6, y); x.lineTo(CX + w / 2 - 18, y + 54); x.lineTo(CX - w / 2 - 6, y + 54); x.closePath(); x.fill(); x.restore();
+      x.fillStyle = '#fff'; fit(x, 'ชิงแชมป์ภาคใต้ ครั้งที่ 16 ประจำปี 2569', 800, 34, 590, 1); x.fillText('ชิงแชมป์ภาคใต้ ครั้งที่ 16 ประจำปี 2569', CX, y + 39) }
+    // date | venue, centred as one unit
+    { const y = 394, t1 = 'วันที่ 7-8 พฤศจิกายน 2569', t2 = 'สระว่ายน้ำ โรงเรียนโภคาพาณิชย์นุกูลมูลนิธิ จ.กระบี่';
+      x.font = K(700, 23, 1); const w1 = x.measureText(t1).width; x.font = K(500, 20); const w2 = x.measureText(t2).width;
+      const tot = 40 + w1 + 34 + 30 + w2, x0 = CX - tot / 2; x.textAlign = 'left';
+      x.strokeStyle = NAVY; x.lineWidth = 3; rr(x, x0, y - 25, 30, 28, 5); x.stroke(); x.fillStyle = NAVY; x.fillRect(x0, y - 25, 30, 8); for (let i = 0; i < 3; i++) for (let j = 0; j < 2; j++) x.fillRect(x0 + 5 + i * 8, y - 12 + j * 7, 4, 4);
+      x.font = K(700, 23, 1); x.fillText(t1, x0 + 40, y);
+      const sx = x0 + 40 + w1 + 17; x.strokeStyle = '#8aa0b4'; x.lineWidth = 2; x.beginPath(); x.moveTo(sx, y - 26); x.lineTo(sx, y + 6); x.stroke();
+      const px = sx + 28; x.fillStyle = '#e0312b'; x.beginPath(); x.arc(px, y - 14, 10, Math.PI, 0); x.lineTo(px, y + 6); x.closePath(); x.fill(); x.fillStyle = '#fff'; x.beginPath(); x.arc(px, y - 14, 4, 0, 7); x.fill();
+      x.fillStyle = NAVY; x.font = K(500, 20); x.fillText(t2, px + 18, y); x.textAlign = 'center' }
+
+    // ---- measure the lower block ----
+    const hasMed = info.medals.length > 0, head = hasMed ? 'รางวัลที่ได้' : 'รายการที่เข้าร่วมแข่งขัน';
+    const rows = info.medals.map(m => ({ v: m.ev, lv: m.lv })).concat(info.part.map(d => ({ v: d.ev, t: 'เข้าร่วม' })));
+    if (!rows.length) rows.push({ v: 'ร่วมแข่งขันด้วยความมุ่งมั่น' });
+    const cols = rows.length <= 3 ? 1 : rows.length <= 10 ? 2 : 3, nr = Math.ceil(rows.length / cols);
+    const troph = info.rk && info.rk <= 6, TOP = 430;
+    const rh = Math.min(cols === 1 ? 62 : 54, Math.max(40, (BOT - TOP - 520) / nr));
+    const listH = nr * rh + 24;
+    const rest = 64 + 12 + 80 + 14 + 54 + (troph ? 14 + 48 : 0) + 22 + 50 + 12 + listH;  // ribbon..list (ribbon overlaps circle)
+    let r = Math.max(80, Math.min(138, (BOT - TOP - rest - 16) / 2));
+    const used = 2 * r + 16 + rest, y0 = TOP + Math.max(0, (BOT - TOP - used) / 2);
+    // portrait
+    const cy = y0 + r + 8;
+    const sunburst = () => { x.save(); x.translate(CX, cy); for (let k = 0; k < 24; k++) { x.rotate(Math.PI / 12); x.beginPath(); x.moveTo(0, 0); x.lineTo(r * 2.1, -r * .14); x.lineTo(r * 2.1, r * .14); x.closePath(); x.fillStyle = 'rgba(255,255,255,.22)'; x.fill() } x.restore() };
+    sunburst();
+    x.save(); x.shadowColor = 'rgba(0,30,70,.3)'; x.shadowBlur = 22; x.beginPath(); x.arc(CX, cy, r + 14, 0, 7); g = x.createLinearGradient(CX - r, cy - r, CX + r, cy + r); g.addColorStop(0, '#ffe58a'); g.addColorStop(.5, '#f2b51d'); g.addColorStop(1, '#b67c0c'); x.fillStyle = g; x.fill(); x.restore();
+    x.beginPath(); x.arc(CX, cy, r + 4, 0, 7); x.fillStyle = '#fff'; x.fill();
+    x.save(); x.beginPath(); x.arc(CX, cy, r, 0, 7); x.clip();
+    const prof = window.Photos && Photos.get && Photos.get(info.name); let ok = false;
+    if (prof) { try { const im = await loadImg(prof); x.drawImage(im, CX - r, cy - r, r * 2, r * 2); ok = true } catch (e) { } }
+    if (!ok) { g = x.createLinearGradient(CX - r, cy - r, CX + r, cy + r); g.addColorStop(0, info.g === 'F' ? '#f6a3c8' : '#6fb2f2'); g.addColorStop(1, info.g === 'F' ? '#c2407f' : '#1f5fb8'); x.fillStyle = g; x.fillRect(CX - r, cy - r, r * 2, r * 2); swimmer(x, CX, cy + 8, r * .5, 'rgba(255,255,255,.95)') }
+    x.restore();
+    laurel(x, CX - r - 46, cy + 10, r * .62, 1); laurel(x, CX + r + 46, cy + 10, r * .62, -1);
+    // congrats ribbon overlapping the portrait bottom
+    let y = cy + r - 26;
+    x.save(); x.shadowColor = 'rgba(120,70,0,.35)'; x.shadowBlur = 10; x.shadowOffsetY = 4; g = x.createLinearGradient(0, y, 0, y + 64); g.addColorStop(0, '#fff3b0'); g.addColorStop(.45, '#f6c637'); g.addColorStop(1, '#c98a0c'); x.fillStyle = g;
+    x.beginPath(); x.moveTo(CX - 250, y); x.lineTo(CX + 250, y); x.lineTo(CX + 228, y + 32); x.lineTo(CX + 250, y + 64); x.lineTo(CX - 250, y + 64); x.lineTo(CX - 228, y + 32); x.closePath(); x.fill(); x.restore();
+    x.fillStyle = '#7a1010'; x.font = K(800, 42, 1); x.fillText('ขอแสดงความยินดี', CX, y + 47);
+    // name bar (full width, centred)
+    y += 76; const nm = `${info.g === 'F' ? 'ด.ญ.' : 'ด.ช.'}${info.disp}`, NW = 760;
+    x.save(); x.shadowColor = 'rgba(0,20,60,.35)'; x.shadowBlur = 12; x.shadowOffsetY = 4; g = x.createLinearGradient(0, y, 0, y + 80); g.addColorStop(0, '#1f63c6'); g.addColorStop(1, '#0a2c72'); x.fillStyle = g;
+    x.beginPath(); x.moveTo(CX - NW / 2 + 24, y); x.lineTo(CX + NW / 2 + 6, y); x.lineTo(CX + NW / 2 - 24, y + 80); x.lineTo(CX - NW / 2 - 6, y + 80); x.closePath(); x.fill(); x.restore();
+    x.fillStyle = GREEN; [[-1], [1]].forEach(([k]) => { const ex = CX + k * (NW / 2 + 22); x.beginPath(); x.moveTo(ex - 8 + (k > 0 ? 6 : 24) - 14, y); x.lineTo(ex + 8 + (k > 0 ? 6 : 24) - 14, y); x.lineTo(ex + 8 - (k > 0 ? 24 : 6) + 14 - 14, y + 80); x.lineTo(ex - 8 - (k > 0 ? 24 : 6) + 14 - 14, y + 80); x.closePath(); x.fill() });
+    x.fillStyle = '#fff'; fit(x, nm, 800, 54, NW - 70, 1); x.fillText(nm, CX + 4, y + 57);
+    // pills
+    y += 94;
+    const pill = (cx, w, t, bg, fg) => { x.save(); x.shadowColor = 'rgba(0,30,70,.2)'; x.shadowBlur = 8; x.shadowOffsetY = 2; rr(x, cx - w / 2, y, w, 54, 27); x.fillStyle = bg; x.fill(); x.restore(); if (bg === '#fff') { x.strokeStyle = '#9cc7ec'; x.lineWidth = 2; rr(x, cx - w / 2, y, w, 54, 27); x.stroke() } x.fillStyle = fg; fit(x, t, 700, 32, w - 30, 0); x.fillText(t, cx, y + 38) };
+    g = x.createLinearGradient(0, y, 0, y + 54); g.addColorStop(0, '#36b54c'); g.addColorStop(1, '#16803a');
+    if (info.cls) { pill(CX - 160, 290, `ชั้น ${info.cls}`, '#fff', NAVY); pill(CX + 160, 290, info.catL, g, '#fff') } else pill(CX, 380, info.catL, g, '#fff');
+    y += 54;
+    if (troph) { y += 14; const t = `ถ้วยนักกีฬายอดเยี่ยมประเภทบุคคล อันดับที่ ${info.rk}`; x.font = K(700, 26); const tw = x.measureText(t).width + 90;
+      x.save(); x.shadowColor = 'rgba(120,70,0,.3)'; x.shadowBlur = 8; g = x.createLinearGradient(0, y, 0, y + 48); g.addColorStop(0, '#fff7cf'); g.addColorStop(1, '#ffe07a'); x.fillStyle = g; rr(x, CX - tw / 2, y, tw, 48, 24); x.fill(); x.restore();
+      x.strokeStyle = '#d9a520'; x.lineWidth = 2; rr(x, CX - tw / 2, y, tw, 48, 24); x.stroke(); trophy(x, CX - tw / 2 + 34, y + 21, 20); x.fillStyle = '#7a4b00'; x.fillText(t, CX + 22, y + 33); y += 48 }
+    // section header: thin rules + title
+    y += 22; x.font = K(800, 38, 1); const hw = x.measureText(head).width;
+    x.strokeStyle = GREEN; x.lineWidth = 3; x.beginPath(); x.moveTo(CX - hw / 2 - 210, y + 24); x.lineTo(CX - hw / 2 - 62, y + 24); x.moveTo(CX + hw / 2 + 30, y + 24); x.lineTo(CX + hw / 2 + 178, y + 24); x.stroke();
+    trophy(x, CX - hw / 2 - 30, y + 22, 22); x.fillStyle = '#14783a'; x.fillText(head, CX + 0, y + 38);
+    if (hasMed) { const cnt = [0, 0, 0]; info.medals.forEach(m => cnt[m.lv]++); }
+    y += 50 + 12;
+    // award grid
+    const GW = cols === 1 ? 640 : 920, cw = GW / cols, gx = CX - GW / 2;
+    x.save(); x.shadowColor = 'rgba(0,40,90,.16)'; x.shadowBlur = 14; rr(x, gx - 14, y, GW + 28, listH, 24); x.fillStyle = 'rgba(255,255,255,.85)'; x.fill(); x.restore();
+    x.strokeStyle = 'rgba(80,150,220,.45)'; x.lineWidth = 2; rr(x, gx - 14, y, GW + 28, listH, 24); x.stroke();
+    const fs = Math.min(cols === 3 ? 25 : 30, rh * .55), mr = Math.min(rh * .32, 20);
+    rows.forEach((it, i) => {
+      const row = Math.floor(i / cols), inRow = Math.min(cols, rows.length - row * cols), col = i % cols;
+      const off = (cols - inRow) * cw / 2, cx0 = gx + off + col * cw, ry = y + 12 + row * rh;
+      g = x.createLinearGradient(cx0, 0, cx0 + cw, 0); g.addColorStop(0, 'rgba(225,240,255,.95)'); g.addColorStop(1, 'rgba(255,255,255,.45)'); rr(x, cx0 + 6, ry + 4, cw - 12, rh - 8, (rh - 8) / 2); x.fillStyle = g; x.fill();
+      const mx = cx0 + 18 + mr; if (it.lv != null) medal(x, mx, ry + rh / 2 - mr * .15, mr, it.lv); else { x.beginPath(); x.arc(mx, ry + rh / 2, mr, 0, 7); x.fillStyle = '#1f63c6'; x.fill(); swimmer(x, mx, ry + rh / 2 + mr * .1, mr * .62, '#fff') }
+      x.textAlign = 'left'; const tx = mx + mr + 12; x.font = K(500, fs * .72); const maxw = cx0 + cw - 16 - tx - (it.t ? x.measureText(it.t).width + 16 : 0);
+      x.fillStyle = it.lv === 0 ? '#7a5200' : it.lv === 1 ? '#2f4560' : it.lv === 2 ? '#7a3e14' : '#10233f'; fit(x, it.v, 700, fs, maxw, 0); x.fillText(it.v, tx, ry + rh / 2 + fs * .36);
+      if (it.t) { x.textAlign = 'right'; x.fillStyle = '#4f7fb8'; x.font = K(500, fs * .72); x.fillText(it.t, cx0 + cw - 22, ry + rh / 2 + fs * .3) }
+      x.textAlign = 'center';
+    });
+  }
+
   async function render(info, photo) {
     await fonts();
     const W = 1080, H = 1350, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
@@ -157,6 +250,8 @@
     x.font = K(700, 46); const hw = x.measureText('โรงเรียนศรีอรุโณทัย จังหวัดระนอง').width / 2 + 18;
     [W / 2 - hw, W / 2 + hw].forEach(px => { x.strokeStyle = GREEN; x.lineWidth = 3; x.beginPath(); x.moveTo(px, 50); x.lineTo(px, 100); x.stroke() });
 
+    const FULL = !!(photo && photo.im), footY = 1205;
+    if (!FULL) { await centered(x, info, W, H, NAVY, GREEN) } else {
     // meet title (right column)
     swimmer(x, RC - 262, 214, 52, '#1565c0');
     x.fillStyle = NAVY; fit(x, 'การแข่งขันว่ายน้ำ', 800, 52, 330, 1); x.textAlign = 'left'; x.fillText('การแข่งขันว่ายน้ำ', RC - 178, 226);
@@ -179,9 +274,9 @@
       x.fillStyle = NAVY; x.font = K(500, 19); x.fillText('สระว่ายน้ำ โรงเรียนโภคาพาณิชย์นุกูล', 774, y - 8); x.fillText('มูลนิธิ อำเภอเมือง จังหวัดกระบี่', 774, y + 18); x.textAlign = 'center' }
 
     // ---- layout of lower block (computed first so it can be centred) ----
-    const footY = 1205, TOP = 540, BOT = footY - 22;
-    const hasMed = info.medals.length > 0, head = hasMed ? 'รางวัลที่ได้ :' : 'ผลงานการแข่งขัน :';
-    const rows = hasMed ? info.medals.map(m => ({ k: LV[m.lv], v: m.ev, lv: m.lv })) : info.done.slice(0, 7).map(d => ({ k: d.ev, v: d.t, pl: 0 }));
+    const TOP = 540, BOT = footY - 22;
+    const hasMed = info.medals.length > 0, head = hasMed ? 'รางวัลที่ได้ :' : 'รายการที่เข้าร่วม :';
+    const rows = info.medals.map(m => ({ k: LV[m.lv], v: m.ev, lv: m.lv })).concat(info.part.map(d => ({ k: 'เข้าร่วม', v: d.ev, pl: 0 })));
     if (!rows.length) rows.push({ k: 'ร่วมแข่งขัน :', v: 'ด้วยความมุ่งมั่นตั้งใจ', pl: 0 });
     const troph = info.rk && info.rk <= 6;
     const fixedH = 74 + 18 + 84 + 20 + 56 + 18 + (troph ? 64 : 0) + 62 + 16;
@@ -254,10 +349,12 @@
       if (r.lv != null) medal(x, x0 + 20 + mr, ry + rh / 2 - mr * .15, mr, r.lv);
       else { x.beginPath(); x.arc(x0 + 20 + mr, ry + rh / 2, mr, 0, 7); x.fillStyle = '#1f63c6'; x.fill(); x.fillStyle = '#fff'; x.font = K(700, mr * 1.1); swimmer(x, x0 + 20 + mr, ry + rh / 2 + mr * .1, mr * .62, '#fff') }
       x.textAlign = 'left'; const tx = x0 + 34 + mr * 2; let vx = tx;
-      if (cols === 1) { x.fillStyle = r.lv === 0 ? '#9a6a00' : r.lv === 1 ? '#3a4f6b' : r.lv === 2 ? '#8a4a1d' : NAVY; x.font = K(800, fs, 1); x.fillText(r.k + (r.lv != null ? ' :' : ''), tx, ry + rh / 2 + fs * .36); vx = r.lv != null ? tx + kw + 18 : tx + x.measureText(r.k).width + 24 }
-      x.fillStyle = '#10233f'; fit(x, r.v, cols > 1 ? 700 : 500, fs, x0 + cw - 18 - vx); x.fillText(r.v, vx, ry + rh / 2 + fs * .36); x.textAlign = 'center';
+      if (cols === 1) { x.fillStyle = r.lv === 0 ? '#9a6a00' : r.lv === 1 ? '#3a4f6b' : r.lv === 2 ? '#8a4a1d' : NAVY; x.font = K(800, fs, 1); x.fillText(r.k + ' :', tx, ry + rh / 2 + fs * .36); vx = tx + kw + 18 }
+      let tagW = 0; if (cols > 1 && r.lv == null) { x.font = K(500, fs * .72); tagW = x.measureText('เข้าร่วม').width + 12; x.textAlign = 'right'; x.fillStyle = '#4f7fb8'; x.fillText('เข้าร่วม', x0 + cw - 20, ry + rh / 2 + fs * .3); x.textAlign = 'left' }
+      x.fillStyle = '#10233f'; fit(x, r.v, cols > 1 ? 700 : 500, fs, x0 + cw - 18 - vx - tagW); x.fillText(r.v, vx, ry + rh / 2 + fs * .36); x.textAlign = 'center';
     });
 
+    }
     // footer band
     swoosh(x, [0, footY, 300, footY - 50, 700, footY + 40, W, footY - 30, W, footY - 30, W, footY - 30, W, H, W, H, W, H, 0, H, 0, H, 0, H], '#a6e08a', '#a6e08a', footY, H);
     swoosh(x, [0, footY + 20, 320, footY - 25, 720, footY + 55, W, footY - 5, W, footY - 5, W, footY - 5, W, H, W, H, W, H, 0, H, 0, H, 0, H], '#35b04a', '#0f6e30', footY, H);
@@ -271,7 +368,7 @@
     const nm = `${i.g === 'F' ? 'ด.ญ.' : 'ด.ช.'}${i.disp}`, cnt = [0, 0, 0]; i.medals.forEach(m => cnt[m.lv]++);
     const lines = [`🎉 ขอแสดงความยินดีกับ ${nm}${i.cls ? ' ชั้น ' + i.cls : ''} ${i.catL}`, '', 'การแข่งขันว่ายน้ำ อบจ.กระบี่ SWIMMING CHAMPIONSHIP ชิงแชมป์ภาคใต้ ครั้งที่ 16 ประจำปี 2569', '📅 7–8 พฤศจิกายน 2569 · 📍 สระว่ายน้ำ โรงเรียนโภคาพาณิชย์นุกูลมูลนิธิ จ.กระบี่', ''];
     if (i.medals.length) { lines.push(`🏅 รางวัลที่ได้ ${['🥇', '🥈', '🥉'].map((e, k) => cnt[k] ? `${e}${cnt[k]}` : '').filter(Boolean).join(' ')}`); i.medals.forEach(m => lines.push(`${['🥇', '🥈', '🥉'][m.lv]} ${LV[m.lv]} ${m.ev}`)) }
-    else { lines.push('🏊 ผลงานการแข่งขัน'); i.done.slice(0, 7).forEach(d => lines.push(`• ${d.ev}  ${d.t}`)) }
+    if (i.part.length) { lines.push('', '🏊 รายการที่เข้าร่วมแข่งขัน'); i.part.forEach(d => lines.push(`• ${d.ev}`)) }
     if (i.rk && i.rk <= 6) lines.push(`🏆 ถ้วยนักกีฬายอดเยี่ยมประเภทบุคคล อันดับที่ ${i.rk} ${i.catL}`);
     lines.push('', 'ชมรมว่ายน้ำโรงเรียนศรีอรุโณทัย (SSC)', '#SSC #ศรีอรุโณทัย #ว่ายน้ำ');
     return lines.join('\n');
