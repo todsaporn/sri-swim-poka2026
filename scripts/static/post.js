@@ -178,12 +178,12 @@
     const footY = 1205, BOT = footY - 22;
     // title: compact, centred
     { // "[swimmer] การแข่งขันว่ายน้ำ อบจ.กระบี่" as one centred unit, kept clear of the seals
-      let k = 1; const unit = () => { x.font = K(800, 44 * k, 1); const a = x.measureText('การแข่งขันว่ายน้ำ').width; x.font = K(800, 72 * k, 1); const b = x.measureText('อบจ.กระบี่').width; return [a, b, 110 * k + a + 18 * k + b] };
+      let k = 1; const unit = () => { x.font = K(800, 46 * k, 1); const a = x.measureText('การแข่งขันว่ายน้ำ').width; x.font = K(800, 46 * k, 1); const b = x.measureText('อบจ.กระบี่').width; return [a, b, 110 * k + a + 18 * k + b] };
       let [a, b, t] = unit(); while (t > 640 && k > .6) { k -= .03;[a, b, t] = unit() }
       const x0 = CX - t / 2, by = 196; swimmer(x, x0 + 50 * k, by - 22 * k, 42 * k, '#1565c0');
-      x.textAlign = 'left'; x.fillStyle = NAVY; x.font = K(800, 44 * k, 1); x.fillText('การแข่งขันว่ายน้ำ', x0 + 110 * k, by);
-      x.font = K(800, 72 * k, 1); g = x.createLinearGradient(0, by - 60, 0, by + 6); g.addColorStop(0, '#1e6fd8'); g.addColorStop(1, '#0a2f78');
-      const bx = x0 + 110 * k + a + 18 * k; x.save(); x.lineWidth = 9; x.strokeStyle = '#fff'; x.lineJoin = 'round'; x.strokeText('อบจ.กระบี่', bx, by); x.restore(); x.fillStyle = g; x.fillText('อบจ.กระบี่', bx, by); x.textAlign = 'center' }
+      x.textAlign = 'left'; x.fillStyle = NAVY; x.font = K(800, 46 * k, 1); x.fillText('การแข่งขันว่ายน้ำ', x0 + 110 * k, by);
+      x.font = K(800, 46 * k, 1); g = x.createLinearGradient(0, by - 40, 0, by + 6); g.addColorStop(0, '#1e6fd8'); g.addColorStop(1, '#0a2f78');
+      const bx = x0 + 110 * k + a + 18 * k; x.save(); x.lineWidth = 6; x.strokeStyle = '#fff'; x.lineJoin = 'round'; x.strokeText('อบจ.กระบี่', bx, by); x.restore(); x.fillStyle = g; x.fillText('อบจ.กระบี่', bx, by); x.textAlign = 'center' }
     { const y = 214, w = 780, t = 'SWIMMING CHAMPIONSHIP · ชิงแชมป์ภาคใต้ ครั้งที่ 16 ประจำปี 2569'; x.save(); x.shadowColor = 'rgba(0,0,0,.2)'; x.shadowBlur = 8; x.shadowOffsetY = 3; g = x.createLinearGradient(0, y, 0, y + 48); g.addColorStop(0, '#3dbb4f'); g.addColorStop(1, '#16803a'); x.fillStyle = g;
       x.beginPath(); x.moveTo(CX - w / 2 + 16, y); x.lineTo(CX + w / 2 + 6, y); x.lineTo(CX + w / 2 - 16, y + 48); x.lineTo(CX - w / 2 - 6, y + 48); x.closePath(); x.fill(); x.restore();
       x.fillStyle = '#fff'; fit(x, t, 800, 28, w - 50, 1); x.fillText(t, CX, y + 34) }
