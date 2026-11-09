@@ -157,7 +157,7 @@
 
     // ---- measure the lower block ----
     const hasMed = info.medals.length > 0, head = hasMed ? 'รางวัลที่ได้' : 'รายการที่เข้าร่วมแข่งขัน';
-    const rows = info.medals.map(m => ({ v: m.ev, lv: m.lv })).concat(info.part.map(d => ({ v: d.ev, t: 'เข้าร่วม' })));
+    const rows = info.medals.map(m => ({ v: m.ev, lv: m.lv })).concat(info.part.map(d => ({ v: d.ev, p: 1 })));
     if (!rows.length) rows.push({ v: 'ร่วมแข่งขันด้วยความมุ่งมั่น' });
     const cols = rows.length <= 3 ? 1 : rows.length <= 10 ? 2 : 3, nr = Math.ceil(rows.length / cols);
     const troph = info.rk && info.rk <= 6, TOP = 430;
@@ -349,8 +349,8 @@
       if (r.lv != null) medal(x, x0 + 20 + mr, ry + rh / 2 - mr * .15, mr, r.lv);
       else { x.beginPath(); x.arc(x0 + 20 + mr, ry + rh / 2, mr, 0, 7); x.fillStyle = '#1f63c6'; x.fill(); x.fillStyle = '#fff'; x.font = K(700, mr * 1.1); swimmer(x, x0 + 20 + mr, ry + rh / 2 + mr * .1, mr * .62, '#fff') }
       x.textAlign = 'left'; const tx = x0 + 34 + mr * 2; let vx = tx;
-      if (cols === 1) { x.fillStyle = r.lv === 0 ? '#9a6a00' : r.lv === 1 ? '#3a4f6b' : r.lv === 2 ? '#8a4a1d' : NAVY; x.font = K(800, fs, 1); x.fillText(r.k + ' :', tx, ry + rh / 2 + fs * .36); vx = tx + kw + 18 }
-      let tagW = 0; if (cols > 1 && r.lv == null) { x.font = K(500, fs * .72); tagW = x.measureText('เข้าร่วม').width + 12; x.textAlign = 'right'; x.fillStyle = '#4f7fb8'; x.fillText('เข้าร่วม', x0 + cw - 20, ry + rh / 2 + fs * .3); x.textAlign = 'left' }
+      if (cols === 1 && r.lv != null) { x.fillStyle = r.lv === 0 ? '#9a6a00' : r.lv === 1 ? '#3a4f6b' : r.lv === 2 ? '#8a4a1d' : NAVY; x.font = K(800, fs, 1); x.fillText(r.k + ' :', tx, ry + rh / 2 + fs * .36); vx = tx + kw + 18 }
+      const tagW = 0;
       x.fillStyle = '#10233f'; fit(x, r.v, cols > 1 ? 700 : 500, fs, x0 + cw - 18 - vx - tagW); x.fillText(r.v, vx, ry + rh / 2 + fs * .36); x.textAlign = 'center';
     });
 
