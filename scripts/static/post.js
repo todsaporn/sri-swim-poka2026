@@ -282,7 +282,7 @@
     await seal('seal-sri.png', 92, 92, 50, true); await seal('logo.png', 210, 92, 50, false);
     x.save(); x.shadowColor = 'rgba(0,8,25,.95)'; x.shadowBlur = 14;
     x.textAlign = 'right'; x.fillStyle = WHITE; x.font = K(800, 30, 1); x.fillText('อบจ.กระบี่ SWIMMING CHAMPIONSHIP', W - 50, 78);
-    x.fillStyle = CY; x.font = K(500, 22); x.fillText('ชิงแชมป์ภาคใต้ ครั้งที่ 16 · 7–8 พ.ย. 2569 · จ.กระบี่', W - 50, 112); x.fillText('ชิงแชมป์ภาคใต้ ครั้งที่ 16 · 7–8 พ.ย. 2569 · จ.กระบี่', W - 50, 112); x.restore();
+    x.fillStyle = CY; x.font = K(500, 22); x.fillText('ชิงแชมป์ภาคใต้ ครั้งที่ 16 · 7–8 พ.ย. 2569 · จ.กระบี่', W - 50, 112); x.restore();
     x.fillStyle = 'rgba(255,255,255,.18)'; x.fillRect(50, 160, W - 100, 2);
 
     // photo (right)
