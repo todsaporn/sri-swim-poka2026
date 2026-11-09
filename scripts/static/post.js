@@ -125,7 +125,13 @@
   const loadImg = src => new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = src });
 
   // ---------- photo crop (zoom / pan) per poster variant ----------
-  let CROP = [1, 0, 0], SLOT = null;
+  let CROP = [1, 0, 0], SLOT = null, CIRC = null;
+  // round portrait on the poster: the poster photo if there is one, otherwise the app profile photo
+  async function circleImg(info) {
+    if (CIRC) return CIRC;
+    const prof = window.Photos && Photos.get && Photos.get(info.name);
+    if (prof) { try { return await loadImg(prof) } catch (e) { } } return null;
+  }
   function drawCrop(x, im, sx, sy, sw, sh, ay) {
     const [z, dx, dy] = CROP, b = Math.max(sw / im.width, sh / im.height) * z, w = im.width * b, h = im.height * b;
     x.drawImage(im, sx + (sw - w) / 2 + dx * sw, sy + (sh - h) * (ay == null ? .5 : ay) + dy * sh, w, h); SLOT = { w: sw, h: sh };
@@ -241,8 +247,8 @@
     x.save(); x.shadowColor = 'rgba(0,30,70,.3)'; x.shadowBlur = 22; x.beginPath(); x.arc(CX, cy, r + 14, 0, 7); g = x.createLinearGradient(CX - r, cy - r, CX + r, cy + r); g.addColorStop(0, '#ffe58a'); g.addColorStop(.5, '#f2b51d'); g.addColorStop(1, '#b67c0c'); x.fillStyle = g; x.fill(); x.restore();
     x.beginPath(); x.arc(CX, cy, r + 4, 0, 7); x.fillStyle = '#fff'; x.fill();
     x.save(); x.beginPath(); x.arc(CX, cy, r, 0, 7); x.clip();
-    const prof = window.Photos && Photos.get && Photos.get(info.name); let ok = false;
-    if (prof) { try { const im = await loadImg(prof); drawCrop(x, im, CX - r, cy - r, r * 2, r * 2); ok = true } catch (e) { } }
+    let ok = false; const cim = await circleImg(info);
+    if (cim) { g = x.createLinearGradient(CX, cy - r, CX, cy + r); g.addColorStop(0, '#e9f7ff'); g.addColorStop(1, '#9fd6f5'); x.fillStyle = g; x.fillRect(CX - r, cy - r, r * 2, r * 2); drawCrop(x, cim, CX - r, cy - r, r * 2, r * 2); ok = true }
     if (!ok) { g = x.createLinearGradient(CX - r, cy - r, CX + r, cy + r); g.addColorStop(0, info.g === 'F' ? '#f6a3c8' : '#6fb2f2'); g.addColorStop(1, info.g === 'F' ? '#c2407f' : '#1f5fb8'); x.fillStyle = g; x.fillRect(CX - r, cy - r, r * 2, r * 2); swimmer(x, CX, cy + 8, r * .5, 'rgba(255,255,255,.95)') }
     x.restore();
     laurel(x, CX - r - 46, cy + 10, r * .62, 1); laurel(x, CX + r + 46, cy + 10, r * .62, -1);
@@ -292,7 +298,7 @@
 
   // ---------- style B: dark "athlete card" (navy / cyan / gold) ----------
   async function renderB(info, photo, opts) {
-    opts = opts || {}; await fonts(); CROP = opts.crop || [1, 0, 0]; SLOT = null;
+    opts = opts || {}; await fonts(); CROP = opts.crop || [1, 0, 0]; SLOT = null; CIRC = (photo && photo.im) || null;
     if (opts.only === 'medal' && info.medals.length) info = Object.assign({}, info, { part: [] });
     const W = 1080, H = 1350, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
     const CY = '#26d0f0', GOLD = '#f6c945', WHITE = '#ffffff', FULL = !!(photo && photo.im) && opts.layout !== 'center';
@@ -326,8 +332,8 @@
       for (let k = 3; k >= 1; k--) { x.beginPath(); x.arc(PCX, cy, r + k * 26, 0, 7); x.strokeStyle = `rgba(38,208,240,${.1 + (3 - k) * .08})`; x.lineWidth = 3; x.stroke() }
       x.save(); x.shadowColor = 'rgba(0,0,0,.5)'; x.shadowBlur = 30; x.beginPath(); x.arc(PCX, cy, r + 12, 0, 7); g = x.createLinearGradient(PCX - r, cy - r, PCX + r, cy + r); g.addColorStop(0, '#fff1a1'); g.addColorStop(.5, GOLD); g.addColorStop(1, '#a8700b'); x.fillStyle = g; x.fill(); x.restore();
       x.save(); x.beginPath(); x.arc(PCX, cy, r, 0, 7); x.clip();
-      const prof = window.Photos && Photos.get && Photos.get(info.name); let ok = false;
-      if (prof) { try { const im = await loadImg(prof); drawCrop(x, im, PCX - r, cy - r, r * 2, r * 2); ok = true } catch (e) { } }
+      let ok = false; const cim = await circleImg(info);
+      if (cim) { g = x.createLinearGradient(PCX, cy - r, PCX, cy + r); g.addColorStop(0, '#1f6fb8'); g.addColorStop(1, '#0a2f63'); x.fillStyle = g; x.fillRect(PCX - r, cy - r, r * 2, r * 2); drawCrop(x, cim, PCX - r, cy - r, r * 2, r * 2); ok = true }
       if (!ok) { g = x.createLinearGradient(PCX - r, cy - r, PCX + r, cy + r); g.addColorStop(0, info.g === 'F' ? '#ff8fc0' : '#3fb7ff'); g.addColorStop(1, info.g === 'F' ? '#9b2c68' : '#0d4c9a'); x.fillStyle = g; x.fillRect(PCX - r, cy - r, r * 2, r * 2); swimmer(x, PCX, cy + 10, r * .5, 'rgba(255,255,255,.95)') }
       x.restore();
     }
@@ -378,7 +384,7 @@
   }
 
   async function render(info, photo, opts) {
-    opts = opts || {}; CROP = opts.crop || [1, 0, 0]; SLOT = null;
+    opts = opts || {}; CROP = opts.crop || [1, 0, 0]; SLOT = null; CIRC = (photo && photo.im) || null;
     if (opts.only === 'medal' && info.medals.length) info = Object.assign({}, info, { part: [] });
     await fonts();
     const W = 1080, H = 1350, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
@@ -601,12 +607,12 @@
     const draw = () => {
       const pp = prof();
       ov.innerHTML = `<div class="pf-in"><h3>👤 ข้อมูลโปรไฟล์<br><span style="font-size:15px;opacity:.85">${esc(prefix(info0))} · ${esc(info0.catL)}</span></h3>
-        <div><label>รูปโปรไฟล์ (วงกลม ใช้ทั่วแอป)</label><div class="pf-ph"><div class="pf-th" style="width:96px;height:96px;border-radius:50%">${pp ? `<img src="${pp}" alt="" style="width:100%;height:100%;object-fit:cover">` : '🙂'}</div>
+        <div><label>① รูปโปรไฟล์ในแอป <small style="opacity:.7">(รูปหน้าตรง แสดงข้างชื่อทั่วแอป)</small></label><div class="pf-ph"><div class="pf-th" style="width:96px;height:96px;border-radius:50%">${pp ? `<img src="${pp}" alt="" style="width:100%;height:100%;object-fit:cover">` : '🙂'}</div>
           <div style="flex:1"><button class="pf-b gold" id="pf-prof" style="width:100%">${pp ? 'เปลี่ยนรูปโปรไฟล์' : 'เพิ่มรูปโปรไฟล์'}</button></div></div></div>
         <div><label>ชั้นเรียน (เว้นว่างได้ ถ้าไม่ต้องการแสดง)</label><input type="text" id="pf-cls" maxlength="16" placeholder="เช่น ป.5/1" value="${esc(cls)}"></div>
-        <div><label>รูปสำหรับโพสต์ Facebook (รูปยืนเต็มตัว)</label><div class="pf-ph"><div class="pf-th">${post ? `<img src="${post}" alt="">` : '🧒'}</div>
+        <div><label>② รูปสำหรับโพสต์/ใบประกาศ <small style="opacity:.7">(แยกจากรูปโปรไฟล์ ใช้ได้ทั้งแบบเต็มตัวและวงกลม)</small></label><div class="pf-ph"><div class="pf-th">${post ? `<img src="${post}" alt="">` : '🧒'}</div>
           <div style="display:flex;flex-direction:column;gap:6px;flex:1"><button class="pf-b gold" id="pf-pick">${post ? 'เปลี่ยนรูป' : 'เลือกรูป'}</button>${post ? '<button class="pf-b del" id="pf-del">ลบรูปนี้</button>' : ''}</div></div></div>
-        <div class="pf-hint">✨ <b>สวยที่สุด:</b> รูปตัดพื้นหลังแล้ว (PNG พื้นใส)<br>iPhone: เปิดรูปในแอปรูปภาพ → กดค้างที่ตัวน้องจนมีขอบเรืองแสง → <b>แชร์ → บันทึกภาพ</b> แล้วกลับมาเลือกรูปนั้น<br>รูปธรรมดาก็ใช้ได้ จะแสดงในกรอบมุมโค้ง · ไม่มีรูป จะใช้รูปโปรไฟล์แทน<br>ข้อมูลเป็นของชมรม ใครก็แก้ให้กันได้ · บันทึกแล้วทุกเครื่องเห็น</div>
+        <div class="pf-hint">✨ <b>สวยที่สุด:</b> รูปตัดพื้นหลังแล้ว (PNG พื้นใส)<br>iPhone: เปิดรูปในแอปรูปภาพ → กดค้างที่ตัวน้องจนมีขอบเรืองแสง → <b>แชร์ → บันทึกภาพ</b> แล้วกลับมาเลือกรูปนั้น<br>รูปธรรมดาก็ใช้ได้ · ถ้ายังไม่มีรูปข้อ ② โพสต์จะใช้รูปโปรไฟล์ในแอปไปก่อน<br>ข้อมูลเป็นของชมรม ใครก็แก้ให้กันได้ · บันทึกแล้วทุกเครื่องเห็น</div>
         <div class="pf-row"><button class="pf-b x">ยกเลิก</button><button class="pf-b ok" id="pf-save">💾 บันทึก</button></div></div>`;
       const ci = ov.querySelector('#pf-cls'); ci.oninput = () => { cls = ci.value; dirty = true };
       ov.querySelector('.x').onclick = () => { if (dirty && !confirmLeave()) return; close() };
@@ -643,22 +649,22 @@
     let only = hasMed && hasPart && o.only === 'medal' ? 'medal' : 'all', style = o.style === 'B' ? 'B' : 'A';
     const crops = Object.assign({}, o.c || {});
     const vkey = () => style + (layout === 'full' && hasFull ? 'f' : 'c');
-    const hasImg = () => (layout === 'full' && hasFull) || !!(window.Photos && Photos.get && Photos.get(name));
+    const hasImg = () => hasFull || !!(window.Photos && Photos.get && Photos.get(name));
     const cur = () => crops[vkey()] || [1, 0, 0];
     const persist = () => saveOpts(name, { layout, only, style, c: crops });
     let url = null, file = null, adjusting = false, busy = false, pending = false, blobT = null, saveT = null, slot = null;
     const seg = (id, items, cv) => `<div class="pf-seg" id="${id}">${items.map(([v, l, dis]) => `<button data-v="${v}" class="${v === cv ? 'on' : ''}" ${dis ? 'disabled' : ''}>${l}</button>`).join('')}</div>`;
-    const miss = [!info.cls && 'ชั้นเรียน', !hasFull && 'รูปเต็มตัว'].filter(Boolean);
+    const miss = [!info.cls && 'ชั้นเรียน', !hasFull && 'รูปสำหรับโพสต์'].filter(Boolean);
     ov.innerHTML = `<div class="pf-in"><h3>📣 ${esc(prefix(info))}</h3>
       ${seg('pf-sty', [['A', '🌿 แบบ A · สดใส'], ['B', '🌊 แบบ B · เข้ม']], style)}
-      ${seg('pf-lay', [['full', '🧍 รูปเต็มตัว', !hasFull], ['center', '⭕ วงกลมกลาง']], layout)}
+      ${seg('pf-lay', [['full', '🧍 รูปเต็มตัว', !hasFull], ['center', '⭕ รูปวงกลม']], layout)}
       ${hasMed && hasPart ? seg('pf-only', [['all', 'ทุกรายการ'], ['medal', 'เฉพาะที่ได้เหรียญ']], only) : ''}
       <div class="pf-stage"><canvas class="pf-img pf-cv" width="1080" height="1350"></canvas><img class="pf-img pf-pic" alt="" style="display:none"><div class="pf-ld" style="position:absolute"><span class="pf-spin"></span>กำลังสร้างภาพ…</div></div>
       <div class="pf-adj" style="display:none"><div class="pf-adj-h">✋ ลากรูปเพื่อเลื่อน · ปรับขนาดด้วยแถบด้านล่าง<br><small>ค่าที่ปรับจะจำแยกตามแบบโพสต์</small></div>
         <div class="pf-zoom"><span>－</span><input type="range" id="pf-z" min="0.5" max="3" step="0.01"><span>＋</span></div>
         <div class="pf-row"><button class="pf-b" id="pf-reset">↺ รีเซ็ต</button><button class="pf-b ok" id="pf-done">✓ เสร็จ</button></div></div>
       <button class="pf-b" id="pf-adjbtn">✂️ ปรับตำแหน่ง/ขนาดรูปในโพสต์</button>
-      ${miss.length ? `<div class="pf-hint">💡 ยังไม่มี${miss.join('และ')} · เพิ่มได้ที่ <b>👤 ข้อมูลโปรไฟล์</b>${!hasFull ? ' (แบบรูปเต็มตัวจะเลือกได้เมื่อมีรูป)' : ''}</div>` : ''}
+      ${miss.length ? `<div class="pf-hint">💡 ยังไม่มี${miss.join('และ')} · เพิ่มได้ที่ <b>👤 ข้อมูลโปรไฟล์</b>${!hasFull ? ' (ตอนนี้ใช้รูปโปรไฟล์ในแอปแทน)' : ''}</div>` : ''}
       <div class="pf-row" id="pf-act"></div>
       <div><label>ข้อความสำหรับโพสต์</label><textarea class="pf-cap" id="pf-cap"></textarea></div>
       <button class="pf-b" id="pf-copy">📋 คัดลอกข้อความ</button>
