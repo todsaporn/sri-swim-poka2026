@@ -104,7 +104,7 @@
     const medals = all.filter(x => x.r.res && x.r.res.lv != null).sort((a, b) => a.r.res.lv - b.r.res.lv || a.e.relay - b.e.relay || a.r.ev - b.r.ev).map(x => ({ lv: x.r.res.lv, ev: evName(x.e) }));
     const part = all.filter(x => !(x.r.res && x.r.res.lv != null)).sort((a, b) => a.r.ev - b.r.ev).map(x => ({ ev: evName(x.e) }));
     const done = ind.filter(r => r.res && r.res.pl).sort((a, b) => a.ev - b.ev).map(r => ({ pl: r.res.pl, ev: evName(EV[r.ev]), t: r.res.f }));
-    return { name: n, disp: dispName(n), g, catL: `รุ่น ${ageL(e0.age)}${G[g]}`, medals, part, done, rk: me.rk, cls: clsOf(n) };
+    return { name: n, disp: dispName(n), g, catL: /^ไม่เกิน/.test(e0.age) ? `รุ่นอายุ${e0.age} ${G[g]}` : `รุ่น ${ageL(e0.age)}${G[g]}`, medals, part, done, rk: me.rk, cls: clsOf(n) };
   }
 
   // ---------- fonts ----------

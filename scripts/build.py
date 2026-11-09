@@ -63,7 +63,7 @@ for day in CFG['days']:
     for no, ev in E.items():
         seeded = [secs(x['seed']) for x in byev[no] if secs(x['seed'])]
         events[no] = dict(no=no, day=day['n'], g='M' if ev['gender'] == 'Boys' else 'F',
-            age=ev['age'].replace(' Year Olds', '').replace('& Under', 'ปีและต่ำกว่า'), dist=ev['dist'],
+            age=re.sub(r'^(\d+) & Under$', r'ไม่เกิน \1 ปี', ev['age'].replace(' Year Olds', '').strip()), dist=ev['dist'],
             stroke=stroke_th(ev['stroke']), relay='Relay' in ev['stroke'], n=len(byev[no]),
             heats=max([x['heats'] for x in byev[no]] or [0]), seeded=len(seeded),
             rec=ev.get('rec'),
@@ -103,7 +103,7 @@ for k, v in RES.items():
     evres[ev] = dict(nfin=len(fin), our=our, top=top, c6=next((r['fin'] for r in srt if r['pl'] >= 6), None) if len(srt) >= 6 else None)
 # rule 16: ages 7-11 get medals per heat (last column), ages 12-14 per event place 1-3 (G/S/B column)
 def medal_of(h, ev):
-    age = int(re.match(r'\d+', ev['age'])[0]) if re.match(r'\d+', ev['age']) else 0
+    age = int(re.search(r'\d+', ev['age'])[0]) if re.search(r'\d+', ev['age']) else 0
     if ev['relay']: return (h['hpl'] - 1) if h.get('hpl') and h['hpl'] <= 3 else None   # relays (all ≤11 ปี): medal by heat place
     if age >= 12: return {'G': 0, 'S': 1, 'B': 2}.get(h.get('pod'))
     return {'ทอง': 0, 'เงิน': 1, 'ทองแดง': 2}.get(h['lv'])
