@@ -121,6 +121,12 @@
   }
   const loadImg = src => new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = src });
 
+  // ---------- photo crop (zoom / pan) per poster variant ----------
+  let CROP = [1, 0, 0], SLOT = null;
+  function drawCrop(x, im, sx, sy, sw, sh, ay) {
+    const [z, dx, dy] = CROP, b = Math.max(sw / im.width, sh / im.height) * z, w = im.width * b, h = im.height * b;
+    x.drawImage(im, sx + (sw - w) / 2 + dx * sw, sy + (sh - h) * (ay == null ? .5 : ay) + dy * sh, w, h); SLOT = { w: sw, h: sh };
+  }
   // ---------- drawing helpers ----------
   function rr(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath() }
   const K = (w, s, it) => `${it ? 'italic ' : ''}${w} ${s}px KanitP, 'IBM Plex Sans Thai', sans-serif`;
@@ -207,7 +213,7 @@
     x.beginPath(); x.arc(CX, cy, r + 4, 0, 7); x.fillStyle = '#fff'; x.fill();
     x.save(); x.beginPath(); x.arc(CX, cy, r, 0, 7); x.clip();
     const prof = window.Photos && Photos.get && Photos.get(info.name); let ok = false;
-    if (prof) { try { const im = await loadImg(prof); x.drawImage(im, CX - r, cy - r, r * 2, r * 2); ok = true } catch (e) { } }
+    if (prof) { try { const im = await loadImg(prof); drawCrop(x, im, CX - r, cy - r, r * 2, r * 2); ok = true } catch (e) { } }
     if (!ok) { g = x.createLinearGradient(CX - r, cy - r, CX + r, cy + r); g.addColorStop(0, info.g === 'F' ? '#f6a3c8' : '#6fb2f2'); g.addColorStop(1, info.g === 'F' ? '#c2407f' : '#1f5fb8'); x.fillStyle = g; x.fillRect(CX - r, cy - r, r * 2, r * 2); swimmer(x, CX, cy + 8, r * .5, 'rgba(255,255,255,.95)') }
     x.restore();
     laurel(x, CX - r - 46, cy + 10, r * .62, 1); laurel(x, CX + r + 46, cy + 10, r * .62, -1);
@@ -256,7 +262,7 @@
 
   // ---------- style B: dark "athlete card" (navy / cyan / gold) ----------
   async function renderB(info, photo, opts) {
-    opts = opts || {}; await fonts();
+    opts = opts || {}; await fonts(); CROP = opts.crop || [1, 0, 0]; SLOT = null;
     if (opts.only === 'medal' && info.medals.length) info = Object.assign({}, info, { part: [] });
     const W = 1080, H = 1350, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
     const CY = '#26d0f0', GOLD = '#f6c945', WHITE = '#ffffff', FULL = !!(photo && photo.im) && opts.layout !== 'center';
@@ -285,19 +291,19 @@
     const PCX = 790;
     if (FULL) {
       const im = photo.im;
-      if (photo.alpha) { const maxH = 1040, maxW = 560, sc = Math.min(maxH / im.height, maxW / im.width), w = im.width * sc, h = im.height * sc;
+      if (photo.alpha) { const maxH = 1040, maxW = 560, sc = Math.min(maxH / im.height, maxW / im.width) * CROP[0], w = im.width * sc, h = im.height * sc, ox = CROP[1] * maxW, oy = CROP[2] * maxH; SLOT = { w: maxW, h: maxH };
         x.beginPath(); x.ellipse(PCX, 1215, w * .5, 34, 0, 0, 7); g = x.createRadialGradient(PCX, 1215, 10, PCX, 1215, w * .5); g.addColorStop(0, 'rgba(0,0,0,.45)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fill();
-        x.save(); x.shadowColor = 'rgba(38,208,240,.55)'; x.shadowBlur = 40; x.drawImage(im, PCX - w / 2, 1222 - h, w, h); x.restore() }
+        x.save(); x.shadowColor = 'rgba(38,208,240,.55)'; x.shadowBlur = 40; x.drawImage(im, PCX - w / 2 + ox, 1222 - h + oy, w, h); x.restore() }
       else { const fw = 420, fh = 640, fx = PCX - fw / 2 + 20, fy = 230, sc = Math.max(fw / im.width, fh / im.height), w = im.width * sc, h = im.height * sc;
         x.save(); x.translate(fx + fw / 2, fy + fh / 2); x.rotate(.03); x.shadowColor = 'rgba(0,0,0,.5)'; x.shadowBlur = 30; rr(x, -fw / 2 - 10, -fh / 2 - 10, fw + 20, fh + 20, 30); g = x.createLinearGradient(-fw / 2, -fh / 2, fw / 2, fh / 2); g.addColorStop(0, '#ffe58a'); g.addColorStop(1, '#b8860b'); x.fillStyle = g; x.fill(); x.shadowBlur = 0;
-          rr(x, -fw / 2, -fh / 2, fw, fh, 22); x.clip(); x.drawImage(im, -w / 2, -fh / 2 - (h - fh) * .2, w, h); x.restore() }
+          rr(x, -fw / 2, -fh / 2, fw, fh, 22); x.clip(); drawCrop(x, im, -fw / 2, -fh / 2, fw, fh, .2); x.restore() }
     } else {
       const cy = 470, r = 190;
       for (let k = 3; k >= 1; k--) { x.beginPath(); x.arc(PCX, cy, r + k * 26, 0, 7); x.strokeStyle = `rgba(38,208,240,${.1 + (3 - k) * .08})`; x.lineWidth = 3; x.stroke() }
       x.save(); x.shadowColor = 'rgba(0,0,0,.5)'; x.shadowBlur = 30; x.beginPath(); x.arc(PCX, cy, r + 12, 0, 7); g = x.createLinearGradient(PCX - r, cy - r, PCX + r, cy + r); g.addColorStop(0, '#fff1a1'); g.addColorStop(.5, GOLD); g.addColorStop(1, '#a8700b'); x.fillStyle = g; x.fill(); x.restore();
       x.save(); x.beginPath(); x.arc(PCX, cy, r, 0, 7); x.clip();
       const prof = window.Photos && Photos.get && Photos.get(info.name); let ok = false;
-      if (prof) { try { const im = await loadImg(prof); x.drawImage(im, PCX - r, cy - r, r * 2, r * 2); ok = true } catch (e) { } }
+      if (prof) { try { const im = await loadImg(prof); drawCrop(x, im, PCX - r, cy - r, r * 2, r * 2); ok = true } catch (e) { } }
       if (!ok) { g = x.createLinearGradient(PCX - r, cy - r, PCX + r, cy + r); g.addColorStop(0, info.g === 'F' ? '#ff8fc0' : '#3fb7ff'); g.addColorStop(1, info.g === 'F' ? '#9b2c68' : '#0d4c9a'); x.fillStyle = g; x.fillRect(PCX - r, cy - r, r * 2, r * 2); swimmer(x, PCX, cy + 10, r * .5, 'rgba(255,255,255,.95)') }
       x.restore();
     }
@@ -348,7 +354,7 @@
   }
 
   async function render(info, photo, opts) {
-    opts = opts || {};
+    opts = opts || {}; CROP = opts.crop || [1, 0, 0]; SLOT = null;
     if (opts.only === 'medal' && info.medals.length) info = Object.assign({}, info, { part: [] });
     await fonts();
     const W = 1080, H = 1350, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
@@ -418,11 +424,11 @@
     // kid photo / placeholder (left), drawn before the lower content
     if (photo && photo.im) {
       const im = photo.im;
-      if (photo.alpha) { const maxH = footY + 60 - 190, maxW = 520, s = Math.min(maxH / im.height, maxW / im.width), w = im.width * s, h = im.height * s;
-        x.save(); x.shadowColor = 'rgba(0,30,70,.35)'; x.shadowBlur = 24; x.shadowOffsetX = 6; x.drawImage(im, 230 - w / 2, footY + 60 - h, w, h); x.restore() }
+      if (photo.alpha) { const maxH = footY + 60 - 190, maxW = 520, s = Math.min(maxH / im.height, maxW / im.width) * CROP[0], w = im.width * s, h = im.height * s, ox = CROP[1] * maxW, oy = CROP[2] * maxH; SLOT = { w: maxW, h: maxH };
+        x.save(); x.shadowColor = 'rgba(0,30,70,.35)'; x.shadowBlur = 24; x.shadowOffsetX = 6; x.drawImage(im, 230 - w / 2 + ox, footY + 60 - h + oy, w, h); x.restore() }
       else { const fw = 340, fh = Math.min(620, BOT - 560), fx = 30, fy = Math.max(545, Math.min(BOT - fh, midY - fh / 2)), s = Math.max(fw / im.width, fh / im.height), w = im.width * s, h = im.height * s;
         x.save(); x.shadowColor = 'rgba(0,30,70,.35)'; x.shadowBlur = 20; rr(x, fx - 8, fy - 8, fw + 16, fh + 16, 34); g = x.createLinearGradient(fx, fy, fx + fw, fy + fh); g.addColorStop(0, '#ffe58a'); g.addColorStop(1, '#c58b12'); x.fillStyle = g; x.fill(); x.restore();
-        x.save(); rr(x, fx, fy, fw, fh, 28); x.clip(); x.drawImage(im, fx + (fw - w) / 2, fy + (fh - h) * .2, w, h); x.restore() }
+        x.save(); rr(x, fx, fy, fw, fh, 28); x.clip(); drawCrop(x, im, fx, fy, fw, fh, .2); x.restore() }
     } else {
       const cx = 205, cy = Math.max(740, Math.min(midY, 900)), r = 165;
       x.save(); x.shadowColor = 'rgba(0,30,70,.3)'; x.shadowBlur = 22; x.beginPath(); x.arc(cx, cy, r + 16, 0, 7); g = x.createLinearGradient(cx - r, cy - r, cx + r, cy + r); g.addColorStop(0, '#ffe58a'); g.addColorStop(1, '#c58b12'); x.fillStyle = g; x.fill(); x.restore();
@@ -551,7 +557,11 @@
   .pf-seg button:disabled{opacity:.35;cursor:not-allowed}
   .pf-stage{position:relative;min-height:200px;display:grid;place-items:center}
   .pf-stage.busy .pf-img{opacity:.45;transition:opacity .15s}
-  .pf-ld{opacity:.85}`;
+  .pf-ld{opacity:.85}
+  .pf-stage.adj .pf-cv{touch-action:none;cursor:grab;outline:3px dashed #ffd23f;outline-offset:3px;width:min(100%,38vh);margin:0 auto}
+  .pf-adj{display:flex;flex-direction:column;gap:10px;background:rgba(255,210,63,.08);border:1px solid rgba(255,210,63,.35);border-radius:14px;padding:12px}
+  .pf-adj-h{font-size:13.5px;line-height:1.5}.pf-adj-h small{opacity:.7}
+  .pf-zoom{display:flex;align-items:center;gap:10px;font-size:20px}.pf-zoom input{flex:1;accent-color:#ffd23f}`;
   const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
   function toast(t) { const d = document.createElement('div'); d.textContent = t; d.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#0d2236;color:#fff;padding:10px 16px;border-radius:12px;z-index:500;font:600 14px IBM Plex Sans Thai,sans-serif;box-shadow:0 6px 20px rgba(0,0,0,.3);max-width:90vw;text-align:center'; document.body.appendChild(d); setTimeout(() => d.remove(), 2800) }
 
@@ -616,40 +626,80 @@
     const o = optsOf(name);
     let layout = hasFull ? (o.layout === 'center' ? 'center' : 'full') : 'center';
     let only = hasMed && hasPart && o.only === 'medal' ? 'medal' : 'all', style = o.style === 'B' ? 'B' : 'A';
-    let url = null, file = null, seq = 0;
-    const seg = (id, items, cur) => `<div class="pf-seg" id="${id}">${items.map(([v, l, dis]) => `<button data-v="${v}" class="${v === cur ? 'on' : ''}" ${dis ? 'disabled' : ''}>${l}</button>`).join('')}</div>`;
+    const crops = Object.assign({}, o.c || {});
+    const vkey = () => style + (layout === 'full' && hasFull ? 'f' : 'c');
+    const hasImg = () => (layout === 'full' && hasFull) || !!(window.Photos && Photos.get && Photos.get(name));
+    const cur = () => crops[vkey()] || [1, 0, 0];
+    const persist = () => saveOpts(name, { layout, only, style, c: crops });
+    let url = null, file = null, adjusting = false, busy = false, pending = false, blobT = null, saveT = null, slot = null;
+    const seg = (id, items, cv) => `<div class="pf-seg" id="${id}">${items.map(([v, l, dis]) => `<button data-v="${v}" class="${v === cv ? 'on' : ''}" ${dis ? 'disabled' : ''}>${l}</button>`).join('')}</div>`;
     const miss = [!info.cls && 'ชั้นเรียน', !hasFull && 'รูปเต็มตัว'].filter(Boolean);
     ov.innerHTML = `<div class="pf-in"><h3>📣 ${esc(prefix(info))}</h3>
       ${seg('pf-sty', [['A', '🌿 แบบ A · สดใส'], ['B', '🌊 แบบ B · เข้ม']], style)}
       ${seg('pf-lay', [['full', '🧍 รูปเต็มตัว', !hasFull], ['center', '⭕ วงกลมกลาง']], layout)}
       ${hasMed && hasPart ? seg('pf-only', [['all', 'ทุกรายการ'], ['medal', 'เฉพาะที่ได้เหรียญ']], only) : ''}
-      <div class="pf-stage"><div class="pf-ld"><span class="pf-spin"></span>กำลังสร้างภาพ…</div></div>
+      <div class="pf-stage"><canvas class="pf-img pf-cv" width="1080" height="1350"></canvas><img class="pf-img pf-pic" alt="" style="display:none"><div class="pf-ld" style="position:absolute"><span class="pf-spin"></span>กำลังสร้างภาพ…</div></div>
+      <div class="pf-adj" style="display:none"><div class="pf-adj-h">✋ ลากรูปเพื่อเลื่อน · ปรับขนาดด้วยแถบด้านล่าง<br><small>ค่าที่ปรับจะจำแยกตามแบบโพสต์</small></div>
+        <div class="pf-zoom"><span>－</span><input type="range" id="pf-z" min="0.5" max="3" step="0.01"><span>＋</span></div>
+        <div class="pf-row"><button class="pf-b" id="pf-reset">↺ รีเซ็ต</button><button class="pf-b ok" id="pf-done">✓ เสร็จ</button></div></div>
+      <button class="pf-b" id="pf-adjbtn">✂️ ปรับตำแหน่ง/ขนาดรูปในโพสต์</button>
       ${miss.length ? `<div class="pf-hint">💡 ยังไม่มี${miss.join('และ')} · เพิ่มได้ที่ <b>👤 ข้อมูลโปรไฟล์</b>${!hasFull ? ' (แบบรูปเต็มตัวจะเลือกได้เมื่อมีรูป)' : ''}</div>` : ''}
       <div class="pf-row" id="pf-act"></div>
       <div><label>ข้อความสำหรับโพสต์</label><textarea class="pf-cap" id="pf-cap"></textarea></div>
       <button class="pf-b" id="pf-copy">📋 คัดลอกข้อความ</button>
       <div class="pf-hint">ขั้นตอนโพสต์: คัดลอกข้อความ → แชร์รูปเข้า Facebook → วางข้อความ</div>
       <div class="pf-row"><button class="pf-b" id="pf-edit">👤 ข้อมูลโปรไฟล์</button><button class="pf-b x">ปิด</button></div></div>`;
-    const stage = ov.querySelector('.pf-stage'), act = ov.querySelector('#pf-act'), capEl = ov.querySelector('#pf-cap');
-    async function draw() {
-      const my = ++seq; stage.classList.add('busy');
-      const inf = only === 'medal' ? Object.assign({}, info, { part: [] }) : info;
-      const c = await (style === 'B' ? renderB : render)(info, ph, { layout, only });
-      if (my !== seq || closed) return;
-      const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', .92));
+    const stage = ov.querySelector('.pf-stage'), cv = ov.querySelector('.pf-cv'), pic = ov.querySelector('.pf-pic'), act = ov.querySelector('#pf-act'), capEl = ov.querySelector('#pf-cap');
+    const adjBox = ov.querySelector('.pf-adj'), adjBtn = ov.querySelector('#pf-adjbtn'), zEl = ov.querySelector('#pf-z');
+    function showPic(on) { pic.style.display = on ? '' : 'none'; cv.style.display = on ? 'none' : '' }
+    async function makeBlob(c) {
+      const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', .92)); if (closed) return;
       if (url) URL.revokeObjectURL(url); url = URL.createObjectURL(blob);
       file = new File([blob], `SSC-ยินดี-${info.disp.split(' ')[0]}.jpg`, { type: 'image/jpeg' });
-      stage.innerHTML = `<img class="pf-img" src="${url}" alt="">`; stage.classList.remove('busy');
+      pic.src = url; if (!adjusting) showPic(true);
       const canShare = !!(navigator.canShare && navigator.canShare({ files: [file] }));
       act.innerHTML = `${canShare ? '<button class="pf-b ok" id="pf-sh">แชร์รูป</button>' : ''}<a class="pf-b ${canShare ? '' : 'ok'}" style="text-align:center;text-decoration:none" href="${url}" download="${file.name}">ดาวน์โหลด</a>`;
       const sh = act.querySelector('#pf-sh'); if (sh) sh.onclick = async () => { try { await navigator.clipboard.writeText(capEl.value) } catch (e) { } navigator.share({ files: [file] }).catch(() => { }) };
-      if (cap0.v === null || capEl.value === cap0.v) { cap0.v = caption(inf); capEl.value = cap0.v }
     }
+    async function draw() {
+      if (busy) { pending = true; return } busy = true;
+      try {
+        do {
+          pending = false;
+          const inf = only === 'medal' ? Object.assign({}, info, { part: [] }) : info;
+          const c = await (style === 'B' ? renderB : render)(info, ph, { layout, only, crop: cur() });
+          slot = SLOT; if (closed) return;
+          cv.getContext('2d').drawImage(c, 0, 0); const ld = stage.querySelector('.pf-ld'); if (ld) ld.remove();
+          if (!adjusting) showPic(false);
+          clearTimeout(blobT); blobT = setTimeout(() => makeBlob(c), adjusting ? 500 : 0);
+          if (cap0.v === null || capEl.value === cap0.v) { cap0.v = caption(inf); capEl.value = cap0.v }
+        } while (pending && !closed);
+      } finally { busy = false }
+      adjBtn.style.display = hasImg() && !adjusting ? '' : 'none';
+    }
+    const changed = () => { draw(); clearTimeout(saveT); saveT = setTimeout(persist, 700) };
+    const setCrop = (z, dx, dy) => { crops[vkey()] = [Math.round(z * 100) / 100, Math.round(dx * 1000) / 1000, Math.round(dy * 1000) / 1000]; changed() };
+    // adjust mode
+    function setAdjust(on) { adjusting = on; adjBox.style.display = on ? '' : 'none'; adjBtn.style.display = on || !hasImg() ? 'none' : ''; stage.classList.toggle('adj', on); showPic(!on && !!url); zEl.value = cur()[0]; if (on) setTimeout(() => stage.scrollIntoView({ behavior: 'smooth', block: 'start' }), 30) }
+    adjBtn.onclick = () => setAdjust(true);
+    ov.querySelector('#pf-done').onclick = () => { setAdjust(false); clearTimeout(saveT); persist(); draw() };
+    ov.querySelector('#pf-reset').onclick = () => { delete crops[vkey()]; zEl.value = 1; changed() };
+    zEl.oninput = () => { const [, dx, dy] = cur(); setCrop(+zEl.value, dx, dy) };
+    const pts = new Map(); let pinch = null;
+    cv.addEventListener('pointerdown', e => { if (!adjusting) return; cv.setPointerCapture(e.pointerId); pts.set(e.pointerId, { x: e.clientX, y: e.clientY }) });
+    cv.addEventListener('pointermove', e => {
+      if (!adjusting || !pts.has(e.pointerId) || !slot) return;
+      const p0 = pts.get(e.pointerId), k = 1080 / cv.getBoundingClientRect().width; pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pts.size === 2) { const [a, b] = [...pts.values()], d = Math.hypot(a.x - b.x, a.y - b.y); if (pinch) { const [, dx, dy] = cur(); const z = Math.max(.5, Math.min(3, pinch.z * d / pinch.d)); zEl.value = z; setCrop(z, dx, dy) } else pinch = { d, z: cur()[0] }; return }
+      const [z, dx, dy] = cur(); setCrop(z, dx + (e.clientX - p0.x) * k / slot.w, dy + (e.clientY - p0.y) * k / slot.h);
+    });
+    const up = e => { pts.delete(e.pointerId); if (pts.size < 2) pinch = null };
+    cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
     const bindSeg = (id, set) => { const el = ov.querySelector('#' + id); if (!el) return; el.querySelectorAll('button').forEach(b => b.onclick = () => {
-      if (b.disabled || b.classList.contains('on')) return; el.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); set(b.dataset.v); saveOpts(name, { layout, only, style }); draw() }) };
+      if (b.disabled || b.classList.contains('on')) return; el.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); set(b.dataset.v); zEl.value = cur()[0]; persist(); draw() }) };
     bindSeg('pf-sty', v => style = v); bindSeg('pf-lay', v => layout = v); bindSeg('pf-only', v => only = v);
-    const done = () => { closed = true; if (url) URL.revokeObjectURL(url); close() };
-    ov.querySelectorAll('.x').forEach(b => b.onclick = done);
+    const done = () => { closed = true; clearTimeout(saveT); if (url) URL.revokeObjectURL(url); close() };
+    ov.querySelectorAll('.x').forEach(b => b.onclick = () => { if (saveT) persist(); done() });
     ov.querySelector('#pf-edit').onclick = () => { done(); editProfile(name, () => showPost(name)) };
     ov.querySelector('#pf-copy').onclick = async () => { try { await navigator.clipboard.writeText(capEl.value); toast('✓ คัดลอกข้อความแล้ว') } catch (e) { capEl.select(); document.execCommand('copy'); toast('✓ คัดลอกแล้ว') } };
     draw();
