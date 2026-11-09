@@ -294,8 +294,8 @@
       if (photo.alpha) { const maxH = 1040, maxW = 560, sc = Math.min(maxH / im.height, maxW / im.width) * CROP[0], w = im.width * sc, h = im.height * sc, ox = CROP[1] * maxW, oy = CROP[2] * maxH; SLOT = { w: maxW, h: maxH };
         x.beginPath(); x.ellipse(PCX, 1215, w * .5, 34, 0, 0, 7); g = x.createRadialGradient(PCX, 1215, 10, PCX, 1215, w * .5); g.addColorStop(0, 'rgba(0,0,0,.45)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fill();
         x.save(); x.shadowColor = 'rgba(38,208,240,.55)'; x.shadowBlur = 40; x.drawImage(im, PCX - w / 2 + ox, 1222 - h + oy, w, h); x.restore() }
-      else { const fw = 420, fh = 640, fx = PCX - fw / 2 + 20, fy = 230, sc = Math.max(fw / im.width, fh / im.height), w = im.width * sc, h = im.height * sc;
-        x.save(); x.translate(fx + fw / 2, fy + fh / 2); x.rotate(.03); x.shadowColor = 'rgba(0,0,0,.5)'; x.shadowBlur = 30; rr(x, -fw / 2 - 10, -fh / 2 - 10, fw + 20, fh + 20, 30); g = x.createLinearGradient(-fw / 2, -fh / 2, fw / 2, fh / 2); g.addColorStop(0, '#ffe58a'); g.addColorStop(1, '#b8860b'); x.fillStyle = g; x.fill(); x.shadowBlur = 0;
+      else { const fw = 430, fx = PCX - fw / 2 + 20, fy = 196, fh = 1222 - fy, sc = Math.max(fw / im.width, fh / im.height), w = im.width * sc, h = im.height * sc;
+        x.save(); x.translate(fx + fw / 2, fy + fh / 2); x.rotate(.012); x.shadowColor = 'rgba(0,0,0,.5)'; x.shadowBlur = 30; rr(x, -fw / 2 - 10, -fh / 2 - 10, fw + 20, fh + 20, 30); g = x.createLinearGradient(-fw / 2, -fh / 2, fw / 2, fh / 2); g.addColorStop(0, '#ffe58a'); g.addColorStop(1, '#b8860b'); x.fillStyle = g; x.fill(); x.shadowBlur = 0;
           rr(x, -fw / 2, -fh / 2, fw, fh, 22); x.clip(); drawCrop(x, im, -fw / 2, -fh / 2, fw, fh, .2); x.restore() }
     } else {
       const cy = 470, r = 190;
@@ -335,7 +335,7 @@
 
     // event list
     const rows = info.medals.map(m => ({ v: m.ev, lv: m.lv })).concat(info.part.map(d => ({ v: d.ev })));
-    const top = Math.max(y + 6, FULL ? 0 : 720), PW = FULL ? 560 : W - 2 * LX, avail = 1206 - top;
+    const top = Math.max(y + 6, FULL ? 0 : 720), PW = FULL ? 510 : W - 2 * LX, avail = 1206 - top;
     let cols = FULL ? (rows.length > 9 ? 2 : 1) : (rows.length <= 5 ? 1 : rows.length <= 12 ? 2 : 3);
     const per = Math.ceil(rows.length / cols); const rh = Math.min(64, (avail - 20) / per);
     const ph2 = per * rh + 20, py = top + Math.max(0, (avail - ph2) / 2) * (FULL ? 0 : .5);
@@ -426,7 +426,7 @@
       const im = photo.im;
       if (photo.alpha) { const maxH = footY + 60 - 190, maxW = 520, s = Math.min(maxH / im.height, maxW / im.width) * CROP[0], w = im.width * s, h = im.height * s, ox = CROP[1] * maxW, oy = CROP[2] * maxH; SLOT = { w: maxW, h: maxH };
         x.save(); x.shadowColor = 'rgba(0,30,70,.35)'; x.shadowBlur = 24; x.shadowOffsetX = 6; x.drawImage(im, 230 - w / 2 + ox, footY + 60 - h + oy, w, h); x.restore() }
-      else { const fw = 340, fh = Math.min(620, BOT - 560), fx = 30, fy = Math.max(545, Math.min(BOT - fh, midY - fh / 2)), s = Math.max(fw / im.width, fh / im.height), w = im.width * s, h = im.height * s;
+      else { const fw = 352, fx = 24, fy = 236, fh = footY + 30 - fy, s = Math.max(fw / im.width, fh / im.height), w = im.width * s, h = im.height * s;
         x.save(); x.shadowColor = 'rgba(0,30,70,.35)'; x.shadowBlur = 20; rr(x, fx - 8, fy - 8, fw + 16, fh + 16, 34); g = x.createLinearGradient(fx, fy, fx + fw, fy + fh); g.addColorStop(0, '#ffe58a'); g.addColorStop(1, '#c58b12'); x.fillStyle = g; x.fill(); x.restore();
         x.save(); rr(x, fx, fy, fw, fh, 28); x.clip(); drawCrop(x, im, fx, fy, fw, fh, .2); x.restore() }
     } else {
