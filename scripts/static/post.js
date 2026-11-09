@@ -9,6 +9,8 @@
   const POST = {};         // name -> dataURL (cloud or local)
   const POSTT = {};        // name -> cloud updated_at of POST
   let cloud = null;        // null unknown, true table ok, false missing/offline
+  const OPTS = {};         // name -> {layout:'full'|'center', only:'all'|'medal'}
+  let optsCloud = false;
 
   // ---------- local fallback ----------
   const LS = 'sri-info';
@@ -26,9 +28,11 @@
   async function sync() {
     const c = CL(); if (!c) { cloud = false; return }
     try {
-      const r = await fetch(c.url + '/rest/v1/athlete_info?select=athlete,cls,updated_at', { headers: hdr(c), cache: 'no-store' });
+      let r = await fetch(c.url + '/rest/v1/athlete_info?select=athlete,cls,opts,updated_at', { headers: hdr(c), cache: 'no-store' });
+      optsCloud = r.ok;
+      if (!r.ok) r = await fetch(c.url + '/rest/v1/athlete_info?select=athlete,cls,updated_at', { headers: hdr(c), cache: 'no-store' });
       if (!r.ok) throw 0;
-      (await r.json()).forEach(x => { if (x.cls !== null) CLS[x.athlete] = x.cls; if (POSTT[x.athlete] && POSTT[x.athlete] !== x.updated_at) delete POST[x.athlete] });
+      (await r.json()).forEach(x => { if (x.cls !== null) CLS[x.athlete] = x.cls; if (x.opts) OPTS[x.athlete] = x.opts; if (POSTT[x.athlete] && POSTT[x.athlete] !== x.updated_at) delete POST[x.athlete] });
       cloud = true;
     } catch (e) { cloud = false }
   }
@@ -56,6 +60,13 @@
     POST[n] = url || null; delete POSTT[n];
     if (cloud) { try { await rpc('set_post_photo', { p_athlete: n, p_img: url || null }); return true } catch (e) { } }
     await idbPut(n, url || null); return false;
+  }
+
+  function optsOf(n) { return Object.assign({}, (lsGet()[n] || {}).opts || {}, OPTS[n] || {}) }
+  async function saveOpts(n, o) {
+    OPTS[n] = o;
+    if (cloud && optsCloud) { try { await rpc('set_post_opts', { p_athlete: n, p_opts: o }); return true } catch (e) { } }
+    const l = lsGet(); l[n] = Object.assign(l[n] || {}, { opts: o }); lsSet(l); return false;
   }
 
   // ---------- data ----------
@@ -221,7 +232,9 @@
     });
   }
 
-  async function render(info, photo) {
+  async function render(info, photo, opts) {
+    opts = opts || {};
+    if (opts.only === 'medal' && info.medals.length) info = Object.assign({}, info, { part: [] });
     await fonts();
     const W = 1080, H = 1350, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
     const NAVY = '#0b3d91', GREEN = '#1f9d43', RC = 700;
@@ -250,7 +263,7 @@
     x.font = K(700, 46); const hw = x.measureText('โรงเรียนศรีอรุโณทัย จังหวัดระนอง').width / 2 + 18;
     [W / 2 - hw, W / 2 + hw].forEach(px => { x.strokeStyle = GREEN; x.lineWidth = 3; x.beginPath(); x.moveTo(px, 50); x.lineTo(px, 100); x.stroke() });
 
-    const FULL = !!(photo && photo.im), footY = 1205;
+    const FULL = !!(photo && photo.im) && opts.layout !== 'center', footY = 1205;
     if (!FULL) { await centered(x, info, W, H, NAVY, GREEN) } else {
     // meet title (right column)
     swimmer(x, RC - 262, 214, 52, '#1565c0');
@@ -416,7 +429,14 @@
   .pf-img{width:100%;border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.5);display:block}
   .pf-cap{width:100%;box-sizing:border-box;min-height:150px;border-radius:12px;border:0;padding:10px 12px;font:14px 'IBM Plex Sans Thai',sans-serif;background:#0f2a40;color:#e8eef5}
   .pf-spin{display:inline-block;width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;animation:pfspin .8s linear infinite;vertical-align:middle;margin-right:6px}
-  @keyframes pfspin{to{transform:rotate(1turn)}}`;
+  @keyframes pfspin{to{transform:rotate(1turn)}}
+  .pf-seg{display:flex;background:rgba(255,255,255,.08);border-radius:12px;padding:4px;gap:4px}
+  .pf-seg button{flex:1;border:0;border-radius:9px;padding:10px 6px;font:600 14.5px 'IBM Plex Sans Thai',sans-serif;background:none;color:#cfe0ef;cursor:pointer}
+  .pf-seg button.on{background:#fff;color:#0b3d91;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+  .pf-seg button:disabled{opacity:.35;cursor:not-allowed}
+  .pf-stage{position:relative;min-height:200px;display:grid;place-items:center}
+  .pf-stage.busy .pf-img{opacity:.45;transition:opacity .15s}
+  .pf-ld{opacity:.85}`;
   const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
   function toast(t) { const d = document.createElement('div'); d.textContent = t; d.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#0d2236;color:#fff;padding:10px 16px;border-radius:12px;z-index:500;font:600 14px IBM Plex Sans Thai,sans-serif;box-shadow:0 6px 20px rgba(0,0,0,.3);max-width:90vw;text-align:center'; document.body.appendChild(d); setTimeout(() => d.remove(), 2800) }
 
@@ -476,24 +496,47 @@
     ov.innerHTML = `<div class="pf-in"><h3>📣 โพสต์แสดงความยินดี</h3><div><span class="pf-spin"></span>กำลังสร้างภาพ…</div><button class="pf-b x">ปิด</button></div>`;
     let closed = false; ov.querySelector('.x').onclick = () => { closed = true; close() };
     await ready;
-    const info = gather(name), c = await render(info, await photoObj(await postOf(name)));
-    if (closed) return;
-    const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', .92)), url = URL.createObjectURL(blob);
-    const file = new File([blob], `SSC-ยินดี-${info.disp.split(' ')[0]}.jpg`, { type: 'image/jpeg' }), cap = caption(info);
-    const canShare = !!(navigator.canShare && navigator.canShare({ files: [file] }));
-    const miss = [!info.cls && 'ชั้นเรียน', !POST[name] && 'รูปเต็มตัว'].filter(Boolean);
-    ov.innerHTML = `<div class="pf-in"><h3>📣 ${esc(prefix(info))}</h3><img class="pf-img" src="${url}" alt="">
-      ${miss.length ? `<div class="pf-hint">💡 ยังไม่มี${miss.join('และ')} — เพิ่มได้ที่ <b>👤 ข้อมูลโปรไฟล์</b></div>` : ''}
-      <div class="pf-row">${canShare ? '<button class="pf-b ok" id="pf-sh">แชร์รูป</button>' : ''}<a class="pf-b ${canShare ? '' : 'ok'}" style="text-align:center;text-decoration:none" href="${url}" download="${file.name}">ดาวน์โหลด</a></div>
-      <div><label>ข้อความสำหรับโพสต์</label><textarea class="pf-cap" id="pf-cap">${esc(cap)}</textarea></div>
+    const info = gather(name), ph = await photoObj(await postOf(name)), cap0 = { v: null };
+    const hasFull = !!ph, hasMed = info.medals.length > 0, hasPart = info.part.length > 0;
+    const o = optsOf(name);
+    let layout = hasFull ? (o.layout === 'center' ? 'center' : 'full') : 'center';
+    let only = hasMed && hasPart && o.only === 'medal' ? 'medal' : 'all';
+    let url = null, file = null, seq = 0;
+    const seg = (id, items, cur) => `<div class="pf-seg" id="${id}">${items.map(([v, l, dis]) => `<button data-v="${v}" class="${v === cur ? 'on' : ''}" ${dis ? 'disabled' : ''}>${l}</button>`).join('')}</div>`;
+    const miss = [!info.cls && 'ชั้นเรียน', !hasFull && 'รูปเต็มตัว'].filter(Boolean);
+    ov.innerHTML = `<div class="pf-in"><h3>📣 ${esc(prefix(info))}</h3>
+      ${seg('pf-lay', [['full', '🧍 รูปเต็มตัว', !hasFull], ['center', '⭕ วงกลมกลาง']], layout)}
+      ${hasMed && hasPart ? seg('pf-only', [['all', 'ทุกรายการ'], ['medal', 'เฉพาะที่ได้เหรียญ']], only) : ''}
+      <div class="pf-stage"><div class="pf-ld"><span class="pf-spin"></span>กำลังสร้างภาพ…</div></div>
+      ${miss.length ? `<div class="pf-hint">💡 ยังไม่มี${miss.join('และ')} · เพิ่มได้ที่ <b>👤 ข้อมูลโปรไฟล์</b>${!hasFull ? ' (แบบรูปเต็มตัวจะเลือกได้เมื่อมีรูป)' : ''}</div>` : ''}
+      <div class="pf-row" id="pf-act"></div>
+      <div><label>ข้อความสำหรับโพสต์</label><textarea class="pf-cap" id="pf-cap"></textarea></div>
       <button class="pf-b" id="pf-copy">📋 คัดลอกข้อความ</button>
       <div class="pf-hint">ขั้นตอนโพสต์: คัดลอกข้อความ → แชร์รูปเข้า Facebook → วางข้อความ</div>
       <div class="pf-row"><button class="pf-b" id="pf-edit">👤 ข้อมูลโปรไฟล์</button><button class="pf-b x">ปิด</button></div></div>`;
-    const done = () => { URL.revokeObjectURL(url); close() };
-    ov.querySelector('.x').onclick = done;
+    const stage = ov.querySelector('.pf-stage'), act = ov.querySelector('#pf-act'), capEl = ov.querySelector('#pf-cap');
+    async function draw() {
+      const my = ++seq; stage.classList.add('busy');
+      const inf = only === 'medal' ? Object.assign({}, info, { part: [] }) : info;
+      const c = await render(info, ph, { layout, only });
+      if (my !== seq || closed) return;
+      const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', .92));
+      if (url) URL.revokeObjectURL(url); url = URL.createObjectURL(blob);
+      file = new File([blob], `SSC-ยินดี-${info.disp.split(' ')[0]}.jpg`, { type: 'image/jpeg' });
+      stage.innerHTML = `<img class="pf-img" src="${url}" alt="">`; stage.classList.remove('busy');
+      const canShare = !!(navigator.canShare && navigator.canShare({ files: [file] }));
+      act.innerHTML = `${canShare ? '<button class="pf-b ok" id="pf-sh">แชร์รูป</button>' : ''}<a class="pf-b ${canShare ? '' : 'ok'}" style="text-align:center;text-decoration:none" href="${url}" download="${file.name}">ดาวน์โหลด</a>`;
+      const sh = act.querySelector('#pf-sh'); if (sh) sh.onclick = async () => { try { await navigator.clipboard.writeText(capEl.value) } catch (e) { } navigator.share({ files: [file] }).catch(() => { }) };
+      if (cap0.v === null || capEl.value === cap0.v) { cap0.v = caption(inf); capEl.value = cap0.v }
+    }
+    const bindSeg = (id, set) => { const el = ov.querySelector('#' + id); if (!el) return; el.querySelectorAll('button').forEach(b => b.onclick = () => {
+      if (b.disabled || b.classList.contains('on')) return; el.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); set(b.dataset.v); saveOpts(name, { layout, only }); draw() }) };
+    bindSeg('pf-lay', v => layout = v); bindSeg('pf-only', v => only = v);
+    const done = () => { closed = true; if (url) URL.revokeObjectURL(url); close() };
+    ov.querySelectorAll('.x').forEach(b => b.onclick = done);
     ov.querySelector('#pf-edit').onclick = () => { done(); editProfile(name, () => showPost(name)) };
-    ov.querySelector('#pf-copy').onclick = async () => { const t = ov.querySelector('#pf-cap').value; try { await navigator.clipboard.writeText(t); toast('✓ คัดลอกข้อความแล้ว') } catch (e) { const ta = ov.querySelector('#pf-cap'); ta.select(); document.execCommand('copy'); toast('✓ คัดลอกแล้ว') } };
-    const sh = ov.querySelector('#pf-sh'); if (sh) sh.onclick = async () => { try { await navigator.clipboard.writeText(ov.querySelector('#pf-cap').value) } catch (e) { } navigator.share({ files: [file] }).catch(() => { }) };
+    ov.querySelector('#pf-copy').onclick = async () => { try { await navigator.clipboard.writeText(capEl.value); toast('✓ คัดลอกข้อความแล้ว') } catch (e) { capEl.select(); document.execCommand('copy'); toast('✓ คัดลอกแล้ว') } };
+    draw();
   }
 
   document.addEventListener('click', e => {
