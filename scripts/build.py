@@ -21,6 +21,32 @@ def t24(t):
 def fixteam(t): return {'ศวมอ':'ศว.ม.อ','ศวมอ . .':'ศว.ม.อ','ทบมหาราช':'ทบ4 มหาราช'}.get(t, t)
 norm = lambda s: re.sub(r'[\s.\u200b]', '', s or '')
 
+ALIAS = CFG.get('name_alias', {})
+def swimmers(txt):
+    if not txt: return []
+    out = []
+    for part in re.split(r'(?:^|\s*)(?=[1-4]\)\s*)', txt):
+        m = re.match(r'([1-4])\)\s*(.+)$', part.strip())
+        if not m: continue
+        n = re.sub(r'\s*\(?\d{1,2}\)?\s*$', '', m[2]).strip()
+        out.append(ALIAS.get(n, n))
+    return out
+STROKE_ORDER = ['กรรเชียง', 'กบ', 'ผีเสื้อ', 'ฟรีสไตล์']
+DQ_TH = [(r'Arm movements not simultaneous', 'แขนไม่เคลื่อนพร้อมกัน'), (r'[Kk]ick.*not simultaneous|[Ll]eg movements not simultaneous', 'ขาไม่เคลื่อนพร้อมกัน'),
+         (r'[Oo]ne hand touch|[Nn]on-simultaneous touch|touch.*not simultaneous', 'แตะผนังไม่พร้อมกันสองมือ'), (r'[Ee]arly (take-?off|exchange)', 'ออกตัวก่อนเพื่อนแตะผนัง (เปลี่ยนตัวเร็ว)'),
+         (r'[Ff]alse start', 'ออกตัวก่อนสัญญาณ'), (r'[Aa]lternating kick', 'เตะขาสลับ'), (r'[Ff]lutter|[Dd]olphin kick', 'เตะขาผิดท่า'), (r'[Nn]ot on back|[Pp]ast vertical', 'ตัวพลิกคว่ำเกินแนวดิ่ง'),
+         (r'[Dd]id not touch|[Nn]o touch', 'ไม่แตะผนัง'), (r'[Ff]ailed to finish|[Dd]id not finish', 'ว่ายไม่จบระยะ'), (r'[Ss]troke [Ii]nfraction', 'ผิดกติกาท่าว่าย')]
+def dq_th(why, sw, ev):
+    if not why: return ''
+    th = next((t for p, t in DQ_TH if re.search(p, why)), '')
+    m = re.search(r'swimmer #(\d)', why); who = ''
+    if m and sw:
+        i = int(m[1]) - 1
+        if 0 <= i < len(sw):
+            leg = STROKE_ORDER[i] if 'ผสม' in ev['stroke'] else 'ฟรีสไตล์'
+            who = f"คนที่ {i + 1} {sw[i]} ({leg})"
+    rules = re.findall(r'(\d+\.\d+)\s', why)
+    return ' · '.join(x for x in [who, th, f"กติกาข้อ {rules[-1]}" if rules else ''] if x)
 events, races, heats, total, teams = {}, [], {}, 0, set()
 ALL_ENTS = []
 day_date = lambda n: CFG['days_meta'][str(n)]['date']
@@ -61,7 +87,7 @@ for k, v in RES.items():
     ev = v.get('ev') or int(k)
     rows = v['rows']
     fin = [r for r in rows if r.get('pl')]
-    our = [dict(pl=r.get('pl'), n=r.get('name') or (r['team'] + ' ' + r.get('rel', '')), tm=fixteam(r.get('team', '')),
+    our = [dict(sw=swimmers(r.get('swimmers', '')), pl=r.get('pl'), n=r.get('name') or (r['team'] + ' ' + r.get('rel', '')), tm=fixteam(r.get('team', '')),
                 f=r.get('fin'), pts=int(r['pts']) if r.get('pts') else 0, why=r.get('reason', ''), pod=r.get('pod', ''), lv=r.get('lvl', ''), nr=r.get('rec') == 'NR', hpl=r.get('hpl'), ht=r.get('ht'))
            for r in rows if is_sri(r.get('team')) or is_sri(r.get('name'))]
     top = [dict(pl=r['pl'], n=r.get('name') or (r['team'] + ' ' + r.get('rel', '')), tm=fixteam(r.get('team', '')), f=r.get('fin'),
@@ -92,7 +118,7 @@ for r in races:
         hit = next((o for o in er['our'] if o['n'].strip().endswith(' ' + r['relay']) or o['n'].strip().endswith(r['relay'])), None)
     if hit:
         nres += 1
-        r['res'] = dict(pl=hit['pl'], f=hit['f'], pts=hit['pts'], why=hit['why'], nfin=er['nfin'], lv=medal_of(hit, events[r['ev']]), nr=hit['nr'], hpl=hit.get('hpl'), ht=hit.get('ht'))
+        r['res'] = dict(pl=hit['pl'], f=hit['f'], pts=hit['pts'], why=hit['why'], nfin=er['nfin'], lv=medal_of(hit, events[r['ev']]), nr=hit['nr'], sw=hit.get('sw', []), whyth=dq_th(hit['why'], hit.get('sw', []), events[r['ev']]), hpl=hit.get('hpl'), ht=hit.get('ht'))
         s0, s1 = secs(r['seed']), secs(hit['f'])
         if s0 and s1: r['res']['d'] = round(s1 - s0, 2)
     else:

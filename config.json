@@ -28,5 +28,15 @@
   "photo_cloud": {
     "url": "https://ktesayrfgodtdoaanzpg.supabase.co",
     "key": "sb_publishable_i9LrZVACqgEOWYRmpylTLA_VUY-t0zr"
+  },
+  "name_alias": {
+    "Natthaharit Singthong": "ณัฏฐหฤษฎ์ สิงห์ทอง",
+    "Narawish Junyalert": "นราวิชญ์ จรรยาเลิศ",
+    "Kantarakorn Junyalert": "กันทรากร จรรยาเลิศ",
+    "Chawaroj Chaichitatorn": "ชะวโรจน์ ชัยชิตาทร",
+    "Vachirawit Wattanasupinyo": "วชิรวิชญ์ วัฒนสุภิญโญ",
+    "Chakkaphat Sisamniam": "จักรภัทร ศรีสำเนียม",
+    "Konsaran Jitaree": "กรณ์ศรันย์ จิตต์อารี",
+    "Kriangkrai Khonkaen": "เกรียงไกร ขอนแก่น"
   }
 }
