@@ -133,6 +133,11 @@
   function rr(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath() }
   const K = (w, s, it) => `${it ? 'italic ' : ''}${w} ${s}px KanitP, 'IBM Plex Sans Thai', sans-serif`;
   function fit(x, t, w0, sz, maxW, it) { let s = sz; x.font = K(w0, s, it); while (x.measureText(t).width > maxW && s > 14) { s -= 2; x.font = K(w0, s, it) } return s }
+  // one font size for a whole list (longest entry decides); shorten "เมตร" to "ม." if that alone would make it too small
+  function uniformList(x, rows, fs, maxW, w) {
+    const size = () => { let z = fs; for (const r of rows) { x.font = K(w || 700, z); while (x.measureText(r.v).width > maxW && z > 14) { z -= 1; x.font = K(w || 700, z) } } return z };
+    let z = size(); if (z < fs * .85) { rows.forEach(r => r.v = r.v.replace(/ เมตร$/, ' ม.')); z = size() } return z;
+  }
   function rnd(seed) { return () => (seed = (seed * 16807) % 2147483647) / 2147483647 }
   function medal(x, cx, cy, r, lv) {
     const im = MEDIMG[lv];
@@ -254,13 +259,14 @@
     x.save(); x.shadowColor = 'rgba(0,40,90,.16)'; x.shadowBlur = 14; rr(x, gx - 14, y, GW + 28, listH, 24); x.fillStyle = 'rgba(255,255,255,.85)'; x.fill(); x.restore();
     x.strokeStyle = 'rgba(80,150,220,.45)'; x.lineWidth = 2; rr(x, gx - 14, y, GW + 28, listH, 24); x.stroke();
     const fs = Math.min(cols === 3 ? 25 : 30, rh * .55), mr = Math.min(rh * .32, 20);
+    const UF = uniformList(x, rows, fs, cw - 16 - (18 + 2 * mr + 12) - 10);
     rows.forEach((it, i) => {
       const row = Math.floor(i / cols), inRow = Math.min(cols, rows.length - row * cols), col = i % cols;
       const off = (cols - inRow) * cw / 2, cx0 = gx + off + col * cw, ry = y + 12 + row * rh;
       g = x.createLinearGradient(cx0, 0, cx0 + cw, 0); g.addColorStop(0, 'rgba(225,240,255,.95)'); g.addColorStop(1, 'rgba(255,255,255,.45)'); rr(x, cx0 + 6, ry + 4, cw - 12, rh - 8, (rh - 8) / 2); x.fillStyle = g; x.fill();
       const mx = cx0 + 18 + mr; if (it.lv != null) medal(x, mx, ry + rh / 2 - mr * .15, mr, it.lv); else { x.beginPath(); x.arc(mx, ry + rh / 2, mr, 0, 7); x.fillStyle = '#1f63c6'; x.fill(); swimmer(x, mx, ry + rh / 2 + mr * .1, mr * .62, '#fff') }
       x.textAlign = 'left'; const tx = mx + mr + 12; x.font = K(500, fs * .72); const maxw = cx0 + cw - 16 - tx - (it.t ? x.measureText(it.t).width + 16 : 0);
-      x.fillStyle = it.lv === 0 ? '#7a5200' : it.lv === 1 ? '#2f4560' : it.lv === 2 ? '#7a3e14' : '#10233f'; fit(x, it.v, 700, fs, maxw, 0); x.fillText(it.v, tx, ry + rh / 2 + fs * .36);
+      x.fillStyle = it.lv === 0 ? '#7a5200' : it.lv === 1 ? '#2f4560' : it.lv === 2 ? '#7a3e14' : '#10233f'; x.font = K(700, UF); x.fillText(it.v, tx, ry + rh / 2 + UF * .36);
       if (it.t) { x.textAlign = 'right'; x.fillStyle = '#4f7fb8'; x.font = K(500, fs * .72); x.fillText(it.t, cx0 + cw - 22, ry + rh / 2 + fs * .3) }
       x.textAlign = 'center';
     });
@@ -341,10 +347,11 @@
     const ph2 = per * rh + 20, py = top + Math.max(0, (avail - ph2) / 2) * (FULL ? 0 : .5);
     x.save(); rr(x, LX - 16, py, PW + 32, ph2, 20); x.fillStyle = 'rgba(4,20,45,.55)'; x.fill(); x.strokeStyle = 'rgba(38,208,240,.35)'; x.lineWidth = 1.5; x.stroke(); x.restore();
     const cw = PW / cols, fs = Math.min(cols === 3 ? 23 : cols === 1 ? 32 : 27, rh * .56), mr = Math.min(rh * .3, 16);
+    const UF = uniformList(x, rows, fs, cw - mr * 2 - 40);
     rows.forEach((it, i) => { const col = Math.floor(i / per), ry = py + 10 + (i % per) * rh, x0 = LX + col * cw;
       if (i % per) { x.fillStyle = 'rgba(255,255,255,.07)'; x.fillRect(x0 + 6, ry, cw - 22, 1) }
       const mx = x0 + 6 + mr; if (it.lv != null) medal(x, mx, ry + rh / 2 - mr * .15, mr, it.lv); else { x.beginPath(); x.arc(mx, ry + rh / 2, mr, 0, 7); x.fillStyle = 'rgba(38,208,240,.25)'; x.fill(); swimmer(x, mx, ry + rh / 2 + mr * .1, mr * .62, CY) }
-      x.fillStyle = it.lv != null ? WHITE : 'rgba(220,240,255,.8)'; fit(x, it.v, it.lv != null ? 700 : 500, fs, cw - mr * 2 - 34); x.fillText(it.v, mx + mr + 14, ry + rh / 2 + fs * .36) });
+      x.fillStyle = it.lv != null ? WHITE : 'rgba(220,240,255,.8)'; x.font = K(it.lv != null ? 700 : 500, UF); x.fillText(it.v, mx + mr + 14, ry + rh / 2 + UF * .36) });
 
     // footer band over the plate
     g = x.createLinearGradient(0, 1236, 0, H); g.addColorStop(0, 'rgba(2,10,28,0)'); g.addColorStop(.4, 'rgba(2,10,28,.7)'); g.addColorStop(1, 'rgba(2,10,28,.9)'); x.fillStyle = g; x.fillRect(0, 1236, W, H - 1236);
@@ -471,6 +478,7 @@
     x.strokeStyle = 'rgba(80,150,220,.5)'; x.lineWidth = 2; rr(x, LX - 14, boxTop, LW + 28, listH, 26); x.stroke();
     const cw = (LW + 4) / cols, fs = Math.min(cols > 1 ? 27 : 34, rh * .56);
     x.font = K(800, fs, 1); const kw = x.measureText('เหรียญทองแดง :').width;
+    const UF = uniformList(x, rows, fs, cols > 1 ? cw - 96 : cw - 96 - kw, cols > 1 ? 700 : 500);
     rows.forEach((r, i) => {
       const col = Math.floor(i / per), ry = boxTop + 10 + (i % per) * rh, x0 = LX - 2 + col * cw, mr = Math.min(rh * .34, 22);
       g = x.createLinearGradient(x0, 0, x0 + cw, 0); g.addColorStop(0, 'rgba(225,240,255,.95)'); g.addColorStop(1, 'rgba(255,255,255,.4)'); rr(x, x0 + 8, ry + 4, cw - 16, rh - 8, (rh - 8) / 2); x.fillStyle = g; x.fill();
@@ -479,7 +487,7 @@
       x.textAlign = 'left'; const tx = x0 + 34 + mr * 2; let vx = tx;
       if (cols === 1 && r.lv != null) { x.fillStyle = r.lv === 0 ? '#9a6a00' : r.lv === 1 ? '#3a4f6b' : r.lv === 2 ? '#8a4a1d' : NAVY; x.font = K(800, fs, 1); x.fillText(r.k + ' :', tx, ry + rh / 2 + fs * .36); vx = tx + kw + 18 }
       const tagW = 0;
-      x.fillStyle = '#10233f'; fit(x, r.v, cols > 1 ? 700 : 500, fs, x0 + cw - 18 - vx - tagW); x.fillText(r.v, vx, ry + rh / 2 + fs * .36); x.textAlign = 'center';
+      x.fillStyle = '#10233f'; x.font = K(cols > 1 ? 700 : 500, UF); x.fillText(r.v, vx, ry + rh / 2 + UF * .36); x.textAlign = 'center';
     });
 
     }

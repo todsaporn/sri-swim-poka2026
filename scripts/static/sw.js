@@ -1,6 +1,6 @@
 // network-first, bypassing the HTTP cache (GitHub Pages sends max-age=600) so results are always fresh online;
 // cached copy is only used when offline.
-const C = 'sri-swim-v23';
+const C = 'sri-swim-v24';
 self.addEventListener('install', e => self.skipWaiting());
 self.addEventListener('activate', e => e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== C).map(k => caches.delete(k)))).then(() => self.clients.claim())));
 self.addEventListener('fetch', e => {
