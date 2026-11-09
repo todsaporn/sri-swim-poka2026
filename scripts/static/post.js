@@ -108,7 +108,7 @@
   }
 
   // ---------- fonts ----------
-  let fontsP = null;
+  let fontsP = null; const MEDIMG = [], BGIMG = {};
   function fonts() {
     if (fontsP) return fontsP;
     const TH = 'U+0E01-0E5B,U+200C-200D,U+25CC', LA = 'U+0000-00FF,U+2013-2014,U+2018-201E,U+2026';
@@ -116,7 +116,9 @@
     [['500', 'normal'], ['700', 'normal'], ['800', 'italic']].forEach(([w, s]) => {
       [['thai', TH], ['latin', LA]].forEach(([sub, ur]) => { try { const f = new FontFace('KanitP', `url(kanit-${sub}-${w}-${s}.woff2)`, { weight: w, style: s, unicodeRange: ur }); document.fonts.add(f); fs.push(f.load()) } catch (e) { } });
     });
-    fontsP = Promise.race([Promise.all(fs), new Promise(r => setTimeout(r, 4000))]).catch(() => { });
+    ['gold', 'silver', 'bronze'].forEach((n, i) => fs.push(loadImg(`medal-${n}.png`).then(im => { MEDIMG[i] = im }, () => { })));
+    ['a', 'b'].forEach(k => fs.push(loadImg(`bg-${k}.jpg`).then(im => { BGIMG[k] = im }, () => { })));
+    fontsP = Promise.race([Promise.all(fs), new Promise(r => setTimeout(r, 6000))]).catch(() => { });
     return fontsP;
   }
   const loadImg = src => new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = src });
@@ -133,6 +135,8 @@
   function fit(x, t, w0, sz, maxW, it) { let s = sz; x.font = K(w0, s, it); while (x.measureText(t).width > maxW && s > 14) { s -= 2; x.font = K(w0, s, it) } return s }
   function rnd(seed) { return () => (seed = (seed * 16807) % 2147483647) / 2147483647 }
   function medal(x, cx, cy, r, lv) {
+    const im = MEDIMG[lv];
+    if (im) { const w = r * 2.15, h = w * im.height / im.width; x.save(); x.shadowColor = 'rgba(0,0,0,.28)'; x.shadowBlur = r * .35; x.shadowOffsetY = r * .1; x.drawImage(im, cx - w / 2, cy - h * .64, w, h); x.restore(); return }
     const C = [['#fff2a8', '#f1b81c', '#b07a0a'], ['#ffffff', '#c9d2dc', '#7d8a98'], ['#ffd2ad', '#d98a4e', '#8a4a1d']][lv];
     const RB = [['#d42a2a', '#a01616'], ['#2f5fcf', '#1c3d93'], ['#2f9b48', '#1d6b30']][lv];
     // ribbon tails
@@ -267,24 +271,18 @@
     const W = 1080, H = 1350, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
     const CY = '#26d0f0', GOLD = '#f6c945', WHITE = '#ffffff', FULL = !!(photo && photo.im) && opts.layout !== 'center';
     let g;
-    // background
-    g = x.createLinearGradient(0, 0, W * .4, H); g.addColorStop(0, '#04122a'); g.addColorStop(.55, '#082b57'); g.addColorStop(1, '#0a4c86'); x.fillStyle = g; x.fillRect(0, 0, W, H);
-    g = x.createRadialGradient(800, 560, 30, 800, 560, 620); g.addColorStop(0, 'rgba(38,208,240,.42)'); g.addColorStop(1, 'rgba(38,208,240,0)'); x.fillStyle = g; x.fillRect(0, 0, W, H);
-    // diagonal light beams
-    x.save(); x.globalCompositeOperation = 'lighter';
-    [[520, 90, .07], [690, 60, .05], [860, 120, .06], [1000, 50, .04]].forEach(([bx, bw, a]) => { x.beginPath(); x.moveTo(bx, 0); x.lineTo(bx + bw, 0); x.lineTo(bx + bw - 520, H); x.lineTo(bx - 520, H); x.closePath(); x.fillStyle = `rgba(160,230,255,${a})`; x.fill() });
-    x.restore();
-    // water caustic lines
-    x.save(); x.globalAlpha = .12; x.strokeStyle = '#9fe6ff'; x.lineWidth = 2;
-    for (let k = 0; k < 9; k++) { x.beginPath(); for (let i = 0; i <= W; i += 10) { const yy = 860 + k * 40 + Math.sin(i / 70 + k) * 10; i ? x.lineTo(i, yy) : x.moveTo(i, yy) } x.stroke() } x.restore();
-    const rn = rnd(11); for (let i = 0; i < 50; i++) { x.beginPath(); x.arc(rn() * W, rn() * H, 1.5 + rn() * 4, 0, 7); x.fillStyle = `rgba(190,240,255,${.1 + rn() * .3})`; x.fill() }
+    // background plate (Canva art) + left-side shade for legibility
+    if (BGIMG.b) x.drawImage(BGIMG.b, 0, 0, W, H); else { g = x.createLinearGradient(0, 0, W * .4, H); g.addColorStop(0, '#04122a'); g.addColorStop(1, '#0a4c86'); x.fillStyle = g; x.fillRect(0, 0, W, H) }
+    g = x.createLinearGradient(0, 0, W * .75, 0); g.addColorStop(0, 'rgba(2,10,28,.72)'); g.addColorStop(.6, 'rgba(2,10,28,.25)'); g.addColorStop(1, 'rgba(2,10,28,0)'); x.fillStyle = g; x.fillRect(0, 0, W, H);
+    g = x.createLinearGradient(0, 0, 0, 190); g.addColorStop(0, 'rgba(2,10,28,.7)'); g.addColorStop(1, 'rgba(2,10,28,0)'); x.fillStyle = g; x.fillRect(0, 0, W, 190);
 
     // top bar: seals + meet
     const seal = async (src, cx, cy, r, clip) => { x.save(); x.beginPath(); x.arc(cx, cy, r + 4, 0, 7); x.fillStyle = '#fff'; x.shadowColor = 'rgba(0,0,0,.4)'; x.shadowBlur = 10; x.fill(); x.restore();
       try { const im = await loadImg(src); x.save(); if (clip) { x.beginPath(); x.arc(cx, cy, r, 0, 7); x.clip() } x.drawImage(im, cx - r, cy - r, r * 2, r * 2); x.restore() } catch (e) { } };
     await seal('seal-sri.png', 92, 92, 50, true); await seal('logo.png', 210, 92, 50, false);
+    x.save(); x.shadowColor = 'rgba(0,8,25,.95)'; x.shadowBlur = 14;
     x.textAlign = 'right'; x.fillStyle = WHITE; x.font = K(800, 30, 1); x.fillText('อบจ.กระบี่ SWIMMING CHAMPIONSHIP', W - 50, 78);
-    x.fillStyle = CY; x.font = K(500, 22); x.fillText('ชิงแชมป์ภาคใต้ ครั้งที่ 16 · 7–8 พ.ย. 2569 · จ.กระบี่', W - 50, 112);
+    x.fillStyle = CY; x.font = K(500, 22); x.fillText('ชิงแชมป์ภาคใต้ ครั้งที่ 16 · 7–8 พ.ย. 2569 · จ.กระบี่', W - 50, 112); x.fillText('ชิงแชมป์ภาคใต้ ครั้งที่ 16 · 7–8 พ.ย. 2569 · จ.กระบี่', W - 50, 112); x.restore();
     x.fillStyle = 'rgba(255,255,255,.18)'; x.fillRect(50, 160, W - 100, 2);
 
     // photo (right)
@@ -324,9 +322,9 @@
     // medal tally
     let y = 600; const cnt = [0, 0, 0]; info.medals.forEach(m => cnt[m.lv]++);
     if (info.medals.length) {
-      [0, 1, 2].filter(lv => cnt[lv]).forEach((lv, i) => { const mx = LX + 58 + i * 160; medal(x, mx, y + 56, 50, lv);
-        x.textAlign = 'center'; x.fillStyle = lv === 1 ? '#33475e' : lv === 0 ? '#6b4700' : '#5c2c0b'; x.font = K(800, 50, 1); x.fillText(String(cnt[lv]), mx, y + 74);
-        x.fillStyle = 'rgba(255,255,255,.8)'; x.font = K(500, 20); x.fillText(['ทอง', 'เงิน', 'ทองแดง'][lv], mx, y + 150) });
+      [0, 1, 2].filter(lv => cnt[lv]).forEach((lv, i) => { const mx = LX + 44 + i * 172; medal(x, mx, y + 74, 40, lv);
+        x.textAlign = 'left'; x.save(); x.shadowColor = 'rgba(0,0,0,.5)'; x.shadowBlur = 8; x.fillStyle = [GOLD, '#e6edf5', '#e9a46f'][lv]; x.font = K(800, 64, 1); x.fillText('×' + cnt[lv], mx + 44, y + 98); x.restore();
+        x.fillStyle = 'rgba(255,255,255,.75)'; x.font = K(500, 19); x.fillText(['เหรียญทอง', 'เหรียญเงิน', 'เหรียญทองแดง'][lv], mx + 48, y + 128) });
       y += 170;
     } else { x.fillStyle = WHITE; x.font = K(800, 40, 1); x.textAlign = 'left'; x.fillText(`ลงแข่ง ${info.part.length} รายการ`, LX, y + 52); y += 80 }
     x.textAlign = 'left';
@@ -346,8 +344,9 @@
       const mx = x0 + 6 + mr; if (it.lv != null) medal(x, mx, ry + rh / 2 - mr * .15, mr, it.lv); else { x.beginPath(); x.arc(mx, ry + rh / 2, mr, 0, 7); x.fillStyle = 'rgba(38,208,240,.25)'; x.fill(); swimmer(x, mx, ry + rh / 2 + mr * .1, mr * .62, CY) }
       x.fillStyle = it.lv != null ? WHITE : 'rgba(220,240,255,.8)'; fit(x, it.v, it.lv != null ? 700 : 500, fs, cw - mr * 2 - 34); x.fillText(it.v, mx + mr + 14, ry + rh / 2 + fs * .36) });
 
-    // footer: lane rope + club
-    const fy = 1244; for (let i = 0; i < 46; i++) { x.beginPath(); x.ellipse(12 + i * 24, fy, 11, 9, 0, 0, 7); x.fillStyle = i % 6 < 2 ? '#e8333a' : i % 6 < 4 ? '#ffffff' : '#1d6fe0'; x.fill() }
+    // footer band over the plate
+    g = x.createLinearGradient(0, 1236, 0, H); g.addColorStop(0, 'rgba(2,10,28,0)'); g.addColorStop(.4, 'rgba(2,10,28,.7)'); g.addColorStop(1, 'rgba(2,10,28,.9)'); x.fillStyle = g; x.fillRect(0, 1236, W, H - 1236);
+    x.fillStyle = 'rgba(38,208,240,.6)'; x.fillRect(W / 2 - 60, 1262, 120, 3);
     x.textAlign = 'center'; x.fillStyle = WHITE; x.font = K(800, 34, 1); x.fillText('ชมรมว่ายน้ำโรงเรียนศรีอรุโณทัย', W / 2, 1298);
     x.fillStyle = CY; x.font = K(500, 18); x.fillText('S R I A R U N O T H A I   S W I M M I N G   C L U B   ·   S S C', W / 2, 1328);
     return c;
@@ -359,18 +358,11 @@
     await fonts();
     const W = 1080, H = 1350, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
     const NAVY = '#0b3d91', GREEN = '#1f9d43', RC = 700;
-    // background
-    let g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#f3fbff'); g.addColorStop(.45, '#d6effd'); g.addColorStop(1, '#9fd6f5'); x.fillStyle = g; x.fillRect(0, 0, W, H);
-    g = x.createRadialGradient(260, 760, 40, 260, 760, 620); g.addColorStop(0, 'rgba(56,170,235,.55)'); g.addColorStop(1, 'rgba(56,170,235,0)'); x.fillStyle = g; x.fillRect(0, 0, W, H);
-    // pool lane lines (left)
-    for (let i = 0; i < 5; i++) { const y = 560 + i * 120; x.save(); x.globalAlpha = .18; for (let k = 0; k < 18; k++) { x.beginPath(); x.arc(-20 + k * 26, y + k * 3, 10, 0, 7); x.fillStyle = k % 3 ? '#ffffff' : '#e23b3b'; x.fill() } x.restore() }
-    // corner swooshes
-    swoosh(x, [0, 0, 260, 0, 120, 60, 0, 230, 0, 230, 0, 230], '#52c55e', '#1f9d43', 0, 230);
-    swoosh(x, [W, 0, W - 260, 0, W - 120, 70, W, 250, W, 250, W, 250], '#52c55e', '#1f9d43', 0, 250);
-    x.save(); x.globalAlpha = .55; swoosh(x, [0, 0, 330, 0, 160, 110, 0, 330, 0, 330, 0, 330], '#bfe9a8', 'rgba(255,255,255,0)', 0, 330); x.restore();
-    // splash dots
-    const rn = rnd(7); for (let i = 0; i < 70; i++) { const px = 330 + rn() * 750, py = 140 + rn() * 900, r = 2 + rn() * 7; x.beginPath(); x.arc(px, py, r, 0, 7); x.fillStyle = `rgba(${rn() > .5 ? '30,150,230' : '255,255,255'},${.25 + rn() * .5})`; x.fill() }
-    for (let i = 0; i < 3; i++) { x.beginPath(); x.moveTo(380, 360 + i * 22); x.bezierCurveTo(600, 280 + i * 30, 820, 420 + i * 10, 1080, 300 + i * 25); x.strokeStyle = `rgba(255,255,255,${.5 - i * .12})`; x.lineWidth = 10 - i * 3; x.stroke() }
+    // background plate (Canva art) + soft light veil for text areas
+    let g;
+    if (BGIMG.a) x.drawImage(BGIMG.a, 0, 0, W, H); else { g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#f3fbff'); g.addColorStop(1, '#9fd6f5'); x.fillStyle = g; x.fillRect(0, 0, W, H) }
+    g = x.createRadialGradient(W / 2, 520, 60, W / 2, 520, 620); g.addColorStop(0, 'rgba(255,255,255,.55)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, W, H);
+    g = x.createLinearGradient(0, 0, 0, 170); g.addColorStop(0, 'rgba(255,255,255,.75)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, W, 170);
 
     // header seals
     const seal = async (src, cx, cy, r, clip) => { x.save(); x.shadowColor = 'rgba(0,0,0,.22)'; x.shadowBlur = 14; x.beginPath(); x.arc(cx, cy, r + 6, 0, 7); x.fillStyle = '#fff'; x.fill(); x.restore();
@@ -489,12 +481,11 @@
     });
 
     }
-    // footer band
-    swoosh(x, [0, footY, 300, footY - 50, 700, footY + 40, W, footY - 30, W, footY - 30, W, footY - 30, W, H, W, H, W, H, 0, H, 0, H, 0, H], '#a6e08a', '#a6e08a', footY, H);
-    swoosh(x, [0, footY + 20, 320, footY - 25, 720, footY + 55, W, footY - 5, W, footY - 5, W, footY - 5, W, H, W, H, W, H, 0, H, 0, H, 0, H], '#35b04a', '#0f6e30', footY, H);
+    // footer: text on the plate's wave band
+    g = x.createLinearGradient(0, footY + 10, 0, H); g.addColorStop(0, 'rgba(10,80,160,0)'); g.addColorStop(.45, 'rgba(10,80,160,.35)'); g.addColorStop(1, 'rgba(8,60,130,.55)'); x.fillStyle = g; x.fillRect(0, footY + 10, W, H - footY);
     swimmer(x, 175, footY + 75, 46, '#ffffff');
-    x.fillStyle = '#fff'; fit(x, 'ชมรมว่ายน้ำโรงเรียนศรีอรุโณทัย', 800, 50, 720, 1); x.save(); x.shadowColor = 'rgba(0,40,10,.4)'; x.shadowBlur = 6; x.fillText('ชมรมว่ายน้ำโรงเรียนศรีอรุโณทัย', W / 2 + 70, footY + 82); x.restore();
-    x.font = K(500, 24); x.fillText('S R I A R U N O T H A I   S W I M M I N G   C L U B   ( S S C )', W / 2 + 70, footY + 120);
+    x.save(); x.shadowColor = 'rgba(0,30,80,.55)'; x.shadowBlur = 10; x.fillStyle = '#fff'; fit(x, 'ชมรมว่ายน้ำโรงเรียนศรีอรุโณทัย', 800, 50, 720, 1); x.fillText('ชมรมว่ายน้ำโรงเรียนศรีอรุโณทัย', W / 2 + 70, footY + 82);
+    x.font = K(500, 24); x.fillText('S R I A R U N O T H A I   S W I M M I N G   C L U B   ( S S C )', W / 2 + 70, footY + 120); x.restore();
     return c;
   }
 
