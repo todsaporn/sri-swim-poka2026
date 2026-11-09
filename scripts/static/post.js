@@ -232,6 +232,99 @@
     });
   }
 
+  // ---------- style B: dark "athlete card" (navy / cyan / gold) ----------
+  async function renderB(info, photo, opts) {
+    opts = opts || {}; await fonts();
+    if (opts.only === 'medal' && info.medals.length) info = Object.assign({}, info, { part: [] });
+    const W = 1080, H = 1350, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
+    const CY = '#26d0f0', GOLD = '#f6c945', WHITE = '#ffffff', FULL = !!(photo && photo.im) && opts.layout !== 'center';
+    let g;
+    // background
+    g = x.createLinearGradient(0, 0, W * .4, H); g.addColorStop(0, '#04122a'); g.addColorStop(.55, '#082b57'); g.addColorStop(1, '#0a4c86'); x.fillStyle = g; x.fillRect(0, 0, W, H);
+    g = x.createRadialGradient(800, 560, 30, 800, 560, 620); g.addColorStop(0, 'rgba(38,208,240,.42)'); g.addColorStop(1, 'rgba(38,208,240,0)'); x.fillStyle = g; x.fillRect(0, 0, W, H);
+    // diagonal light beams
+    x.save(); x.globalCompositeOperation = 'lighter';
+    [[520, 90, .07], [690, 60, .05], [860, 120, .06], [1000, 50, .04]].forEach(([bx, bw, a]) => { x.beginPath(); x.moveTo(bx, 0); x.lineTo(bx + bw, 0); x.lineTo(bx + bw - 520, H); x.lineTo(bx - 520, H); x.closePath(); x.fillStyle = `rgba(160,230,255,${a})`; x.fill() });
+    x.restore();
+    // water caustic lines
+    x.save(); x.globalAlpha = .12; x.strokeStyle = '#9fe6ff'; x.lineWidth = 2;
+    for (let k = 0; k < 9; k++) { x.beginPath(); for (let i = 0; i <= W; i += 10) { const yy = 860 + k * 40 + Math.sin(i / 70 + k) * 10; i ? x.lineTo(i, yy) : x.moveTo(i, yy) } x.stroke() } x.restore();
+    const rn = rnd(11); for (let i = 0; i < 50; i++) { x.beginPath(); x.arc(rn() * W, rn() * H, 1.5 + rn() * 4, 0, 7); x.fillStyle = `rgba(190,240,255,${.1 + rn() * .3})`; x.fill() }
+
+    // top bar: seals + meet
+    const seal = async (src, cx, cy, r, clip) => { x.save(); x.beginPath(); x.arc(cx, cy, r + 4, 0, 7); x.fillStyle = '#fff'; x.shadowColor = 'rgba(0,0,0,.4)'; x.shadowBlur = 10; x.fill(); x.restore();
+      try { const im = await loadImg(src); x.save(); if (clip) { x.beginPath(); x.arc(cx, cy, r, 0, 7); x.clip() } x.drawImage(im, cx - r, cy - r, r * 2, r * 2); x.restore() } catch (e) { } };
+    await seal('seal-sri.png', 92, 92, 50, true); await seal('logo.png', 210, 92, 50, false);
+    x.textAlign = 'right'; x.fillStyle = WHITE; x.font = K(800, 30, 1); x.fillText('อบจ.กระบี่ SWIMMING CHAMPIONSHIP', W - 50, 78);
+    x.fillStyle = CY; x.font = K(500, 22); x.fillText('ชิงแชมป์ภาคใต้ ครั้งที่ 16 · 7–8 พ.ย. 2569 · จ.กระบี่', W - 50, 112);
+    x.fillStyle = 'rgba(255,255,255,.18)'; x.fillRect(50, 160, W - 100, 2);
+
+    // photo (right)
+    const PCX = 790;
+    if (FULL) {
+      const im = photo.im;
+      if (photo.alpha) { const maxH = 1040, maxW = 560, sc = Math.min(maxH / im.height, maxW / im.width), w = im.width * sc, h = im.height * sc;
+        x.beginPath(); x.ellipse(PCX, 1215, w * .5, 34, 0, 0, 7); g = x.createRadialGradient(PCX, 1215, 10, PCX, 1215, w * .5); g.addColorStop(0, 'rgba(0,0,0,.45)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fill();
+        x.save(); x.shadowColor = 'rgba(38,208,240,.55)'; x.shadowBlur = 40; x.drawImage(im, PCX - w / 2, 1222 - h, w, h); x.restore() }
+      else { const fw = 420, fh = 640, fx = PCX - fw / 2 + 20, fy = 230, sc = Math.max(fw / im.width, fh / im.height), w = im.width * sc, h = im.height * sc;
+        x.save(); x.translate(fx + fw / 2, fy + fh / 2); x.rotate(.03); x.shadowColor = 'rgba(0,0,0,.5)'; x.shadowBlur = 30; rr(x, -fw / 2 - 10, -fh / 2 - 10, fw + 20, fh + 20, 30); g = x.createLinearGradient(-fw / 2, -fh / 2, fw / 2, fh / 2); g.addColorStop(0, '#ffe58a'); g.addColorStop(1, '#b8860b'); x.fillStyle = g; x.fill(); x.shadowBlur = 0;
+          rr(x, -fw / 2, -fh / 2, fw, fh, 22); x.clip(); x.drawImage(im, -w / 2, -fh / 2 - (h - fh) * .2, w, h); x.restore() }
+    } else {
+      const cy = 470, r = 190;
+      for (let k = 3; k >= 1; k--) { x.beginPath(); x.arc(PCX, cy, r + k * 26, 0, 7); x.strokeStyle = `rgba(38,208,240,${.1 + (3 - k) * .08})`; x.lineWidth = 3; x.stroke() }
+      x.save(); x.shadowColor = 'rgba(0,0,0,.5)'; x.shadowBlur = 30; x.beginPath(); x.arc(PCX, cy, r + 12, 0, 7); g = x.createLinearGradient(PCX - r, cy - r, PCX + r, cy + r); g.addColorStop(0, '#fff1a1'); g.addColorStop(.5, GOLD); g.addColorStop(1, '#a8700b'); x.fillStyle = g; x.fill(); x.restore();
+      x.save(); x.beginPath(); x.arc(PCX, cy, r, 0, 7); x.clip();
+      const prof = window.Photos && Photos.get && Photos.get(info.name); let ok = false;
+      if (prof) { try { const im = await loadImg(prof); x.drawImage(im, PCX - r, cy - r, r * 2, r * 2); ok = true } catch (e) { } }
+      if (!ok) { g = x.createLinearGradient(PCX - r, cy - r, PCX + r, cy + r); g.addColorStop(0, info.g === 'F' ? '#ff8fc0' : '#3fb7ff'); g.addColorStop(1, info.g === 'F' ? '#9b2c68' : '#0d4c9a'); x.fillStyle = g; x.fillRect(PCX - r, cy - r, r * 2, r * 2); swimmer(x, PCX, cy + 10, r * .5, 'rgba(255,255,255,.95)') }
+      x.restore();
+    }
+
+    // headline + name (left column)
+    const LX = 56, LW = FULL ? 520 : 500;
+    x.textAlign = 'left';
+    g = x.createLinearGradient(0, 200, 0, 270); g.addColorStop(0, '#fff3b0'); g.addColorStop(.5, GOLD); g.addColorStop(1, '#c48a10'); x.fillStyle = g;
+    fit(x, 'ขอแสดงความยินดี', 800, 64, LW, 1); x.fillText('ขอแสดงความยินดี', LX, 258);
+    x.fillStyle = CY; x.font = K(700, 28); x.fillText(info.g === 'F' ? 'เด็กหญิง' : 'เด็กชาย', LX, 316);
+    const sp = info.disp.indexOf(' '), first = sp > 0 ? info.disp.slice(0, sp) : info.disp, last = sp > 0 ? info.disp.slice(sp + 1) : '';
+    x.fillStyle = WHITE; x.save(); x.shadowColor = 'rgba(0,0,0,.4)'; x.shadowBlur = 12; fit(x, first, 800, 104, LW, 1); x.fillText(first, LX - 4, 418); x.restore();
+    x.fillStyle = 'rgba(255,255,255,.85)'; fit(x, last, 700, 52, LW, 1); x.fillText(last, LX, 482);
+    // chips
+    let cx0 = LX; const chip = (t, fill) => { x.font = K(700, 26); const w = x.measureText(t).width + 40; rr(x, cx0, 512, w, 48, 24); if (fill) { x.fillStyle = CY; x.fill(); x.fillStyle = '#04223f' } else { x.strokeStyle = CY; x.lineWidth = 2.5; x.stroke(); x.fillStyle = CY } x.fillText(t, cx0 + 20, 545); cx0 += w + 14 };
+    if (info.cls) chip(`ชั้น ${info.cls}`, false); chip(info.catL, true);
+
+    // medal tally
+    let y = 600; const cnt = [0, 0, 0]; info.medals.forEach(m => cnt[m.lv]++);
+    if (info.medals.length) {
+      [0, 1, 2].filter(lv => cnt[lv]).forEach((lv, i) => { const mx = LX + 58 + i * 160; medal(x, mx, y + 56, 50, lv);
+        x.textAlign = 'center'; x.fillStyle = lv === 1 ? '#33475e' : lv === 0 ? '#6b4700' : '#5c2c0b'; x.font = K(800, 50, 1); x.fillText(String(cnt[lv]), mx, y + 74);
+        x.fillStyle = 'rgba(255,255,255,.8)'; x.font = K(500, 20); x.fillText(['ทอง', 'เงิน', 'ทองแดง'][lv], mx, y + 150) });
+      y += 170;
+    } else { x.fillStyle = WHITE; x.font = K(800, 40, 1); x.textAlign = 'left'; x.fillText(`ลงแข่ง ${info.part.length} รายการ`, LX, y + 52); y += 80 }
+    x.textAlign = 'left';
+    if (info.rk && info.rk <= 6) { const t = `ถ้วยนักกีฬายอดเยี่ยม อันดับที่ ${info.rk}`; x.font = K(700, 26); const w = Math.min(LW, x.measureText(t).width + 80);
+      g = x.createLinearGradient(LX, 0, LX + w, 0); g.addColorStop(0, '#f6c945'); g.addColorStop(1, '#d99a14'); rr(x, LX, y, w, 50, 12); x.fillStyle = g; x.fill(); trophy(x, LX + 32, y + 22, 18); x.fillStyle = '#3a2500'; fit(x, t, 700, 26, w - 70); x.fillText(t, LX + 60, y + 35); y += 66 }
+
+    // event list
+    const rows = info.medals.map(m => ({ v: m.ev, lv: m.lv })).concat(info.part.map(d => ({ v: d.ev })));
+    const top = Math.max(y + 6, FULL ? 0 : 720), PW = FULL ? 560 : W - 2 * LX, avail = 1206 - top;
+    let cols = FULL ? (rows.length > 9 ? 2 : 1) : (rows.length <= 5 ? 1 : rows.length <= 12 ? 2 : 3);
+    const per = Math.ceil(rows.length / cols); const rh = Math.min(64, (avail - 20) / per);
+    const ph2 = per * rh + 20, py = top + Math.max(0, (avail - ph2) / 2) * (FULL ? 0 : .5);
+    x.save(); rr(x, LX - 16, py, PW + 32, ph2, 20); x.fillStyle = 'rgba(4,20,45,.55)'; x.fill(); x.strokeStyle = 'rgba(38,208,240,.35)'; x.lineWidth = 1.5; x.stroke(); x.restore();
+    const cw = PW / cols, fs = Math.min(cols === 3 ? 23 : cols === 1 ? 32 : 27, rh * .56), mr = Math.min(rh * .3, 16);
+    rows.forEach((it, i) => { const col = Math.floor(i / per), ry = py + 10 + (i % per) * rh, x0 = LX + col * cw;
+      if (i % per) { x.fillStyle = 'rgba(255,255,255,.07)'; x.fillRect(x0 + 6, ry, cw - 22, 1) }
+      const mx = x0 + 6 + mr; if (it.lv != null) medal(x, mx, ry + rh / 2 - mr * .15, mr, it.lv); else { x.beginPath(); x.arc(mx, ry + rh / 2, mr, 0, 7); x.fillStyle = 'rgba(38,208,240,.25)'; x.fill(); swimmer(x, mx, ry + rh / 2 + mr * .1, mr * .62, CY) }
+      x.fillStyle = it.lv != null ? WHITE : 'rgba(220,240,255,.8)'; fit(x, it.v, it.lv != null ? 700 : 500, fs, cw - mr * 2 - 34); x.fillText(it.v, mx + mr + 14, ry + rh / 2 + fs * .36) });
+
+    // footer: lane rope + club
+    const fy = 1244; for (let i = 0; i < 46; i++) { x.beginPath(); x.ellipse(12 + i * 24, fy, 11, 9, 0, 0, 7); x.fillStyle = i % 6 < 2 ? '#e8333a' : i % 6 < 4 ? '#ffffff' : '#1d6fe0'; x.fill() }
+    x.textAlign = 'center'; x.fillStyle = WHITE; x.font = K(800, 34, 1); x.fillText('ชมรมว่ายน้ำโรงเรียนศรีอรุโณทัย', W / 2, 1298);
+    x.fillStyle = CY; x.font = K(500, 18); x.fillText('S R I A R U N O T H A I   S W I M M I N G   C L U B   ·   S S C', W / 2, 1328);
+    return c;
+  }
+
   async function render(info, photo, opts) {
     opts = opts || {};
     if (opts.only === 'medal' && info.medals.length) info = Object.assign({}, info, { part: [] });
@@ -500,11 +593,12 @@
     const hasFull = !!ph, hasMed = info.medals.length > 0, hasPart = info.part.length > 0;
     const o = optsOf(name);
     let layout = hasFull ? (o.layout === 'center' ? 'center' : 'full') : 'center';
-    let only = hasMed && hasPart && o.only === 'medal' ? 'medal' : 'all';
+    let only = hasMed && hasPart && o.only === 'medal' ? 'medal' : 'all', style = o.style === 'B' ? 'B' : 'A';
     let url = null, file = null, seq = 0;
     const seg = (id, items, cur) => `<div class="pf-seg" id="${id}">${items.map(([v, l, dis]) => `<button data-v="${v}" class="${v === cur ? 'on' : ''}" ${dis ? 'disabled' : ''}>${l}</button>`).join('')}</div>`;
     const miss = [!info.cls && 'ชั้นเรียน', !hasFull && 'รูปเต็มตัว'].filter(Boolean);
     ov.innerHTML = `<div class="pf-in"><h3>📣 ${esc(prefix(info))}</h3>
+      ${seg('pf-sty', [['A', '🌿 แบบ A · สดใส'], ['B', '🌊 แบบ B · เข้ม']], style)}
       ${seg('pf-lay', [['full', '🧍 รูปเต็มตัว', !hasFull], ['center', '⭕ วงกลมกลาง']], layout)}
       ${hasMed && hasPart ? seg('pf-only', [['all', 'ทุกรายการ'], ['medal', 'เฉพาะที่ได้เหรียญ']], only) : ''}
       <div class="pf-stage"><div class="pf-ld"><span class="pf-spin"></span>กำลังสร้างภาพ…</div></div>
@@ -518,7 +612,7 @@
     async function draw() {
       const my = ++seq; stage.classList.add('busy');
       const inf = only === 'medal' ? Object.assign({}, info, { part: [] }) : info;
-      const c = await render(info, ph, { layout, only });
+      const c = await (style === 'B' ? renderB : render)(info, ph, { layout, only });
       if (my !== seq || closed) return;
       const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', .92));
       if (url) URL.revokeObjectURL(url); url = URL.createObjectURL(blob);
@@ -530,8 +624,8 @@
       if (cap0.v === null || capEl.value === cap0.v) { cap0.v = caption(inf); capEl.value = cap0.v }
     }
     const bindSeg = (id, set) => { const el = ov.querySelector('#' + id); if (!el) return; el.querySelectorAll('button').forEach(b => b.onclick = () => {
-      if (b.disabled || b.classList.contains('on')) return; el.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); set(b.dataset.v); saveOpts(name, { layout, only }); draw() }) };
-    bindSeg('pf-lay', v => layout = v); bindSeg('pf-only', v => only = v);
+      if (b.disabled || b.classList.contains('on')) return; el.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); set(b.dataset.v); saveOpts(name, { layout, only, style }); draw() }) };
+    bindSeg('pf-sty', v => style = v); bindSeg('pf-lay', v => layout = v); bindSeg('pf-only', v => only = v);
     const done = () => { closed = true; if (url) URL.revokeObjectURL(url); close() };
     ov.querySelectorAll('.x').forEach(b => b.onclick = done);
     ov.querySelector('#pf-edit').onclick = () => { done(); editProfile(name, () => showPost(name)) };
@@ -543,5 +637,5 @@
     const b = e.target.closest('[data-post]'), p = e.target.closest('[data-profile]'); if (!b && !p) return;
     e.preventDefault(); e.stopPropagation(); b ? showPost(b.dataset.post) : editProfile(p.dataset.profile);
   }, true);
-  window.Post = { open: showPost, showPost, editProfile, render, gather, caption, cls: clsOf, ready, onChange: f => listeners.push(f), _photo: photoObj };
+  window.Post = { renderB, open: showPost, showPost, editProfile, render, gather, caption, cls: clsOf, ready, onChange: f => listeners.push(f), _photo: photoObj };
 })();
