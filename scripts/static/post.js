@@ -138,6 +138,19 @@
     const size = () => { let z = fs; for (const r of rows) { x.font = K(w || 700, z); while (x.measureText(r.v).width > maxW && z > 14) { z -= 1; x.font = K(w || 700, z) } } return z };
     let z = size(); if (z < fs * .85) { rows.forEach(r => r.v = r.v.replace(/ เมตร$/, ' ม.')); z = size() } return z;
   }
+  // footer: club name (left) + coach credit with photo (right)
+  const COACH = { name: 'โค้ชครูเก๋', img: 'coach.jpg' };
+  async function footer(x, W, cy, c1, c2, sh, fs1, fs2) {
+    const r = 48, ccx = W - 64 - r;
+    x.save(); x.shadowColor = sh; x.shadowBlur = 10; x.textAlign = 'left';
+    x.fillStyle = c1; fit(x, 'ชมรมว่ายน้ำโรงเรียนศรีอรุโณทัย', 800, fs1, ccx - r - 230 - 56, 1); x.fillText('ชมรมว่ายน้ำโรงเรียนศรีอรุโณทัย', 56, cy + 2);
+    x.fillStyle = c2; x.font = K(500, fs2); x.fillText('SRIARUNOTHAI SWIMMING CLUB (SSC)', 58, cy + fs2 + 14);
+    x.textAlign = 'right'; x.fillStyle = c2; x.font = K(500, 20); x.fillText('by', ccx - r - 18, cy - 12);
+    x.fillStyle = c1; x.font = K(800, 32, 1); x.fillText(COACH.name, ccx - r - 16, cy + 24); x.restore();
+    x.save(); x.shadowColor = 'rgba(0,0,0,.35)'; x.shadowBlur = 10; x.beginPath(); x.arc(ccx, cy, r + 5, 0, 7); const g = x.createLinearGradient(ccx - r, cy - r, ccx + r, cy + r); g.addColorStop(0, '#fff1a1'); g.addColorStop(1, '#c48a10'); x.fillStyle = g; x.fill(); x.restore();
+    try { const im = await loadImg(COACH.img); x.save(); x.beginPath(); x.arc(ccx, cy, r, 0, 7); x.clip(); x.drawImage(im, ccx - r, cy - r, r * 2, r * 2); x.restore() } catch (e) { }
+    x.textAlign = 'center';
+  }
   function rnd(seed) { return () => (seed = (seed * 16807) % 2147483647) / 2147483647 }
   function medal(x, cx, cy, r, lv) {
     const im = MEDIMG[lv];
@@ -355,9 +368,7 @@
 
     // footer band over the plate
     g = x.createLinearGradient(0, 1236, 0, H); g.addColorStop(0, 'rgba(2,10,28,0)'); g.addColorStop(.4, 'rgba(2,10,28,.7)'); g.addColorStop(1, 'rgba(2,10,28,.9)'); x.fillStyle = g; x.fillRect(0, 1236, W, H - 1236);
-    x.fillStyle = 'rgba(38,208,240,.6)'; x.fillRect(W / 2 - 60, 1262, 120, 3);
-    x.textAlign = 'center'; x.fillStyle = WHITE; x.font = K(800, 34, 1); x.fillText('ชมรมว่ายน้ำโรงเรียนศรีอรุโณทัย', W / 2, 1298);
-    x.fillStyle = CY; x.font = K(500, 18); x.fillText('S R I A R U N O T H A I   S W I M M I N G   C L U B   ·   S S C', W / 2, 1328);
+    await footer(x, W, 1284, WHITE, CY, 'rgba(0,0,0,.6)', 36, 18);
     return c;
   }
 
@@ -493,9 +504,7 @@
     }
     // footer: text on the plate's wave band
     g = x.createLinearGradient(0, footY + 10, 0, H); g.addColorStop(0, 'rgba(10,80,160,0)'); g.addColorStop(.45, 'rgba(10,80,160,.35)'); g.addColorStop(1, 'rgba(8,60,130,.55)'); x.fillStyle = g; x.fillRect(0, footY + 10, W, H - footY);
-    swimmer(x, 175, footY + 75, 46, '#ffffff');
-    x.save(); x.shadowColor = 'rgba(0,30,80,.55)'; x.shadowBlur = 10; x.fillStyle = '#fff'; fit(x, 'ชมรมว่ายน้ำโรงเรียนศรีอรุโณทัย', 800, 50, 720, 1); x.fillText('ชมรมว่ายน้ำโรงเรียนศรีอรุโณทัย', W / 2 + 70, footY + 82);
-    x.font = K(500, 24); x.fillText('S R I A R U N O T H A I   S W I M M I N G   C L U B   ( S S C )', W / 2 + 70, footY + 120); x.restore();
+    await footer(x, W, footY + 80, '#ffffff', '#e6f6ff', 'rgba(0,30,80,.6)', 46, 22);
     return c;
   }
 
@@ -505,7 +514,7 @@
     if (i.medals.length) { lines.push(`🏅 รางวัลที่ได้ ${['🥇', '🥈', '🥉'].map((e, k) => cnt[k] ? `${e}${cnt[k]}` : '').filter(Boolean).join(' ')}`); i.medals.forEach(m => lines.push(`${['🥇', '🥈', '🥉'][m.lv]} ${LV[m.lv]} ${m.ev}`)) }
     if (i.part.length) { lines.push('', '🏊 รายการที่เข้าร่วมแข่งขัน'); i.part.forEach(d => lines.push(`• ${d.ev}`)) }
     if (i.rk && i.rk <= 6) lines.push(`🏆 ถ้วยนักกีฬายอดเยี่ยมประเภทบุคคล อันดับที่ ${i.rk} ${i.catL}`);
-    lines.push('', 'ชมรมว่ายน้ำโรงเรียนศรีอรุโณทัย (SSC)', '#SSC #ศรีอรุโณทัย #ว่ายน้ำ');
+    lines.push('', 'ชมรมว่ายน้ำโรงเรียนศรีอรุโณทัย (SSC) · by ' + COACH.name, '#SSC #ศรีอรุโณทัย #ว่ายน้ำ');
     return lines.join('\n');
   }
 
