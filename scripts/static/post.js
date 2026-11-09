@@ -36,7 +36,29 @@
       cloud = true;
     } catch (e) { cloud = false }
   }
-  const ready = sync();
+  // push anything saved only on this device (while the cloud was unreachable) up to the shared store
+  let pushing = false;
+  async function pushLocal() {
+    if (!cloud || pushing) return; pushing = true;
+    try {
+      const l = lsGet(); let ch = false;
+      for (const n of Object.keys(l)) {
+        const e = l[n];
+        if ('cls' in e) { try { await rpc('set_class', { p_athlete: n, p_cls: e.cls }); CLS[n] = e.cls; delete e.cls; ch = true } catch (er) { } }
+        if (e.opts && optsCloud) { try { await rpc('set_post_opts', { p_athlete: n, p_opts: e.opts }); OPTS[n] = e.opts; delete e.opts; ch = true } catch (er) { } }
+        if (!Object.keys(e).length) delete l[n];
+      }
+      if (ch) lsSet(l);
+      idb = idb || await openDB();
+      if (idb) {
+        const keys = await new Promise(res => { try { const q = idb.transaction('p').objectStore('p').getAllKeys(); q.onsuccess = () => res(q.result || []); q.onerror = () => res([]) } catch (er) { res([]) } });
+        for (const n of keys) { const v = await idbGet(n); if (!v) continue; try { await rpc('set_post_photo', { p_athlete: n, p_img: v }); await idbPut(n, null); POST[n] = v } catch (er) { } }
+      }
+    } finally { pushing = false }
+  }
+  // DATA is declared by the page's inline script, which runs after this file: sync once the DOM is ready
+  const ready = new Promise(res => { const go = () => sync().then(() => { pushLocal(); res() }, res); document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', go) : setTimeout(go, 0) });
+  setInterval(() => sync(), 120000);
 
   function clsOf(n) { if (n in CLS) return CLS[n]; const l = lsGet()[n]; if (l && 'cls' in l) return l.cls; return (DEFo()[n] || {}).cls || '' }
   const dispName = n => (DEFo()[n] || {}).nm || n;
