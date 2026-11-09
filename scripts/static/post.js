@@ -108,7 +108,7 @@
   }
 
   // ---------- fonts ----------
-  let fontsP = null; const MEDIMG = [], BGIMG = {};
+  let fontsP = null; const MEDIMG = [], DISCIMG = [], BGIMG = {};
   function fonts() {
     if (fontsP) return fontsP;
     const TH = 'U+0E01-0E5B,U+200C-200D,U+25CC', LA = 'U+0000-00FF,U+2013-2014,U+2018-201E,U+2026';
@@ -117,6 +117,7 @@
       [['thai', TH], ['latin', LA]].forEach(([sub, ur]) => { try { const f = new FontFace('KanitP', `url(kanit-${sub}-${w}-${s}.woff2)`, { weight: w, style: s, unicodeRange: ur }); document.fonts.add(f); fs.push(f.load()) } catch (e) { } });
     });
     ['gold', 'silver', 'bronze'].forEach((n, i) => fs.push(loadImg(`medal-${n}.png`).then(im => { MEDIMG[i] = im }, () => { })));
+    ['gold', 'silver', 'bronze'].forEach((n, i) => fs.push(loadImg(`disc-${n}.png`).then(im => { DISCIMG[i] = im }, () => { })));
     ['a', 'b'].forEach(k => fs.push(loadImg(`bg-${k}.jpg`).then(im => { BGIMG[k] = im }, () => { })));
     fontsP = Promise.race([Promise.all(fs), new Promise(r => setTimeout(r, 6000))]).catch(() => { });
     return fontsP;
@@ -152,6 +153,10 @@
     x.textAlign = 'center';
   }
   function rnd(seed) { return () => (seed = (seed * 16807) % 2147483647) / 2147483647 }
+  function disc(x, cx, cy, r, lv) { // ribbon-less medal for list rows
+    const im = DISCIMG[lv]; if (!im) return medal(x, cx, cy, r, lv);
+    x.save(); x.shadowColor = 'rgba(0,0,0,.25)'; x.shadowBlur = r * .3; x.shadowOffsetY = r * .08; x.drawImage(im, cx - r, cy - r, r * 2, r * 2); x.restore();
+  }
   function medal(x, cx, cy, r, lv) {
     const im = MEDIMG[lv];
     if (im) { const w = r * 2.15, h = w * im.height / im.width; x.save(); x.shadowColor = 'rgba(0,0,0,.28)'; x.shadowBlur = r * .35; x.shadowOffsetY = r * .1; x.drawImage(im, cx - w / 2, cy - h * .64, w, h); x.restore(); return }
@@ -277,7 +282,7 @@
       const row = Math.floor(i / cols), inRow = Math.min(cols, rows.length - row * cols), col = i % cols;
       const off = (cols - inRow) * cw / 2, cx0 = gx + off + col * cw, ry = y + 12 + row * rh;
       g = x.createLinearGradient(cx0, 0, cx0 + cw, 0); g.addColorStop(0, 'rgba(225,240,255,.95)'); g.addColorStop(1, 'rgba(255,255,255,.45)'); rr(x, cx0 + 6, ry + 4, cw - 12, rh - 8, (rh - 8) / 2); x.fillStyle = g; x.fill();
-      const mx = cx0 + 18 + mr; if (it.lv != null) medal(x, mx, ry + rh / 2 - mr * .15, mr, it.lv); else { x.beginPath(); x.arc(mx, ry + rh / 2, mr, 0, 7); x.fillStyle = '#1f63c6'; x.fill(); swimmer(x, mx, ry + rh / 2 + mr * .1, mr * .62, '#fff') }
+      const mx = cx0 + 18 + mr; if (it.lv != null) disc(x, mx, ry + rh / 2, mr * 1.08, it.lv); else { x.beginPath(); x.arc(mx, ry + rh / 2, mr, 0, 7); x.fillStyle = '#1f63c6'; x.fill(); swimmer(x, mx, ry + rh / 2 + mr * .1, mr * .62, '#fff') }
       x.textAlign = 'left'; const tx = mx + mr + 12; x.font = K(500, fs * .72); const maxw = cx0 + cw - 16 - tx - (it.t ? x.measureText(it.t).width + 16 : 0);
       x.fillStyle = it.lv === 0 ? '#7a5200' : it.lv === 1 ? '#2f4560' : it.lv === 2 ? '#7a3e14' : '#10233f'; x.font = K(700, UF); x.fillText(it.v, tx, ry + rh / 2 + UF * .36);
       if (it.t) { x.textAlign = 'right'; x.fillStyle = '#4f7fb8'; x.font = K(500, fs * .72); x.fillText(it.t, cx0 + cw - 22, ry + rh / 2 + fs * .3) }
@@ -363,7 +368,7 @@
     const UF = uniformList(x, rows, fs, cw - mr * 2 - 40);
     rows.forEach((it, i) => { const col = Math.floor(i / per), ry = py + 10 + (i % per) * rh, x0 = LX + col * cw;
       if (i % per) { x.fillStyle = 'rgba(255,255,255,.07)'; x.fillRect(x0 + 6, ry, cw - 22, 1) }
-      const mx = x0 + 6 + mr; if (it.lv != null) medal(x, mx, ry + rh / 2 - mr * .15, mr, it.lv); else { x.beginPath(); x.arc(mx, ry + rh / 2, mr, 0, 7); x.fillStyle = 'rgba(38,208,240,.25)'; x.fill(); swimmer(x, mx, ry + rh / 2 + mr * .1, mr * .62, CY) }
+      const mx = x0 + 6 + mr; if (it.lv != null) disc(x, mx, ry + rh / 2, mr * 1.08, it.lv); else { x.beginPath(); x.arc(mx, ry + rh / 2, mr, 0, 7); x.fillStyle = 'rgba(38,208,240,.25)'; x.fill(); swimmer(x, mx, ry + rh / 2 + mr * .1, mr * .62, CY) }
       x.fillStyle = it.lv != null ? WHITE : 'rgba(220,240,255,.8)'; x.font = K(it.lv != null ? 700 : 500, UF); x.fillText(it.v, mx + mr + 14, ry + rh / 2 + UF * .36) });
 
     // footer band over the plate
@@ -493,7 +498,7 @@
     rows.forEach((r, i) => {
       const col = Math.floor(i / per), ry = boxTop + 10 + (i % per) * rh, x0 = LX - 2 + col * cw, mr = Math.min(rh * .34, 22);
       g = x.createLinearGradient(x0, 0, x0 + cw, 0); g.addColorStop(0, 'rgba(225,240,255,.95)'); g.addColorStop(1, 'rgba(255,255,255,.4)'); rr(x, x0 + 8, ry + 4, cw - 16, rh - 8, (rh - 8) / 2); x.fillStyle = g; x.fill();
-      if (r.lv != null) medal(x, x0 + 20 + mr, ry + rh / 2 - mr * .15, mr, r.lv);
+      if (r.lv != null) disc(x, x0 + 20 + mr, ry + rh / 2, mr * 1.08, r.lv);
       else { x.beginPath(); x.arc(x0 + 20 + mr, ry + rh / 2, mr, 0, 7); x.fillStyle = '#1f63c6'; x.fill(); x.fillStyle = '#fff'; x.font = K(700, mr * 1.1); swimmer(x, x0 + 20 + mr, ry + rh / 2 + mr * .1, mr * .62, '#fff') }
       x.textAlign = 'left'; const tx = x0 + 34 + mr * 2; let vx = tx;
       if (cols === 1 && r.lv != null) { x.fillStyle = r.lv === 0 ? '#9a6a00' : r.lv === 1 ? '#3a4f6b' : r.lv === 2 ? '#8a4a1d' : NAVY; x.font = K(800, fs, 1); x.fillText(r.k + ' :', tx, ry + rh / 2 + fs * .36); vx = tx + kw + 18 }
