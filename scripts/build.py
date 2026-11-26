@@ -284,7 +284,7 @@ _now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=7)))
 now = _now.strftime('%d/%m %H:%M')
 out = dict(events={k: v for k, v in events.items() if k in {r['ev'] for r in races}}, races=races, heats=heats,
            evres={k: dict(nfin=v['nfin'], top=v['top'], c6=v.get('c6')) for k, v in evres.items() if k in {r['ev'] for r in races}}, stand=stand, clubs=clubs, drift=drift, qa=qa, lastres={d: max([int(k) for k in RES if int(k) in events and events[int(k)]['day'] == d] or [0]) for d in {e['day'] for e in events.values()}},
-           rules=dict(tz=TZ, pz=PZ, pts=PT, ct=RULES.get('club_top', 3), hm=HEAT_MAX), days=CFG['days_meta'], cloud=CFG.get('photo_cloud'), info=CFG.get('athlete_info',{}), meet=dict(ts=_now.isoformat(timespec='seconds'), name=CFG['meet_name'], slug=MEET, poster=CFG.get('poster', {}), meets=json.load(open(os.path.join(ROOT, 'meets', 'meets.json'))), total=total, teams=len(teams), updated=now,
+           rules=dict(tz=TZ, pz=PZ, pts=PT, ct=RULES.get('club_top', 3), hm=HEAT_MAX), days=CFG['days_meta'], cloud=CFG.get('photo_cloud'), info=CFG.get('athlete_info',{}), meet=dict(ts=_now.isoformat(timespec='seconds'), name=CFG['meet_name'], slug=MEET, rules_text=CFG.get('rules_text', []), rules_url=CFG.get('rules_url', ''), poster=CFG.get('poster', {}), meets=json.load(open(os.path.join(ROOT, 'meets', 'meets.json'))), total=total, teams=len(teams), updated=now,
            results_url=CFG['results_url'], pdf_tpl=(CFG.get('pdf_tpls') or ['https://www.cnxswimming.com/wp-content/uploads/2026/11/1_{}.pdf'])[0], resev=sorted(int(k) for k in RES), nres=nres, nevres=len(RES)))
 SITE = os.path.join(ROOT, 'site', MEET); os.makedirs(SITE, exist_ok=True)
 S = lambda *a: os.path.join(ROOT, 'scripts', *a)

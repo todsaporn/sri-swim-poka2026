@@ -235,6 +235,18 @@ body.pulling .hero,body.pulling .next,body.pulling #medals{transition:none}
 .mmore{margin-top:8px;border:0;background:none;color:var(--pri2);font-weight:600;font-size:13.5px;padding:4px 0}
 .tabs{overflow-x:auto;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
 .tab{padding:8px 10px}
+.plan,.tline{background:linear-gradient(135deg,#fff8dc,#fff);border:1px solid #f1d98a;border-radius:14px;padding:12px 14px;margin:12px 0}
+.tline{background:linear-gradient(135deg,#eef7ff,#fff);border-color:#c9e2fb}
+.plan-h{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.plan-d{padding:6px 0;border-top:1px dashed #ecd9a0}.plan-d:first-of-type{border-top:0}
+.plan-t{font-size:13px;color:var(--mut);margin-bottom:3px}
+.plan-g{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px}.plan-g small{color:var(--mut)}
+.plan-note{font-size:12px;color:var(--mut);margin-top:6px}
+.tl-d{margin-top:6px}.tl-row{display:flex;gap:4px;align-items:flex-end;overflow-x:auto;padding-bottom:2px}
+.tl-c{flex:1 0 34px;text-align:center}.tl-bar{background:#7fb8ef;border-radius:6px 6px 2px 2px;margin:2px 4px}.tl-c.hot .tl-bar{background:#f39c3d}
+.tl-n{font-size:12px;font-weight:700}.tl-h{font-size:10.5px;color:var(--mut)}
+.rules{background:#f4f6ff;border:1px solid #d5dcfb;border-radius:14px;padding:10px 14px;margin:12px 0;font-size:14px}
+.rules summary{font-weight:700;cursor:pointer}.rules ul{margin:8px 0 6px;padding-left:20px;line-height:1.6}.rules a{font-weight:700;color:var(--pri)}
 .dayhd{margin:22px 0 4px;font-family:var(--disp);font-size:19px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:8px}
 .dayhd span{font-family:'IBM Plex Sans Thai',system-ui,sans-serif;font-size:12px;font-weight:600;background:#e3ebf2;color:var(--mut);border-radius:99px;padding:2px 9px}
 .res{text-align:center;min-width:64px}
@@ -416,6 +428,7 @@ function vSchedule(){const nm=nowM();const all=R.filter(okRace);
   let h=past.length?`<button class="pastbtn" id="pastbtn">${S.showPast?'▲ ซ่อนรายการที่แข่งไปแล้ว':'▼ แสดงรายการที่แข่งไปแล้ว'} <span>${past.length}</span></button>`:'';
   const dn=[...new Set(list.map(r=>r.day))].map(driftNote).filter(Boolean)[0];if(dn)h+=`<div class="drift">${dn}<br><small>เวลา ~ คือเวลาประมาณ · เวลาขีดฆ่าคือเวลาในโปรแกรม</small></div>`;
   if(!list.length)return h+(all.length?'<div class="empty">แข่งครบทุกรายการตามตัวกรองแล้ว 🎉</div>':'<div class="empty">ไม่พบรายการตามตัวกรอง</div>');
+  if(!S.showPast&&!past.length)h=rulesHTML()+timelineHTML()+h;
   let cur='',cd=0;list.forEach(r=>{if(r.day!==cd){cd=r.day;cur='';if(dayList.length>1)h+=`<div class="dayhd">${dLabel(r.day)} <span>${list.filter(x=>x.day===r.day).length} รายการ</span></div>`}const hr=(r.et||r.t).slice(0,2);if(hr!==cur){cur=hr;h+=`<div class="hour">${hr}:00 น.</div>`}h+=raceCard(r,nm)});return h}
 function vAthletes(){const list=ath.filter(okAth).map(a=>({a,rs:a.races.filter(r=>(!S.s||r.e.stroke===S.s)&&okDay(r))})).filter(x=>x.rs.length);
   $('#count').textContent=`${list.length} คน · กด ☆ เพื่อติดตาม`;
@@ -469,11 +482,44 @@ function ourRes(ev,ht){const rs=R.filter(r=>r.ev===ev&&r.heat===ht&&r.res);if(!r
 function openHeat(k){const[ev,ht]=k.split('-').map(Number);const e=EV[ev];
   $('#sheet').innerHTML=`<button class="x" onclick="closeOv()">×</button><div class="kick" style="color:var(--mut)">Event ${ev} · ฮีต ${ht}/${e.heats}</div>
   <h2 style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${evLabel(e)} ${pdfA(ev,'ใบผล')}</h2><div style="color:var(--mut);font-size:14px;margin-bottom:12px">${G[e.g]} ${ageLabel(e)} · ${R.find(r=>r.ev===ev&&r.heat===ht).t} น. (${dLabel(e.day)}) · ${e.n} คนในรายการ</div>${recLine(e)}${top3(ev)}${ourRes(ev,ht)}${lineup(k)}`;showOv()}
+// ---- pre-meet helpers: day plan, calendar export, team timeline, rules
+const ARRIVE=60;const hm=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+function dayPlan(a){const by={};a.races.forEach(r=>(by[r.day]??=[]).push(r));
+  return Object.entries(by).map(([d,rs])=>{rs.sort((x,y)=>x.m-y.m);const f=mins(rs[0].t),l=mins(rs[rs.length-1].t);let gap=0,ga=null;
+    for(let i=1;i<rs.length;i++){const g=mins(rs[i].t)-mins(rs[i-1].t);if(g>gap){gap=g;ga=[rs[i-1].t,rs[i].t]}}
+    return {d:+d,n:rs.length,first:rs[0].t,arrive:hm(Math.max(0,f-ARRIVE)),last:rs[rs.length-1].t,gap,ga,span:l-f}})}
+function planHTML(a){const P=dayPlan(a);if(!P.length)return '';
+  return `<div class="plan"><div class="plan-h"><b>🗓️ แผนวันแข่ง</b><button class="sumlink" style="border:0;background:#ffd23f;color:#3a2a00" data-ics="${esc(a.name)}">📅 บันทึกลงปฏิทิน</button></div>${P.map(p=>`<div class="plan-d"><div class="plan-t">${dayList.length>1?dLabel(p.d):''} · <b>${p.n} รายการ</b></div>
+   <div class="plan-g"><span>🚗 ถึงสระก่อน <b>${p.arrive} น.</b></span><span>🏁 รายการแรก <b>${p.first}</b></span><span>🔚 รายการสุดท้าย <b>${p.last}</b></span>${p.n>1?`<span>☕ พักยาวสุด <b>${dur(p.gap)}</b> <small>(${p.ga[0]}–${p.ga[1]})</small></span>`:''}</div></div>`).join('')}
+   <div class="plan-note">เวลาตามโปรแกรม · วันจริงอาจเร็ว/ช้ากว่านี้ · ปฏิทินเตือนก่อนแข่ง 30 นาที</div></div>`}
+function icsFor(list,fname){const P=(DATA.meet.poster||{}),z=n=>String(n).padStart(2,'0'),now=new Date().toISOString().replace(/[-:]/g,'').slice(0,15)+'Z';
+  const ut=(d,t)=>{const [y,mo,da]=(DAYS[d]||{}).date.split('-').map(Number),[h,mi]=t.split(':').map(Number);const u=new Date(Date.UTC(y,mo-1,da,h-7,mi));return u.getUTCFullYear()+z(u.getUTCMonth()+1)+z(u.getUTCDate())+'T'+z(u.getUTCHours())+z(u.getUTCMinutes())+'00Z'};
+  const tx=s=>String(s).replace(/[\\,;]/g,m=>'\\'+m).replace(/\n/g,'\\n');
+  const ev=list.map(r=>{const who=r.name||('ผลัด '+r.e.stroke);const end=mins(r.t)+10;
+    return ['BEGIN:VEVENT',`UID:ssc-${DATA.meet.slug||''}-${r.ev}-${r.heat}-${r.lane}@sri-swim`,`DTSTAMP:${now}`,`DTSTART:${ut(r.day,r.t)}`,`DTEND:${ut(r.day,hm(end))}`,
+      `SUMMARY:${tx('🏊 '+who+' · '+evLabel(r.e))}`,`LOCATION:${tx(P.venue1||'')}`,`DESCRIPTION:${tx(`Event ${r.ev} · ฮีต ${r.heat}/${r.e.heats} · ลู่ ${r.lane}\nเวลาตามโปรแกรม (วันจริงอาจคลาดเคลื่อน)`)}`,
+      'BEGIN:VALARM','ACTION:DISPLAY','TRIGGER:-PT30M',`DESCRIPTION:${tx('อีก 30 นาที '+who+' แข่ง '+evLabel(r.e))}`,'END:VALARM','END:VEVENT'].join('\r\n')});
+  const fold=l=>{const enc=new TextEncoder();if(enc.encode(l).length<=74)return l;let out='',cur='',n=0;for(const ch of l){const b=enc.encode(ch).length;if(n+b>73){out+=cur+'\r\n ';cur='';n=1}cur+=ch;n+=b}return out+cur};
+  const body0=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//SSC//sri-swim//TH','CALSCALE:GREGORIAN','METHOD:PUBLISH',`X-WR-CALNAME:${tx('SSC · '+(P.title||DATA.meet.name))}`,...ev,'END:VCALENDAR'].join('\r\n');const body=body0.split('\r\n').map(fold).join('\r\n');
+  const file=new File([body],fname,{type:'text/calendar'});
+  if(navigator.canShare&&navigator.canShare({files:[file]})&&/iPhone|iPad|Android/i.test(navigator.userAgent)){navigator.share({files:[file]}).catch(()=>{});return}
+  const u=URL.createObjectURL(file),l=document.createElement('a');l.href=u;l.download=fname;document.body.appendChild(l);l.click();setTimeout(()=>{URL.revokeObjectURL(u);l.remove()},1500)}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-ics]');if(!b)return;e.preventDefault();e.stopPropagation();const k=b.dataset.ics;
+  const list=k==='*'?R.filter(okRace):((A[k]||{}).races||[]);if(!list.length)return;icsFor(list,k==='*'?'ssc-team.ics':`ssc-${k.split(' ')[0]}.ics`)},true);
+function timelineHTML(){const list=R.filter(okRace);if(!list.length)return '';const days=[...new Set(list.map(r=>r.day))];
+  return `<div class="tline"><div class="plan-h"><b>👥 ช่วงที่น้องลงแข่ง (ทั้งทีม)</b><button class="sumlink" style="border:0;background:#ffd23f;color:#3a2a00" data-ics="*">📅 รายการที่แสดงลงปฏิทิน</button></div>${days.map(d=>{const rs=list.filter(r=>r.day===d),by={};rs.forEach(r=>(by[r.t.slice(0,2)]??=[]).push(r));
+   const hs=Object.keys(by).sort(),mx=Math.max(...hs.map(h=>by[h].length));
+   return `<div class="tl-d">${dayList.length>1?`<div class="plan-t">${dLabel(d)} · ${rs.length} รายการ · ${new Set(rs.map(r=>r.name||r.relay)).size} คน</div>`:''}<div class="tl-row">${hs.map(h=>{const n=by[h].length,ppl=[...new Set(by[h].map(r=>(r.name||'ผลัด').split(' ')[0]))];
+     return `<div class="tl-c ${n===mx&&mx>3?'hot':''}" title="${esc(ppl.join(', '))}"><div class="tl-n">${n}</div><div class="tl-bar" style="height:${8+Math.round(40*n/mx)}px"></div><div class="tl-h">${h}:00</div></div>`}).join('')}</div>
+     ${(h=>`<div class="plan-note">ช่วงแน่นสุด ${h}:00–${h}:59 น. · ${by[h].length} รายการ: ${esc([...new Set(by[h].map(r=>(r.name||'ผลัด').split(' ')[0]))].join(', '))}</div>`)(hs.find(h=>by[h].length===mx))}</div>`}).join('')}</div>`}
+function rulesHTML(){const T=(DATA.meet.rules_text||[]);if(!T.length)return '';
+  return `<details class="rules"><summary>📘 กติกางานนี้ (ฉบับย่อ)</summary><ul>${T.map(t=>`<li>${t}</li>`).join('')}</ul>${DATA.meet.rules_url?`<a href="${esc(DATA.meet.rules_url)}" target="_blank" rel="noopener">อ่านระเบียบการฉบับเต็ม ›</a>`:''}</details>`}
 function openAth(n){const a=A[n];if(!a)return;
   $('#sheet').innerHTML=`<button class="x" onclick="closeOv()">×</button><div class="top" style="display:flex;gap:12px;align-items:center">${AV(a.name,a.g,64,{edit:true})}
   <div><h2>${esc(a.name)}</h2><div style="color:var(--mut);font-size:14px">${G[a.g]} · ${a.age} ปี${window.Post&&Post.cls(a.name)?' · ชั้น '+esc(Post.cls(a.name)):''} · ${a.races.length} รายการ${a.med.some(x=>x)?' · '+a.med.map((n,i)=>n?MED[i]+n:'').join(' '):''}</div>${a.st.p?`<div style="font-weight:700;color:#3546b5;font-size:14px">⭐ ${a.st.p} คะแนน · อันดับ ${a.st.rk} ของรุ่น${a.catL}</div>`:''}</div></div>
   ${(o=>o?`<div class="olk ${o.cls}">🏆 ${o.txt}</div>`:'')(outlook(a))}
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><a href="summary.html?a=${encodeURIComponent(a.name)}" class="sumlink">📊 สรุปละเอียด + วิเคราะห์ ›</a><button class="sumlink" style="border:0;background:#14b8c4;color:#062033" data-post="${esc(a.name)}">📣 โพสต์แสดงความยินดี</button><button class="sumlink" style="border:0" data-profile="${esc(a.name)}">👤 ข้อมูลโปรไฟล์</button></div>
+  ${a.races.some(r=>!r.res)?planHTML(a):''}
   ${(rs=>rs.length?`<div class="relmine"><b>🤝 ผลัด</b>${rs.map(r=>{const i=r.res.sw.indexOf(a.name),med=/ผสม/.test(r.e.stroke),L=['กรรเชียง','กบ','ผีเสื้อ','ฟรีสไตล์'];return `<div>D${r.day} ${r.e.stroke} ${r.e.age} · คนที่ ${i+1} (${med?L[i]:'ฟรีสไตล์'}) · ${r.res.pl?(r.res.lv!=null?MED[r.res.lv]+' ':'')+'อันดับ '+r.res.pl+'/'+r.res.nfin+' · '+esc(r.res.f):'<span style="color:#c0262d">DQ'+(r.res.whyth&&r.res.whyth.includes(a.name)?' (คนที่ถูกขานฟาวล์)':'')+'</span>'}</div>`}).join('')}</div>`:'')(rel.filter(r=>r.res&&r.res.sw&&r.res.sw.includes(a.name)))}
   <div class="tl">${a.races.map((r,i)=>`${i&&r.gap!=null&&a.races[i-1].day===r.day?`<div class="gap ${r.gap<TIGHT?'warn':''}">↓ พัก ${dur(r.gap)}</div>`:''}<div class="it"><button data-h="${r.ev}-${r.heat}">
    ${i===0||a.races[i-1].day!==r.day?(dayList.length>1?`<div style="font-size:12px;font-weight:700;color:var(--mut);margin-bottom:2px">${dLabel(r.day)}</div>`:''):''}<div style="display:flex;justify-content:space-between;gap:8px"><b class="disp" style="color:var(--pri)">${r.t} น.</b><span style="font-size:13px;color:var(--mut)">ฮีต ${r.heat}/${r.e.heats} · <b style="color:var(--ink)">ลู่ ${r.lane}</b></span></div>
