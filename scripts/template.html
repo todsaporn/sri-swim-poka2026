@@ -253,8 +253,9 @@ body.pulling .hero,body.pulling .next,body.pulling #medals{transition:none}
 .tl-d{margin-top:6px}.tl-row{display:flex;gap:4px;align-items:flex-end;overflow-x:auto;padding-bottom:2px}
 .tl-c{flex:1 0 34px;text-align:center}.tl-bar{background:#7fb8ef;border-radius:6px 6px 2px 2px;margin:2px 4px}.tl-c.hot .tl-bar{background:#f39c3d}
 .tl-n{font-size:12px;font-weight:700}.tl-h{font-size:10.5px;color:var(--mut)}
-.rules{background:#f4f6ff;border:1px solid #d5dcfb;border-radius:14px;padding:10px 14px;margin:12px 0;font-size:14px}
-.rules summary{font-weight:700;cursor:pointer}.rules ul{margin:8px 0 6px;padding-left:20px;line-height:1.6}.rules a{font-weight:700;color:var(--pri)}
+.rulesbtn{display:flex;width:100%;justify-content:space-between;align-items:center;background:#f4f6ff;border:1px solid #d5dcfb;border-radius:14px;padding:12px 14px;margin:12px 0;font:700 14.5px 'IBM Plex Sans Thai',system-ui,sans-serif;color:var(--ink);cursor:pointer;text-align:left}
+.rulesbtn span{color:var(--pri);font-size:13px}
+.rules-ul{margin:0;padding-left:20px;line-height:1.65;font-size:14.5px}.rules-ul li{margin-bottom:6px}
 .dayhd{margin:22px 0 4px;font-family:var(--disp);font-size:19px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:8px}
 .dayhd span{font-family:'IBM Plex Sans Thai',system-ui,sans-serif;font-size:12px;font-weight:600;background:#e3ebf2;color:var(--mut);border-radius:99px;padding:2px 9px}
 .res{text-align:center;min-width:64px}
@@ -525,8 +526,10 @@ function timelineHTML(){const list=R.filter(okRace);if(!list.length)return '';co
    return `<div class="tl-d">${dayList.length>1?`<div class="plan-t">${dLabel(d)} · ${rs.length} รายการ · ${new Set(rs.map(r=>r.name||r.relay)).size} คน</div>`:''}<div class="tl-row">${hs.map(h=>{const n=by[h].length,ppl=[...new Set(by[h].map(r=>(r.name||'ผลัด').split(' ')[0]))];
      return `<div class="tl-c ${n===mx&&mx>3?'hot':''}" title="${esc(ppl.join(', '))}"><div class="tl-n">${n}</div><div class="tl-bar" style="height:${8+Math.round(40*n/mx)}px"></div><div class="tl-h">${h}:00</div></div>`}).join('')}</div>
      ${(h=>`<div class="plan-note">ช่วงแน่นสุด ${h}:00–${h}:59 น. · ${by[h].length} รายการ: ${esc([...new Set(by[h].map(r=>(r.name||'ผลัด').split(' ')[0]))].join(', '))}</div>`)(hs.find(h=>by[h].length===mx))}</div>`}).join('')}</div>`}
-function rulesHTML(){const T=(DATA.meet.rules_text||[]);if(!T.length)return '';
-  return `<details class="rules"><summary>📘 กติกางานนี้ (ฉบับย่อ)</summary><ul>${T.map(t=>`<li>${t}</li>`).join('')}</ul>${DATA.meet.rules_url?`<a href="${esc(DATA.meet.rules_url)}" target="_blank" rel="noopener">อ่านระเบียบการฉบับเต็ม ›</a>`:''}</details>`}
+function rulesHTML(){return (DATA.meet.rules_text||[]).length?`<button class="rules rulesbtn" data-rules="1">📘 กติกางานนี้ (ฉบับย่อ) <span>เปิดอ่าน ›</span></button>`:''}
+function openRules(){const T=DATA.meet.rules_text||[];
+  $('#sheet').innerHTML=`<button class="x" onclick="closeOv()">×</button><h2 style="margin-bottom:8px">📘 กติกางานนี้</h2><ul class="rules-ul">${T.map(t=>`<li>${t}</li>`).join('')}</ul>${DATA.meet.rules_url?`<a class="sumlink" style="display:inline-block;margin-top:8px" href="${esc(DATA.meet.rules_url)}" target="_blank" rel="noopener">อ่านระเบียบการฉบับเต็ม ›</a>`:''}`;showOv()}
+document.addEventListener('click',e=>{if(e.target.closest('[data-rules]')){e.preventDefault();e.stopPropagation();openRules()}},true);
 function openAth(n){const a=A[n];if(!a)return;
   $('#sheet').innerHTML=`<button class="x" onclick="closeOv()">×</button><div class="top" style="display:flex;gap:12px;align-items:center">${AV(a.name,a.g,64,{edit:true})}
   <div><h2>${esc(a.name)}</h2><div style="color:var(--mut);font-size:14px">${G[a.g]} · ${a.age} ปี${window.Post&&Post.cls(a.name)?' · ชั้น '+esc(Post.cls(a.name)):''} · ${a.races.length} รายการ${a.med.some(x=>x)?' · '+a.med.map((n,i)=>n?MED[i]+n:'').join(' '):''}</div>${a.st.p?`<div style="font-weight:700;color:#3546b5;font-size:14px">⭐ ${a.st.p} คะแนน · อันดับ ${a.st.rk} ของรุ่น${a.catL}</div>`:''}</div></div>
