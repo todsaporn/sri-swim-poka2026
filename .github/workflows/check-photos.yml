@@ -7,8 +7,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Probe Supabase photos API
         run: |
-          U=$(python3 -c "import json;print(json.load(open('config.json'))['photo_cloud']['url'])")
-          K=$(python3 -c "import json;print(json.load(open('config.json'))['photo_cloud']['key'])")
+          U=$(python3 -c "import json;print(json.load(open('meets/poka2026/config.json'))['photo_cloud']['url'])")
+          K=$(python3 -c "import json;print(json.load(open('meets/poka2026/config.json'))['photo_cloud']['key'])")
           echo "== table photos (list)"; curl -sS "$U/rest/v1/photos?select=athlete,updated_at" -H "apikey: $K" -H "Authorization: Bearer $K" -w "\nHTTP %{http_code}\n"
           echo "== rpc set_photo with unknown athlete (expect error 'unknown athlete')"
           curl -sS -X POST "$U/rest/v1/rpc/set_photo" -H "apikey: $K" -H "Authorization: Bearer $K" -H "Content-Type: application/json" -d '{"p_athlete":"__probe__","p_img":null}' -w "\nHTTP %{http_code}\n"

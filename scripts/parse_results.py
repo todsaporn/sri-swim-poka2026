@@ -1,5 +1,9 @@
 """Parse HY-TEK result PDFs in raw/results/*.pdf -> data/results.json (+ .txt dumps for debugging)."""
 import fitz, re, json, glob, os, sys, warnings
+import os, sys
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+MEET = os.environ.get('MEET') or (sys.argv[1] if len(sys.argv) > 1 and not sys.argv[1].isdigit() else 'poka2026')
+MD = os.path.join(ROOT, 'meets', MEET); os.chdir(MD)
 warnings.filterwarnings('ignore')
 sys.path.insert(0, os.path.dirname(__file__))
 def clean(t):

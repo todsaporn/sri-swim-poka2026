@@ -35,7 +35,7 @@ ev=None; heat=None; out=[]; events={}
 for L in lines:
     its=sorted(L['its'],key=lambda i:i['x'])
     full=clean(' '.join(i['t'] for i in its))
-    m=re.match(r'Event (\d+) (Boys|Girls) (.+?) (\d+) SC Meter (.+)$',full)
+    m=re.match(r'Event (\d+) (Boys|Girls) (.+?) (\d+) (?:SC|LC) Meter (.+)$',full)
     if m:
         ev=dict(no=int(m[1]),gender=m[2],age=m[3],dist=int(m[4]),stroke=m[5]); events[ev['no']]=ev; heat=None; continue
     m=re.match(r'Heat (\d+) of (\d+) Finals Starts at (.+)$',full)
@@ -55,6 +55,13 @@ for L in lines:
     m=re.match(r'R4SCM:\s*([\d:.]+)\s+(\d{4}-\d\d-\d\d)\s*(.*)$',full)
     if m and ev:
         ev['rec']=dict(t=m[1],d=m[2],n=re.sub(r' [A-Z]$','',m[3].strip())); continue
+    # LC programs print one record per age: "13 R4 Age: 2:17.27 15/10/2019 Name"
+    m=re.match(r'(?:(\d+|16&O) )?R4 Age:\s*([\d:]*\d\.\d\d)?\s*(\d+/\d+/\d{4})?\s*(.*)$',full)
+    if m and ev and not heat:
+        r_=dict(t=m[2],d=m[3] or '',n=re.sub(r' [A-Z]$','',m[4].strip())) if m[2] else None
+        if r_ and not m[1]: ev.setdefault('rec',r_)
+        elif r_ and m[1] not in ev.setdefault('recs',{}): ev['recs'][m[1]]=r_
+        continue
     if not ev or not heat: continue
     if full.startswith(('Lane','R4SCM','CNX','HY-TEK','Krabi','Meet')): continue
     relay='Relay' in ev['stroke']

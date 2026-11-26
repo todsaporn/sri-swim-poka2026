@@ -1,7 +1,7 @@
 name: update-results
 on:
   schedule:
-    - cron: '*/10 0-15 7,8 11 *'   # every 10 min, 07:00–22:59 Bangkok, 7–8 Nov
+    - cron: '*/10 0-15 5,6,7 12 *'   # every 10 min, 07:00–22:59 Bangkok, 5–7 Dec (Surat)
   workflow_dispatch:
   push:
     branches: [main]
@@ -21,17 +21,18 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: pip install -q pymupdf
-      - name: Fetch result PDFs
-        run: python scripts/fetch_results.py
-      - name: Parse results
-        run: python scripts/parse_results.py
-      - name: Build site
-        run: python scripts/build.py
+      - name: Fetch result PDFs (current meet)
+        run: |
+          export MEET=$(python -c "import json;print(json.load(open('meets/meets.json'))['current'])")
+          python scripts/fetch_results.py
+          python scripts/parse_results.py
+      - name: Build site (all meets)
+        run: python scripts/build_all.py
       - name: Commit data
         run: |
           git config user.name "results-bot"
           git config user.email "results-bot@users.noreply.github.com"
-          git add raw data
+          git add meets
           git diff --cached --quiet || (git commit -m "results: auto update $(TZ=Asia/Bangkok date '+%d/%m %H:%M')" && git push)
       - uses: actions/upload-pages-artifact@v3
         with: {path: site}
@@ -54,7 +55,7 @@ jobs:
         run: |
           now=$(TZ=Asia/Bangkok date '+%Y-%m-%d %H')
           d=${now% *}; h=${now#* }
-          if [[ ( "$d" == "2026-11-07" || "$d" == "2026-11-08" ) && 10#$h -ge 7 && 10#$h -le 22 ]]; then
+          if [[ ( "$d" == "2026-12-05" || "$d" == "2026-12-06" || "$d" == "2026-12-07" ) && 10#$h -ge 7 && 10#$h -le 22 ]]; then
             sleep 420
             gh workflow run update.yml --repo "$GITHUB_REPOSITORY" --ref main
           else

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>สรุปรายคน · ศรีอรุโณทัย · ว่ายน้ำ อบจ.กระบี่ ชิงแชมป์ภาคใต้ #16</title>
+<title>สรุปรายคน · ศรีอรุโณทัย · __TITLE__</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0b4f8a">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -114,6 +114,7 @@ h3.sec{font-size:16px;margin:18px 0 8px}
 <script src="photos.js"></script><script src="post.js"></script>
 <script>
 const DATA=__DATA__;
+const TZ=(DATA.rules||{}).tz||6,PZ=(DATA.rules||{}).pz||6;
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const G={M:'ชาย',F:'หญิง'},MED=['🥇','🥈','🥉'];
@@ -131,10 +132,10 @@ const pdfA=ev=>RESEV.has(ev)?`<a class="pdf" href="${pdfUrl(ev)}" target="_blank
 R.forEach(r=>{r.e=EV[r.ev];r.day=r.day||1;r.m=(r.day-1)*1440+mins(r.t)});
 const A={};R.filter(r=>!r.relay).forEach(r=>{(A[r.name]??={name:r.name,age:r.age,g:r.e.g,races:[]}).races.push(r)});
 const ath=Object.values(A).sort((a,b)=>a.g.localeCompare(b.g)||a.age-b.age||a.name.localeCompare(b.name,'th'));
-ath.forEach(a=>{a.races.sort((x,y)=>x.m-y.m);const e=a.races[0].e;a.cat=a.g+'|'+e.age;a.catL=`${G[a.g]} ${ageL(e)}`;a.st=(ST[a.cat]&&ST[a.cat].our[nrm(a.name)])||{p:0,rk:null}});
+ath.forEach(a=>{a.races.sort((x,y)=>x.m-y.m);const e=(a.races.find(r=>!/ขึ้นไป/.test(r.e.age))||a.races[0]).e;a.cat=a.g+'|'+e.age;a.catL=`${G[a.g]} ${ageL(e)}`;a.st=(ST[a.cat]&&ST[a.cat].our[nrm(a.name)])||{p:0,rk:null}});
 $('#meet').textContent=DATA.meet.name;
 $('#upd').textContent='อัปเดต '+DATA.meet.updated+' น.';
-$('#foot').innerHTML=`ข้อมูลจากใบผล <a href="${DATA.meet.results_url}">cnxswimming.com</a> · เหรียญ: อายุ 7–11 ที่ 1–3 ของฮีต, 12–14 ที่ 1–3 ของรายการ · คะแนนจากอันดับรวมของรายการ สะสมชิงถ้วยนักกีฬายอดเยี่ยม 1–6 ของรุ่น`;
+$('#foot').innerHTML=`ข้อมูลจากใบผล <a href="${DATA.meet.results_url}">cnxswimming.com</a> · เหรียญ: อายุ 7–11 ที่ 1–3 ของฮีต, 12–14 ที่ 1–3 ของรายการ · คะแนนจากอันดับรวมของรายการ สะสมชิงถ้วยนักกีฬายอดเยี่ยม 1–${TZ} ของรุ่น`;
 function outlook(a){const sc=(DATA.stand||{})[a.cat];if(!sc)return null;const R_=(sc.risk||{})[nrm(a.name)];
   if(!R_){return null}
   const ev=x=>`<b>${esc(x.lbl)}</b> ${x.d===2?'D2 ':''}${x.t} น.`;
@@ -142,8 +143,8 @@ function outlook(a){const sc=(DATA.stand||{})[a.cat];if(!sc)return null;const R_
   if(R_.status==='lock')return {cls:'in',txt:`🔒 <b>ได้ถ้วยแน่นอน</b> — อันดับแย่สุด #${R_.worst} แม้คู่แข่งได้ที่ 1 ทุกรายการที่เหลือ${R_.best<a.st.rk?` · ยังขยับขึ้นได้ถึง #${R_.best}`:''}${mine.length?`<div class="olk-ev">รายการที่เหลือ: ${mine.map(ev).join(' · ')}</div>`:''}`};
   if(R_.status==='risk'){const th=R_.threats.map(t=>`<li><b>${esc(t.n)}</b> <small>${esc(t.tm)}</small> · ${t.p} คะแนน เหลือ ${t.left} รายการ (สูงสุด ${t.mx}) → แซงได้ถ้า<b>${esc(t.need)}</b></li>`).join('');
     return {cls:'risk',txt:`⚠️ <b>อยู่ในโซนถ้วย (#${a.st.rk}) แต่ยังหลุดได้</b> — อันดับแย่สุด #${R_.worst}${R_.left?` · น้องเหลือ ${R_.left} รายการ เก็บได้อีกสูงสุด ${R_.mx-a.st.p}`:''}<ul class="olk-th">${th}</ul>${R_.keyev.length?`<div class="olk-ev">🎯 รายการชี้ขาด: ${R_.keyev.map(x=>`${ev(x)}${x.notme?' <small>(คู่แข่งลง)</small>':x.vs.length?` <small>(แข่งกับ ${x.vs.map(v=>esc(v.split(' ')[0])).join(', ')})</small>`:''}`).join(' · ')}</div>`:''}`}}
-  if(R_.status==='chance')return {cls:'chance',txt:`🎯 <b>ยังลุ้นเข้าโซนถ้วยได้</b> — ตอนนี้ #${a.st.rk||'–'} อันดับดีสุดที่เป็นไปได้ #${R_.best} · ต้อง${esc(R_.need6||'')} (อันดับ 6 มี ${R_.p6} คะแนน)${mine.length?`<div class="olk-ev">รายการที่เหลือ: ${mine.map(ev).join(' · ')}</div>`:''}`};
-  return {cls:'out',txt:R_.left?`เหลือ ${R_.left} รายการ (สูงสุด ${R_.mx} คะแนน) ยังไม่พอเข้าโซนถ้วย (อันดับ 6 มี ${R_.p6} คะแนน)`:`แข่งครบแล้ว · อันดับ 6 มี ${R_.p6} คะแนน`}}
+  if(R_.status==='chance')return {cls:'chance',txt:`🎯 <b>ยังลุ้นเข้าโซนถ้วยได้</b> — ตอนนี้ #${a.st.rk||'–'} อันดับดีสุดที่เป็นไปได้ #${R_.best} · ต้อง${esc(R_.need6||'')} (อันดับ ${TZ} มี ${R_.p6} คะแนน)${mine.length?`<div class="olk-ev">รายการที่เหลือ: ${mine.map(ev).join(' · ')}</div>`:''}`};
+  return {cls:'out',txt:R_.left?`เหลือ ${R_.left} รายการ (สูงสุด ${R_.mx} คะแนน) ยังไม่พอเข้าโซนถ้วย (อันดับ ${TZ} มี ${R_.p6} คะแนน)`:`แข่งครบแล้ว · อันดับ ${TZ} มี ${R_.p6} คะแนน`}}
 let cur=null;
 function pick(){const q=new URLSearchParams(location.search).get('a')||decodeURIComponent(location.hash.slice(1)||'');return A[q]?q:ath[0].name}
 function renderPick(){$('#pick').innerHTML=ath.map(a=>`<button class="chip ${a.name===cur?'on':''}" data-a="${esc(a.name)}">${Photos.avatar(a.name,a.g,22)}${esc(a.name.split(' ')[0])}<small style="opacity:.7">${a.age}</small></button>`).join('');
@@ -160,7 +161,7 @@ function render(){const a=A[cur];const rs=a.races,done=rs.filter(r=>r.res);
   let h=`<div class="card"><div class="head">${Photos.avatar(a.name,a.g,64,{edit:true})}<div style="flex:1"><h2>${esc(a.name)}</h2><div class="meta">${a.catL}${window.Post&&Post.cls(a.name)?' · ชั้น '+esc(Post.cls(a.name)):''} · ${rs.length} รายการ (D1 ${rs.filter(r=>r.day===1).length} · D2 ${rs.filter(r=>r.day===2).length}) · ผลออก ${done.length}</div></div><div style="display:flex;flex-direction:column;gap:6px"><button class="share" data-post="${esc(a.name)}" style="background:#14b8c4;border-color:#14b8c4;color:#062033">📣 โพสต์ยินดี</button><button class="share" data-profile="${esc(a.name)}">👤 โปรไฟล์</button><button class="share" id="share">🔗 ลิงก์</button></div></div>
   <div class="kpis"><div class="kpi"><b>${MED[0]}${med[0]} ${MED[1]}${med[1]} ${MED[2]}${med[2]}</b><span>เหรียญ</span></div>
    <div class="kpi"><b style="color:#3546b5">⭐ ${a.st.p||pts}</b><span>คะแนนสะสม</span></div>
-   <div class="kpi ${a.st.rk&&a.st.rk<=6?'tro':''}"><b>${a.st.rk?(a.st.rk<=6?'🏆 ':'')+'#'+a.st.rk:'–'}</b><span>อันดับในรุ่น${sc?` (ผลออก ${sc.done}/${sc.nev})`:''}</span></div>
+   <div class="kpi ${a.st.rk&&a.st.rk<=TZ?'tro':''}"><b>${a.st.rk?(a.st.rk<=TZ?'🏆 ':'')+'#'+a.st.rk:'–'}</b><span>อันดับในรุ่น${sc?` (ผลออก ${sc.done}/${sc.nev})`:''}</span></div>
    <div class="kpi"><b class="${cmp&&imp/cmp>=.5?'up':''}">${cmp?imp+'/'+cmp:'–'}</b><span>เร็วกว่าเวลาส่ง</span></div></div>
   <div class="hl">${best?`<div><b>ผลดีที่สุด</b>${evL(best.e)} · อันดับ ${best.res.pl}/${best.res.nfin} · ${esc(best.res.f)}</div>`:''}
    ${bigImp&&bigImp.res.d<0?`<div><b>พัฒนาการมากที่สุด</b>${evL(bigImp.e)} · เร็วขึ้น ${(-bigImp.res.d).toFixed(2)} วิ (${esc(bigImp.seed)} → ${esc(bigImp.res.f)})</div>`:''}
@@ -169,7 +170,7 @@ function render(){const a=A[cur];const rs=a.races,done=rs.filter(r=>r.res);
   // ---- development analysis
   const fin=done.filter(r=>r.res.pl&&secs(r.res.f)!=null);
   const gaps=fin.map(r=>{const x=EVR[r.ev]||{},f=secs(r.res.f),t3=x.top&&x.top[2]&&secs(x.top[2].f),c6=secs(x.c6),rec=r.e.rec&&secs(r.e.rec.t),win=x.top&&x.top[0]&&secs(x.top[0].f);
-    return {r,f,podium:t3!=null&&r.res.pl>3?f-t3:null,pts:c6!=null&&r.res.pl>6?f-c6:null,rec:rec!=null?f-rec:null,win:win!=null&&r.res.pl>1?f-win:null,pct:1-(r.res.pl-1)/Math.max(1,r.res.nfin-1)}});
+    return {r,f,podium:t3!=null&&r.res.pl>3?f-t3:null,pts:c6!=null&&r.res.pl>PZ?f-c6:null,rec:rec!=null?f-rec:null,win:win!=null&&r.res.pl>1?f-win:null,pct:1-(r.res.pl-1)/Math.max(1,r.res.nfin-1)}});
   const sk={};gaps.forEach(g=>{(sk[g.r.e.stroke]??=[]).push(g)});
   const skA=Object.entries(sk).map(([k,v])=>({k,n:v.length,p:v.reduce((t,g)=>t+g.pct,0)/v.length,d:v.filter(g=>g.r.res.d!=null)})).sort((a,b)=>b.p-a.p);
   const tips=[];
@@ -178,7 +179,7 @@ function render(){const a=A[cur];const rs=a.races,done=rs.filter(r=>r.res);
   const nearPod=gaps.filter(g=>g.podium!=null&&g.podium>0).sort((a,b)=>a.podium-b.podium)[0];
   if(nearPod)tips.push(`🥉 <b>ใกล้โพเดียมที่สุด:</b> ${evL(nearPod.r.e)} — ต้องเร็วขึ้นอีก <b>${nearPod.podium.toFixed(2)} วิ</b> จะติดอันดับ 3 ของรายการ`);
   const nearPts=gaps.filter(g=>g.pts!=null&&g.pts>0).sort((a,b)=>a.pts-b.pts)[0];
-  if(nearPts)tips.push(`⭐ <b>ใกล้โซนคะแนนที่สุด:</b> ${evL(nearPts.r.e)} — ห่างอันดับ 6 อยู่ <b>${nearPts.pts.toFixed(2)} วิ</b> (เข้าท็อป 6 ได้คะแนนสะสมชิงถ้วย)`);
+  if(nearPts)tips.push(`⭐ <b>ใกล้โซนคะแนนที่สุด:</b> ${evL(nearPts.r.e)} — ห่างอันดับ ${PZ} อยู่ <b>${nearPts.pts.toFixed(2)} วิ</b> (เข้าท็อป ${PZ} ได้คะแนนสะสมชิงถ้วย)`);
   const slow=done.filter(r=>r.res.d!=null&&r.res.d>0.3).sort((x,y)=>y.res.d-x.res.d);
   if(slow.length)tips.push(`⏱️ <b>ช้ากว่าเวลาส่ง ${slow.length} รายการ</b> — มากสุด ${evL(slow[0].e)} (+${slow[0].res.d.toFixed(2)} วิ) ควรดูเรื่องการออกตัว/กลับตัว หรือความเหนื่อยสะสม`);
   const tight=[];for(let i=1;i<rs.length;i++){const g=rs[i].m-rs[i-1].m;if(rs[i].day===rs[i-1].day&&g<15&&rs[i].res&&rs[i].res.d!=null)tight.push({r:rs[i],g})}
@@ -194,10 +195,10 @@ function render(){const a=A[cur];const rs=a.races,done=rs.filter(r=>r.res);
   if(Object.keys(bys).length){h+=`<h3 class="sec">อันดับเฉลี่ยแยกท่า <small style="font-weight:500;color:var(--mut);font-size:12px">(ยิ่งเต็มยิ่งอยู่หัวตาราง)</small></h3><div class="card"><div class="cmp">${Object.entries(bys).map(([k,v])=>{const p=v.reduce((t,r)=>t+(1-(r.res.pl-1)/Math.max(1,r.res.nfin-1)),0)/v.length;return `<div class="bar"><span>${k} <small style="color:var(--mut)">(${v.length})</small></span><span class="tr"><i style="width:${Math.round(p*100)}%"></i></span><span style="text-align:right;font-weight:600">ท็อป ${Math.max(1,Math.round((1-p)*100))}%</span></div>`}).join('')}</div></div>`}
   // category standings
   if(sc&&sc.top.length){const top=sc.top.slice(0,8);const mine=top.some(t=>nrm(t.n)===nrm(a.name));
-   const LF=(sc.left||{});const row=(rk,n,tm,p,me)=>`<div class="srow ${me?'me':''} ${rk&&rk<=6?'tz':''}"><span class="rk">${rk&&rk<=6?'🏆':''}${rk||'–'}</span><span class="nm"><b>${esc(n)}</b><small>${esc(tm)}</small></span><span class="pt">${p}<small>${LF[nrm(n)]?`เหลือ ${LF[nrm(n)]} · สูงสุด ${p+15*LF[nrm(n)]}`:'คะแนน · แข่งครบ'}</small></span></div>`;
-   h+=`<h3 class="sec">🏆 ลุ้นถ้วยรุ่น${a.catL} <small style="font-weight:500;color:var(--mut);font-size:12px">ถ้วยอันดับ 1–6</small></h3><div class="card slist">${top.map((t,i)=>(i===6?'<div class="cut">— เส้นโซนถ้วย —</div>':'')+row(t.rk,t.n,t.tm,t.p,nrm(t.n)===nrm(a.name))).join('')}${mine?'':'<div class="cut">⋯</div>'+row(a.st.rk,a.name,'ศรีอรุโณทัย',a.st.p,true)}
+   const LF=(sc.left||{});const row=(rk,n,tm,p,me)=>`<div class="srow ${me?'me':''} ${rk&&rk<=TZ?'tz':''}"><span class="rk">${rk&&rk<=TZ?'🏆':''}${rk||'–'}</span><span class="nm"><b>${esc(n)}</b><small>${esc(tm)}</small></span><span class="pt">${p}<small>${LF[nrm(n)]?`เหลือ ${LF[nrm(n)]} · สูงสุด ${p+15*LF[nrm(n)]}`:'คะแนน · แข่งครบ'}</small></span></div>`;
+   h+=`<h3 class="sec">🏆 ลุ้นถ้วยรุ่น${a.catL} <small style="font-weight:500;color:var(--mut);font-size:12px">ถ้วยอันดับ 1–${TZ}</small></h3><div class="card slist">${top.map((t,i)=>(i===TZ?'<div class="cut">— เส้นโซนถ้วย —</div>':'')+row(t.rk,t.n,t.tm,t.p,nrm(t.n)===nrm(a.name))).join('')}${mine?'':'<div class="cut">⋯</div>'+row(a.st.rk,a.name,'ศรีอรุโณทัย',a.st.p,true)}
    ${(o=>o?`<div class="olk ${o.cls}" style="margin:8px 6px 4px">🏆 ${o.txt}</div>`:'')(outlook(a))}
-   ${top[5]&&(!a.st.rk||a.st.rk>6)?`<div class="gapnote">ห่างโซนถ้วย (อันดับ 6) อยู่ <b>${top[5].p-a.st.p}</b> คะแนน${a.st.p?'':' — คะแนนได้จากการติดท็อป 6 ของรายการ (ผลรวมทุกฮีต)'}</div>`:''}</div>`}
+   ${top[TZ-1]&&(!a.st.rk||a.st.rk>TZ)?`<div class="gapnote">ห่างโซนถ้วย (อันดับ ${TZ}) อยู่ <b>${top[TZ-1].p-a.st.p}</b> คะแนน${a.st.p?'':' — คะแนนได้จากการติดท็อป ${PZ} ของรายการ (ผลรวมทุกฮีต)'}</div>`:''}</div>`}
   // races table
   h+=`<h3 class="sec">📋 ทุกรายการ</h3><div class="card" style="padding:8px 12px"><table class="tbl"><thead><tr><th>รายการ</th><th>ฮีต/ลู่</th><th>เวลาส่ง</th><th>เวลาที่ทำ</th><th>เทียบเวลาส่ง</th><th>อันดับรวม</th><th>ในฮีต</th><th>เหรียญ</th><th>คะแนน</th><th>ห่างสถิติ</th></tr></thead><tbody>`;
   rs.forEach(r=>{const x=r.res,e=r.e,rec=e.rec;const f=x&&secs(x.f),rs_=rec&&secs(rec.t);
@@ -216,7 +217,7 @@ function render(){const a=A[cur];const rs=a.races,done=rs.filter(r=>r.res);
 function cardInfo(a){const done=a.races.filter(r=>r.res&&r.res.pl);const med=[0,0,0];a.races.forEach(r=>{if(r.res&&r.res.lv!=null)med[r.res.lv]++});
   const best=done.slice().sort((x,y)=>(x.res.lv??9)-(y.res.lv??9)||x.res.pl/x.res.nfin-y.res.pl/y.res.nfin);
   return {name:a.name,g:a.g,cat:`${a.catL} · ${a.races.length} รายการ`,catShort:a.catL.replace(/^ชาย |^หญิง /,''),meet:DATA.meet.name,date:Object.values(DAYS).map(d=>d.label).join(' / '),med,pts:a.st.p,rk:a.st.rk,logo:'logo.png',
-    catL:a.catL,dates:'ระหว่างวันที่ 7–8 พฤศจิกายน 2569',prov:!!((DATA.stand||{})[a.cat]&&DATA.stand[a.cat].done<DATA.stand[a.cat].nev),results:best.slice(0,6).map(r=>({ev:`${r.e.dist}ม. ${r.e.stroke}`,time:r.res.f,place:`ที่ ${r.res.pl}/${r.res.nfin}`,medal:r.res.lv!=null?MED[r.res.lv]:''}))}}
+    catL:a.catL,dates:(DATA.meet.poster||{}).dates||'',prov:!!((DATA.stand||{})[a.cat]&&DATA.stand[a.cat].done<DATA.stand[a.cat].nev),results:best.slice(0,6).map(r=>({ev:`${r.e.dist}ม. ${r.e.stroke}`,time:r.res.f,place:`ที่ ${r.res.pl}/${r.res.nfin}`,medal:r.res.lv!=null?MED[r.res.lv]:''}))}}
 
 Photos.onChange(()=>{renderPick();render()});if(window.Post){Post.ready.then(()=>render());Post.onChange(()=>render())}
 cur=pick();renderPick();render();

@@ -98,7 +98,7 @@
   function gather(n) {
     const EV = DATA.events, R = DATA.races;
     const ind = R.filter(r => r.name === n && !EV[r.ev].relay), rel = R.filter(r => EV[r.ev].relay && r.res && (r.res.sw || []).includes(n));
-    const e0 = EV[ind[0].ev], g = e0.g, cat = g + '|' + e0.age;
+    const e0 = EV[(ind.find(r => !/ขึ้นไป/.test(EV[r.ev].age)) || ind[0]).ev], g = e0.g, cat = g + '|' + e0.age;
     const st = ((DATA.stand || {})[cat] || {}).our || {}, me = st[nrm(n)] || {};
     const all = ind.concat(rel).map(r => ({ r, e: EV[r.ev] }));
     const medals = all.filter(x => x.r.res && x.r.res.lv != null).sort((a, b) => a.r.res.lv - b.r.res.lv || a.e.relay - b.e.relay || a.r.ev - b.r.ev).map(x => ({ lv: x.r.res.lv, ev: evName(x.e) }));
@@ -158,6 +158,8 @@
     try { const im = await loadImg(COACH.img); x.save(); x.beginPath(); x.arc(ccx, cy, r, 0, 7); x.clip(); x.drawImage(im, ccx - r, cy - r, r * 2, r * 2); x.restore() } catch (e) { }
     x.textAlign = 'center';
   }
+  const PM = () => ((typeof DATA !== 'undefined' && DATA.meet && DATA.meet.poster) || {});
+  const TZ = () => ((typeof DATA !== 'undefined' && DATA.rules) || {}).tz || 6;
   function rnd(seed) { return () => (seed = (seed * 16807) % 2147483647) / 2147483647 }
   function disc(x, cx, cy, r, lv) { // ribbon-less medal for list rows
     const im = DISCIMG[lv]; if (!im) return medal(x, cx, cy, r, lv);
@@ -207,17 +209,17 @@
     const footY = 1205, BOT = footY - 22;
     // title: compact, centred
     { // "[swimmer] การแข่งขันว่ายน้ำ อบจ.กระบี่" as one centred unit, kept clear of the seals
-      let k = 1; const unit = () => { x.font = K(800, 46 * k, 1); const a = x.measureText('การแข่งขันว่ายน้ำ').width; x.font = K(800, 46 * k, 1); const b = x.measureText('อบจ.กระบี่').width; return [a, b, 110 * k + a + 18 * k + b] };
+      let k = 1; const unit = () => { x.font = K(800, 46 * k, 1); const a = x.measureText(PM().l1).width; x.font = K(800, 46 * k, 1); const b = x.measureText(PM().l2).width; return [a, b, 110 * k + a + 18 * k + b] };
       let [a, b, t] = unit(); while (t > 640 && k > .6) { k -= .03;[a, b, t] = unit() }
       const x0 = CX - t / 2, by = 196; swimmer(x, x0 + 50 * k, by - 22 * k, 42 * k, '#1565c0');
-      x.textAlign = 'left'; x.fillStyle = NAVY; x.font = K(800, 46 * k, 1); x.fillText('การแข่งขันว่ายน้ำ', x0 + 110 * k, by);
+      x.textAlign = 'left'; x.fillStyle = NAVY; x.font = K(800, 46 * k, 1); x.fillText(PM().l1, x0 + 110 * k, by);
       x.font = K(800, 46 * k, 1); g = x.createLinearGradient(0, by - 40, 0, by + 6); g.addColorStop(0, '#1e6fd8'); g.addColorStop(1, '#0a2f78');
-      const bx = x0 + 110 * k + a + 18 * k; x.save(); x.lineWidth = 6; x.strokeStyle = '#fff'; x.lineJoin = 'round'; x.strokeText('อบจ.กระบี่', bx, by); x.restore(); x.fillStyle = g; x.fillText('อบจ.กระบี่', bx, by); x.textAlign = 'center' }
-    { const y = 214, w = 780, t = 'SWIMMING CHAMPIONSHIP · ชิงแชมป์ภาคใต้ ครั้งที่ 16 ประจำปี 2569'; x.save(); x.shadowColor = 'rgba(0,0,0,.2)'; x.shadowBlur = 8; x.shadowOffsetY = 3; g = x.createLinearGradient(0, y, 0, y + 48); g.addColorStop(0, '#3dbb4f'); g.addColorStop(1, '#16803a'); x.fillStyle = g;
+      const bx = x0 + 110 * k + a + 18 * k; x.save(); x.lineWidth = 6; x.strokeStyle = '#fff'; x.lineJoin = 'round'; x.strokeText(PM().l2, bx, by); x.restore(); x.fillStyle = g; x.fillText(PM().l2, bx, by); x.textAlign = 'center' }
+    { const y = 214, w = 780, t = PM().ribbonC || (PM().l3 + ' · ' + PM().ribbon); x.save(); x.shadowColor = 'rgba(0,0,0,.2)'; x.shadowBlur = 8; x.shadowOffsetY = 3; g = x.createLinearGradient(0, y, 0, y + 48); g.addColorStop(0, '#3dbb4f'); g.addColorStop(1, '#16803a'); x.fillStyle = g;
       x.beginPath(); x.moveTo(CX - w / 2 + 16, y); x.lineTo(CX + w / 2 + 6, y); x.lineTo(CX + w / 2 - 16, y + 48); x.lineTo(CX - w / 2 - 6, y + 48); x.closePath(); x.fill(); x.restore();
       x.fillStyle = '#fff'; fit(x, t, 800, 28, w - 50, 1); x.fillText(t, CX, y + 34) }
     // date | venue, centred as one unit
-    { const y = 298, t1 = 'วันที่ 7-8 พฤศจิกายน 2569', t2 = 'สระว่ายน้ำ โรงเรียนโภคาพาณิชย์นุกูลมูลนิธิ จ.กระบี่';
+    { const y = 298, t1 = PM().date, t2 = PM().venue1;
       x.font = K(700, 23, 1); const w1 = x.measureText(t1).width; x.font = K(500, 20); const w2 = x.measureText(t2).width;
       const tot = 40 + w1 + 34 + 30 + w2, x0 = CX - tot / 2; x.textAlign = 'left';
       x.strokeStyle = NAVY; x.lineWidth = 3; rr(x, x0, y - 25, 30, 28, 5); x.stroke(); x.fillStyle = NAVY; x.fillRect(x0, y - 25, 30, 8); for (let i = 0; i < 3; i++) for (let j = 0; j < 2; j++) x.fillRect(x0 + 5 + i * 8, y - 12 + j * 7, 4, 4);
@@ -231,7 +233,7 @@
     const rows = info.medals.map(m => ({ v: m.ev, lv: m.lv })).concat(info.part.map(d => ({ v: d.ev, p: 1 })));
     if (!rows.length) rows.push({ v: 'ร่วมแข่งขันด้วยความมุ่งมั่น' });
     const cols = rows.length <= 3 ? 1 : rows.length <= 8 ? 2 : 3, nr = Math.ceil(rows.length / cols);
-    const troph = info.rk && info.rk <= 6, TOP = 318;
+    const troph = info.rk && info.rk <= TZ(), TOP = 318;
     // the portrait gets the space first (target ≈ 1.5/4 of the poster height), the list adapts
     const restNoList = 64 + 12 + 80 + 14 + 54 + (troph ? 14 + 48 : 0) + 22 + 50 + 12 + 24;
     let r = 250, rh = cols === 1 ? 54 : 46;
@@ -313,8 +315,8 @@
       try { const im = await loadImg(src); x.save(); if (clip) { x.beginPath(); x.arc(cx, cy, r, 0, 7); x.clip() } x.drawImage(im, cx - r, cy - r, r * 2, r * 2); x.restore() } catch (e) { } };
     await seal('seal-sri.png', 92, 92, 50, true); await seal('logo.png', 210, 92, 50, false);
     x.save(); x.shadowColor = 'rgba(0,8,25,.95)'; x.shadowBlur = 14;
-    x.textAlign = 'right'; x.fillStyle = WHITE; x.font = K(800, 30, 1); x.fillText('อบจ.กระบี่ SWIMMING CHAMPIONSHIP', W - 50, 78);
-    x.fillStyle = CY; x.font = K(500, 22); x.fillText('ชิงแชมป์ภาคใต้ ครั้งที่ 16 · 7–8 พ.ย. 2569 · จ.กระบี่', W - 50, 112); x.restore();
+    x.textAlign = 'right'; x.fillStyle = WHITE; x.font = K(800, 30, 1); fit(x, PM().bh, 800, 30, 620, 1); x.fillText(PM().bh, W - 50, 78);
+    x.fillStyle = CY; x.font = K(500, 22); x.fillText(PM().bs, W - 50, 112); x.restore();
     x.fillStyle = 'rgba(255,255,255,.18)'; x.fillRect(50, 160, W - 100, 2);
 
     // photo (right)
@@ -360,7 +362,7 @@
       y += 170;
     } else { x.fillStyle = WHITE; x.font = K(800, 40, 1); x.textAlign = 'left'; x.fillText(`ลงแข่ง ${info.part.length} รายการ`, LX, y + 52); y += 80 }
     x.textAlign = 'left';
-    if (info.rk && info.rk <= 6) { const t = `ถ้วยนักกีฬายอดเยี่ยม อันดับที่ ${info.rk}`; x.font = K(700, 26); const w = Math.min(LW, x.measureText(t).width + 80);
+    if (info.rk && info.rk <= TZ()) { const t = `ถ้วยนักกีฬายอดเยี่ยม อันดับที่ ${info.rk}`; x.font = K(700, 26); const w = Math.min(LW, x.measureText(t).width + 80);
       g = x.createLinearGradient(LX, 0, LX + w, 0); g.addColorStop(0, '#f6c945'); g.addColorStop(1, '#d99a14'); rr(x, LX, y, w, 50, 12); x.fillStyle = g; x.fill(); trophy(x, LX + 32, y + 22, 18); x.fillStyle = '#3a2500'; fit(x, t, 700, 26, w - 70); x.fillText(t, LX + 60, y + 35); y += 66 }
 
     // event list
@@ -411,31 +413,31 @@
     if (!FULL) { await centered(x, info, W, H, NAVY, GREEN) } else {
     // meet title (right column)
     swimmer(x, RC - 262, 214, 52, '#1565c0');
-    x.fillStyle = NAVY; fit(x, 'การแข่งขันว่ายน้ำ', 800, 52, 330, 1); x.textAlign = 'left'; x.fillText('การแข่งขันว่ายน้ำ', RC - 178, 226);
-    x.textAlign = 'center'; x.font = K(800, 92, 1);
+    x.fillStyle = NAVY; fit(x, PM().l1, 800, 52, 330, 1); x.textAlign = 'left'; x.fillText(PM().l1, RC - 178, 226);
+    x.textAlign = 'center'; fit(x, PM().l2, 800, 92, 600, 1);
     g = x.createLinearGradient(0, 230, 0, 320); g.addColorStop(0, '#1e6fd8'); g.addColorStop(1, '#0a2f78'); x.fillStyle = g;
-    x.save(); x.shadowColor = 'rgba(255,255,255,.9)'; x.shadowBlur = 0; x.lineWidth = 10; x.strokeStyle = '#fff'; x.lineJoin = 'round'; x.strokeText('อบจ.กระบี่', RC + 40, 310); x.restore(); x.fillText('อบจ.กระบี่', RC + 40, 310);
-    x.fillStyle = '#0d4fb0'; fit(x, 'SWIMMING CHAMPIONSHIP', 800, 50, 640, 1); x.fillText('SWIMMING CHAMPIONSHIP', RC, 372);
+    x.save(); x.shadowColor = 'rgba(255,255,255,.9)'; x.shadowBlur = 0; x.lineWidth = 10; x.strokeStyle = '#fff'; x.lineJoin = 'round'; x.strokeText(PM().l2, RC + 40, 310); x.restore(); x.fillText(PM().l2, RC + 40, 310);
+    x.fillStyle = '#0d4fb0'; fit(x, PM().l3, 800, 50, 640, 1); x.fillText(PM().l3, RC, 372);
     // green ribbon
     const rb = (y, h, w) => { x.save(); x.shadowColor = 'rgba(0,0,0,.2)'; x.shadowBlur = 8; x.shadowOffsetY = 3; g = x.createLinearGradient(0, y, 0, y + h); g.addColorStop(0, '#3dbb4f'); g.addColorStop(1, '#16803a'); x.fillStyle = g;
       x.beginPath(); x.moveTo(RC - w / 2 + 18, y); x.lineTo(RC + w / 2 + 6, y); x.lineTo(RC + w / 2 - 18, y + h); x.lineTo(RC - w / 2 - 6, y + h); x.closePath(); x.fill(); x.restore() };
-    rb(392, 60, 640); x.fillStyle = '#fff'; fit(x, 'ชิงแชมป์ภาคใต้ ครั้งที่ 16 ประจำปี 2569', 800, 38, 590, 1); x.fillText('ชิงแชมป์ภาคใต้ ครั้งที่ 16 ประจำปี 2569', RC, 436);
+    rb(392, 60, 640); x.fillStyle = '#fff'; fit(x, PM().ribbon, 800, 38, 590, 1); x.fillText(PM().ribbon, RC, 436);
     // date & venue
     { const y = 492; x.textAlign = 'left';
       // calendar icon
       x.strokeStyle = NAVY; x.lineWidth = 3; rr(x, 380, y - 28, 34, 32, 5); x.stroke(); x.fillStyle = NAVY; x.fillRect(380, y - 28, 34, 9); for (let i = 0; i < 3; i++) for (let j = 0; j < 2; j++) x.fillRect(386 + i * 9, y - 14 + j * 8, 5, 4);
-      x.fillStyle = NAVY; x.font = K(700, 25, 1); x.fillText('วันที่ 7-8 พฤศจิกายน 2569', 424, y);
+      x.fillStyle = NAVY; x.font = K(700, 25, 1); fit(x, PM().date, 700, 25, 290, 1); x.fillText(PM().date, 424, y);
       x.strokeStyle = '#8aa0b4'; x.lineWidth = 2; x.beginPath(); x.moveTo(722, y - 34); x.lineTo(722, y + 30); x.stroke();
       // pin
       x.fillStyle = '#e0312b'; x.beginPath(); x.arc(752, y - 16, 12, Math.PI, 0); x.lineTo(752, y + 8); x.closePath(); x.fill(); x.fillStyle = '#fff'; x.beginPath(); x.arc(752, y - 16, 4.5, 0, 7); x.fill();
-      x.fillStyle = NAVY; x.font = K(500, 19); x.fillText('สระว่ายน้ำ โรงเรียนโภคาพาณิชย์นุกูล', 774, y - 8); x.fillText('มูลนิธิ อำเภอเมือง จังหวัดกระบี่', 774, y + 18); x.textAlign = 'center' }
+      x.fillStyle = NAVY; x.font = K(500, 19); x.fillText(PM().venue[0], 774, y - 8); x.fillText(PM().venue[1] || '', 774, y + 18); x.textAlign = 'center' }
 
     // ---- layout of lower block (computed first so it can be centred) ----
     const TOP = 540, BOT = footY - 22;
     const hasMed = info.medals.length > 0, head = hasMed ? 'รางวัลที่ได้ :' : 'รายการที่เข้าร่วม :';
     const rows = info.medals.map(m => ({ k: LV[m.lv], v: m.ev, lv: m.lv })).concat(info.part.map(d => ({ k: 'เข้าร่วม', v: d.ev, pl: 0 })));
     if (!rows.length) rows.push({ k: 'ร่วมแข่งขัน :', v: 'ด้วยความมุ่งมั่นตั้งใจ', pl: 0 });
-    const troph = info.rk && info.rk <= 6;
+    const troph = info.rk && info.rk <= TZ();
     const fixedH = 74 + 18 + 84 + 20 + 56 + 18 + (troph ? 64 : 0) + 62 + 16;
     const availL = BOT - TOP - fixedH - 20;
     let cols = 1, rh = Math.min(66, availL / rows.length);
@@ -521,10 +523,10 @@
 
   function caption(i) {
     const nm = `${i.g === 'F' ? 'ด.ญ.' : 'ด.ช.'}${i.disp}`, cnt = [0, 0, 0]; i.medals.forEach(m => cnt[m.lv]++);
-    const lines = [`🎉 ขอแสดงความยินดีกับ ${nm}${i.cls ? ' ชั้น ' + i.cls : ''} ${i.catL}`, '', 'การแข่งขันว่ายน้ำ อบจ.กระบี่ SWIMMING CHAMPIONSHIP ชิงแชมป์ภาคใต้ ครั้งที่ 16 ประจำปี 2569', '📅 7–8 พฤศจิกายน 2569 · 📍 สระว่ายน้ำ โรงเรียนโภคาพาณิชย์นุกูลมูลนิธิ จ.กระบี่', ''];
+    const lines = [`🎉 ขอแสดงความยินดีกับ ${nm}${i.cls ? ' ชั้น ' + i.cls : ''} ${i.catL}`, '', PM().cap, PM().capd, ''];
     if (i.medals.length) { lines.push(`🏅 รางวัลที่ได้ ${['🥇', '🥈', '🥉'].map((e, k) => cnt[k] ? `${e}${cnt[k]}` : '').filter(Boolean).join(' ')}`); i.medals.forEach(m => lines.push(`${['🥇', '🥈', '🥉'][m.lv]} ${LV[m.lv]} ${m.ev}`)) }
     if (i.part.length) { lines.push('', '🏊 รายการที่เข้าร่วมแข่งขัน'); i.part.forEach(d => lines.push(`• ${d.ev}`)) }
-    if (i.rk && i.rk <= 6) lines.push(`🏆 ถ้วยนักกีฬายอดเยี่ยมประเภทบุคคล อันดับที่ ${i.rk} ${i.catL}`);
+    if (i.rk && i.rk <= TZ()) lines.push(`🏆 ถ้วยนักกีฬายอดเยี่ยมประเภทบุคคล อันดับที่ ${i.rk} ${i.catL}`);
     lines.push('', 'ชมรมว่ายน้ำโรงเรียนศรีอรุโณทัย (SSC) · by ' + COACH.name, '#SSC #ศรีอรุโณทัย #ว่ายน้ำ');
     return lines.join('\n');
   }

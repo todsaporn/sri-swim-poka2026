@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>สรุปทีม · ศรีอรุโณทัย · ว่ายน้ำ อบจ.กระบี่ ชิงแชมป์ภาคใต้ #16</title>
+<title>สรุปทีม · ศรีอรุโณทัย · __TITLE__</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0b4f8a">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -67,6 +67,7 @@ h3.sec small{font-family:'IBM Plex Sans Thai',sans-serif;font-weight:500;color:v
 <script src="photos.js"></script><script src="post.js"></script>
 <script>
 const DATA=__DATA__;
+const TZ=(DATA.rules||{}).tz||6,PZ=(DATA.rules||{}).pz||6;
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const G={M:'ชาย',F:'หญิง'},MED=['🥇','🥈','🥉'];
@@ -77,7 +78,7 @@ const evL=e=>`${e.dist}ม. ${e.stroke}`;
 R.forEach(r=>{r.e=EV[r.ev]});
 const A={};R.filter(r=>!r.relay).forEach(r=>{(A[r.name]??={name:r.name,age:r.age,g:r.e.g,races:[]}).races.push(r)});
 const ath=Object.values(A);
-ath.forEach(a=>{const e=a.races[0].e;a.cat=a.g+'|'+e.age;a.catL=`${G[a.g]} ${ageL(e)}`;a.st=(ST[a.cat]&&ST[a.cat].our[nrm(a.name)])||{p:0,rk:null};
+ath.forEach(a=>{const e=(a.races.find(r=>!/ขึ้นไป/.test(r.e.age))||a.races[0]).e;a.cat=a.g+'|'+e.age;a.catL=`${G[a.g]} ${ageL(e)}`;a.st=(ST[a.cat]&&ST[a.cat].our[nrm(a.name)])||{p:0,rk:null};
   a.med=[0,0,0];a.races.forEach(r=>{if(r.res&&r.res.lv!=null)a.med[r.res.lv]++})});
 const AV=(n,g,s)=>window.Photos?Photos.avatar(n,g,s):'';
 function render(){
@@ -96,8 +97,8 @@ function render(){
    <div class="kpi"><b style="color:#3546b5">⭐ ${pts}</b><span>คะแนนรวม${CL&&CL.our?` · สโมสรอันดับ ${CL.our.rk}/${CL.n}`:''}</span></div>
    <div class="kpi"><b class="up">${cmp.length?Math.round(imp.length/cmp.length*100)+'%':'–'}</b><span>เร็วกว่าเวลาส่ง (${imp.length}/${cmp.length})</span></div></div>`;
   // trophies
-  const tro=ath.filter(a=>a.st.rk&&a.st.rk<=6).sort((x,y)=>x.st.rk-y.st.rk);
-  h+=`<h3 class="sec">🏆 ถ้วยนักกีฬายอดเยี่ยม <small>อันดับ 1–6 ของรุ่น จากคะแนนสะสม</small></h3>`;
+  const tro=ath.filter(a=>a.st.rk&&a.st.rk<=TZ).sort((x,y)=>x.st.rk-y.st.rk);
+  h+=`<h3 class="sec">🏆 ถ้วยนักกีฬายอดเยี่ยม <small>อันดับ 1–${TZ} ของรุ่น จากคะแนนสะสม</small></h3>`;
   h+=tro.length?`<div class="tro">${tro.map(a=>{const sc=ST[a.cat];const fin=sc&&sc.done>=sc.nev;return `<div class="tcard">${AV(a.name,a.g,52)}<div style="flex:1;min-width:0"><b>${esc(a.name)}</b><small>รุ่น${a.catL} · ⭐ ${a.st.p} คะแนน</small><span class="tag ${fin?'ok':'tmp'}">${fin?'ยืนยันแล้ว':'ชั่วคราว · ผลออก '+sc.done+'/'+sc.nev}</span></div><div class="big">#${a.st.rk}</div></div>`}).join('')}</div>`:'<div class="card"><div class="empty">ยังไม่มีนักกีฬาในโซนถ้วย</div></div>';
   // club
   if(CL&&CL.top.length){h+=`<h3 class="sec">🏫 อันดับสโมสร <small>ถ้วย 3 อันดับแรก · ผลออก ${CL.done}/${CL.nev} รายการเดี่ยว</small></h3><div class="card">${CL.top.map(c=>`<div class="row ${c.me?'me':''}"><span class="rk">${c.rk<=3?'🏆'+c.rk:c.rk}</span><span class="nm"><b>${esc(c.n)}</b></span><span class="v">${c.p}<small>คะแนน</small></span></div>`).join('')}${CL.our&&!CL.top.some(c=>c.me)?`<div class="row me"><span class="rk">${CL.our.rk}</span><span class="nm"><b>${esc(CL.our.n)}</b></span><span class="v">${CL.our.p}<small>คะแนน</small></span></div>`:''}</div>`}
