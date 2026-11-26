@@ -215,6 +215,14 @@ body.pulling .hero,body.pulling .next,body.pulling #medals{transition:none}
 .howto li{counter-increment:s;display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line);font-size:15px}
 .howto li:before{content:counter(s);flex:0 0 26px;height:26px;border-radius:50%;background:var(--pri);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px}
 .kbd{display:inline-block;border:1px solid var(--line);border-radius:7px;padding:0 6px;background:#f6f9fb;font-weight:600}
+.menubtn{position:absolute;top:-12px;left:16px;width:38px;height:32px;border-radius:10px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.14);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;cursor:pointer;z-index:2;padding:0}
+.menubtn span{display:block;width:18px;height:2px;border-radius:2px;background:#fff}
+@media(max-width:560px){.menubtn{position:static;float:left;margin:-8px 0 10px}}
+.mlist{display:flex;flex-direction:column;gap:8px}
+.mitem{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;text-decoration:none;color:var(--ink);background:#fbfdfe}
+.mitem b{display:block;font-size:15.5px}.mitem small{color:var(--mut);font-size:12.5px}
+.mitem.on{border-color:var(--aqua);background:#e8f7f9}.mck{font-weight:700;color:var(--pri);white-space:nowrap;font-size:13px}
+.mnew{color:#0a8a4a;font-weight:700}
 .fetched{position:absolute;top:-12px;right:16px;font-size:11.5px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);border-radius:99px;padding:3px 9px;display:flex;align-items:center;gap:6px;white-space:nowrap;z-index:2}
 .fetched:before{content:"";width:6px;height:6px;border-radius:50%;background:#4ade80;box-shadow:0 0 0 3px rgba(74,222,128,.25)}
 .fetched.stale:before{background:#fbbf24;box-shadow:0 0 0 3px rgba(251,191,36,.25)}
@@ -295,6 +303,7 @@ body.pulling .hero,body.pulling .next,body.pulling #medals{transition:none}
 <body>
 <div class="ptr" id="ptr"><div class="ptr-ring" id="ptrRing"><img src="logo.png" alt=""></div><div class="ptr-txt" id="ptrTxt">ดึงลงเพื่อรีโหลด</div></div>
 <header class="hero"><div class="wrap" style="position:relative">
+  <button class="menubtn" id="menubtn" aria-label="เลือกการแข่งขัน"><span></span><span></span><span></span></button>
   <div class="fetched" id="fetched"></div>
   <div class="kick" id="meetname"></div>
   <div class="brand"><img src="logo.png" alt="SSC" class="logo"><h1>ทีมว่ายน้ำ ศรีอรุโณทัย</h1></div>
@@ -377,7 +386,11 @@ const saveFav=()=>{try{localStorage.setItem('sri-favs',JSON.stringify([...favs])
 const MED=['🥇','🥈','🥉'];
 const allMed=[0,0,0];let allPts=0;R.forEach(r=>{const x=r.res;if(!x)return;if(x.lv!=null)allMed[x.lv]++;if(!r.relay)allPts+=x.pts||0});const nRes=R.filter(r=>r.res).length;
 function medStat(){return nRes?[`🥇${allMed[0]} 🥈${allMed[1]} 🥉${allMed[2]}`,`เหรียญรวม (ผลออก ${nRes}/${R.length})`]:[dayList.length,'วันแข่งขัน']}
-$('#meetname').innerHTML=esc(DATA.meet.name)+(((DATA.meet.meets||{}).list||[]).filter(m=>m.slug!==DATA.meet.slug).map(m=>` <a href="../${m.slug}/" style="display:inline-block;margin-left:6px;padding:1px 8px;border-radius:99px;background:rgba(255,255,255,.18);color:inherit;text-decoration:none;font-weight:600">↔ ${esc(m.name)}</a>`).join(''));
+$('#meetname').textContent=DATA.meet.name;
+function openMeets(){const L=(DATA.meet.meets||{}).list||[],cur=(DATA.meet.meets||{}).current;
+  $('#sheet').innerHTML=`<button class="x" onclick="closeOv()">×</button><h2 style="margin-bottom:4px">🏊 รายการแข่งขัน</h2><div style="color:var(--mut);font-size:13.5px;margin-bottom:12px">เลือกการแข่งขันที่ต้องการดู</div>
+  <div class="mlist">${L.map(m=>{const on=m.slug===DATA.meet.slug;return `<a class="mitem ${on?'on':''}" href="../${m.slug}/"><div><b>${esc(m.name)}</b><small>${esc(m.dates||'')}${m.slug===cur?' · <span class="mnew">ล่าสุด</span>':''}</small></div><span class="mck">${on?'✓ กำลังดู':'›'}</span></a>`}).join('')}</div>`;showOv()}
+$('#menubtn').onclick=openMeets;
 $('#meetday').textContent=`${dayList.map(dLabel).join(' / ')} · ${DATA.meet.teams} ทีมเข้าแข่งขัน`;
 const boys=ath.filter(a=>a.g==='M').length, girls=ath.length-boys;
 // filters
