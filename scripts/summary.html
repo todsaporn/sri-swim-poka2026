@@ -49,6 +49,7 @@ a{color:var(--pri2)}
 .hl div{border:1px solid var(--line);border-radius:12px;padding:9px 12px;font-size:13.5px}
 .hl b{display:block;font-size:12px;color:var(--mut);font-weight:600;margin-bottom:2px}
 h3.sec{font-size:16px;margin:18px 0 8px}
+.howcalc{margin-top:10px;font-size:13px;background:#f4f6ff;border-radius:10px;padding:8px 10px}.howcalc summary{font-weight:700;cursor:pointer}.howcalc div{margin-top:6px;line-height:1.6}
 .tbl{width:100%;border-collapse:collapse;font-size:13.5px}
 .tbl th{font-size:11.5px;color:var(--mut);font-weight:600;text-align:left;padding:6px 6px;border-bottom:2px solid var(--line);white-space:nowrap}
 .tbl td{padding:9px 6px;border-bottom:1px solid var(--line);vertical-align:top}
@@ -64,6 +65,8 @@ h3.sec{font-size:16px;margin:18px 0 8px}
 .why{font-size:11.5px;color:#c0262d}
 /* mobile: table -> stacked rows */
 @media(max-width:640px){
+  .cmpt tr{grid-template-columns:repeat(3,minmax(0,1fr))!important}.cmpt td.n{display:block!important;text-align:left!important;white-space:normal!important}.cmpt td.n:before{display:block}
+
   .tbl thead{display:none}
   .tbl,.tbl tbody,.tbl tr,.tbl td{display:block;width:100%}
   .tbl tr{border:1px solid var(--line);border-radius:12px;padding:8px 10px;margin-bottom:8px;background:#fff}
@@ -167,6 +170,7 @@ function render(){const a=A[cur];const rs=a.races,done=rs.filter(r=>r.res);
    ${bigImp&&bigImp.res.d<0?`<div><b>พัฒนาการมากที่สุด</b>${evL(bigImp.e)} · เร็วขึ้น ${(-bigImp.res.d).toFixed(2)} วิ (${esc(bigImp.seed)} → ${esc(bigImp.res.f)})</div>`:''}
    ${cmp?`<div><b>เฉลี่ยเทียบเวลาส่ง</b><span class="${sumd<0?'up':'dn'}">${sumd<0?'เร็วขึ้น':'ช้าลง'} ${Math.abs(sumd/cmp).toFixed(2)} วิ/รายการ</span></div>`:''}
    ${dq||nr?`<div><b>อื่นๆ</b>${nr?`<span class="nrb">NR</span> ทำลายสถิติ ${nr} รายการ `:''}${dq?`<span class="dq">DQ/ไม่ได้อันดับ ${dq}</span>`:''}</div>`:''}</div></div>`;
+  h+=`<div id="cmp2"></div>`;
   // ---- development analysis
   const fin=done.filter(r=>r.res.pl&&secs(r.res.f)!=null);
   const gaps=fin.map(r=>{const x=EVR[r.ev]||{},f=secs(r.res.f),t3=x.top&&x.top[2]&&secs(x.top[2].f),c6=secs(x.c6),rec=r.e.rec&&secs(r.e.rec.t),win=x.top&&x.top[0]&&secs(x.top[0].f);
@@ -213,7 +217,39 @@ function render(){const a=A[cur];const rs=a.races,done=rs.filter(r=>r.res);
    <td data-l="คะแนน" class="n">${x&&x.pts?'+'+x.pts:'–'}</td>
    <td data-l="ห่างสถิติ" class="n">${f!=null&&rs_!=null&&x.pl?(f-rs_<=0?'<span class="nrb">NR</span>':(f-rs_).toFixed(2)+' วิ'):'–'}</td></tr>`});
   h+=`</tbody></table></div>`;
-  $('#main').innerHTML=h}
+  $('#main').innerHTML=h;fillCmp(a)}
+
+// ---- compare with other meets (25 m <-> 50 m pools) using HY-TEK turn values
+const TURN={'ฟรีสไตล์':.8,'กรรเชียง':.6,'กบ':1.0,'ผีเสื้อ':.7,'เดี่ยวผสม':.8};
+const fmtT=s=>{if(s==null)return '–';const m=Math.floor(s/60),x=(s-m*60).toFixed(2);return m?`${m}:${x.padStart(5,'0')}`:x};
+const conv=(t,from,to,dist,stroke)=>{if(from===to)return t;const d=(dist/50)*(TURN[stroke]??.8);return from===25&&to===50?t+d:t-d};
+const OTH={};
+async function otherMeets(){const L=((DATA.meet.meets||{}).list||[]).filter(m=>m.slug!==DATA.meet.slug);
+  await Promise.all(L.map(async m=>{if(OTH[m.slug]!==undefined)return;try{OTH[m.slug]=await (await fetch(`../${m.slug}/data.json`,{cache:'no-store'})).json()}catch(e){OTH[m.slug]=null}}));
+  return L.map(m=>({m,d:OTH[m.slug]})).filter(x=>x.d)}
+async function fillCmp(a){const box=document.getElementById('cmp2');if(!box)return;const O=await otherMeets();if(!document.getElementById('cmp2')||cur!==a.name)return;
+  const P1=DATA.meet.pool||25;let html='';
+  for(const {m,d} of O){const P0=d.meet.pool||25,EV0=d.events;
+    const mine=d.races.filter(r=>r.name===a.name&&r.res&&r.res.pl&&secs(r.res.f));if(!mine.length)continue;
+    const key=e=>e.stroke+'|'+e.dist,old={};mine.forEach(r=>{const e=EV0[r.ev];const t=secs(r.res.f);if(!old[key(e)]||t<old[key(e)].t)old[key(e)]={t,f:r.res.f,e}});
+    const rows=[];const onlyNew=[];a.races.forEach(r=>{const o=old[key(r.e)];if(!o){onlyNew.push(evL(r.e));return}
+      const c=conv(o.t,P0,P1,r.e.dist,r.e.stroke),now=r.res&&r.res.pl?secs(r.res.f):null;rows.push({r,o,c,now,pct:now!=null?(now-c)/c*100:null})});
+    const onlyOld=Object.values(old).filter(o=>!a.races.some(r=>key(r.e)===key(o.e))).map(o=>evL(o.e));
+    if(!rows.length&&!onlyOld.length)continue;
+    const doneR=rows.filter(x=>x.pct!=null),better=doneR.filter(x=>x.pct<0).length,avg=doneR.length?doneR.reduce((s,x)=>s+x.pct,0)/doneR.length:null;
+    const same=P0===P1,lbl=`สระ ${P1} ม.`;
+    html+=`<h3 class="sec">🔁 เทียบกับ ${esc(m.name)} <small style="font-weight:500;color:var(--mut);font-size:12px">${esc(m.dates||'')} · สระ ${P0} ม.</small></h3><div class="card">
+     <div class="kpis" style="grid-template-columns:repeat(2,1fr)"><div class="kpi"><b class="${doneR.length&&better/doneR.length>=.5?'up':''}">${doneR.length?better+'/'+doneR.length:'–'}</b><span>ดีขึ้น${same?'':' (หลังปรับสระ)'}</span></div>
+      <div class="kpi"><b class="${avg!=null?(avg<0?'up':'dn'):''}">${avg==null?'รอผล':(avg<0?'เร็วขึ้น ':'ช้าลง ')+Math.abs(avg).toFixed(1)+'%'}</b><span>เฉลี่ยทุกรายการที่เทียบได้</span></div></div>
+     ${rows.length?`<table class="tbl cmpt" style="margin-top:8px"><thead><tr><th>รายการ</th><th>${esc(m.name.split(' ')[0])}</th><th>${same?'':'เทียบ'+lbl}</th><th>งานนี้</th></tr></thead><tbody>${rows.map(x=>`<tr><td class="ev"><b>${evL(x.r.e)}</b><small>D${x.r.day} · ${x.r.t} น.</small></td>
+       <td data-l="${esc(m.name.split(' ')[0])}" class="n">${esc(x.o.f)}</td><td data-l="เทียบ${lbl}" class="n">${same?'':'≈ '+fmtT(x.c)}</td>
+       <td data-l="งานนี้" class="n">${x.now!=null?`<b>${esc(x.r.res.f)}</b><br><span class="${x.pct<0?'up':'dn'}" style="font-size:12px">${x.pct<0?'▲ ดีขึ้น ':'▼ ช้าลง '}${Math.abs(x.pct).toFixed(1)}%</span>`:`<span style="color:#3546b5;font-weight:700">เป้า &lt; ${fmtT(x.c)}</span>${x.r.seed&&x.r.seed!=='NT'?`<br><small style="color:var(--mut)">เวลาส่ง ${esc(x.r.seed)}</small>`:''}`}</td></tr>`).join('')}</tbody></table>`:''}
+     ${onlyNew.length?`<div style="font-size:13px;margin-top:10px"><b>ลงครั้งแรกในงานนี้:</b> ${esc([...new Set(onlyNew)].filter(n=>!rows.some(x=>evL(x.r.e)===n)).join(' · ')||'–')}</div>`:''}
+     ${onlyOld.length?`<div style="font-size:13px;margin-top:4px;color:var(--mut)"><b>ลงเฉพาะ${esc(m.name.split(' ')[0])}:</b> ${esc(onlyOld.join(' · '))}</div>`:''}
+     ${same?'':`<details class="howcalc"><summary>วิธีเทียบสระ ${P0} ม. → ${P1} ม.</summary><div>สระ 50 ม. กลับตัวน้อยกว่าสระ 25 ม. — ทุกระยะ 50 ม. หายไป 1 ครั้ง จึงช้ากว่าโดยธรรมชาติ<br>
+       <b>เวลาสระ 50 ≈ เวลาสระ 25 + (ระยะ ÷ 50) × ค่าเวลาต่อการกลับตัว</b><br>ค่าต่อการกลับตัว: ฟรีสไตล์ 0.8 วิ · กรรเชียง 0.6 · กบ 1.0 · ผีเสื้อ 0.7 · เดี่ยวผสม 0.8<br>
+       ตัวอย่าง: 100ม. ฟรีสไตล์ 1:27.29 → 87.29 + (100÷50)×0.8 = 88.89 วิ ≈ 1:28.89<br><small>ค่ามาตรฐานจากโปรแกรม HY-TEK (โปรแกรมที่ทั้งสองงานใช้จัดการแข่งขัน) · เป็นค่าเฉลี่ยของนักกีฬาทั่วไป เด็กเล็กที่กลับตัวยังไม่คล่องอาจได้ผลต่างจากนี้ · ใช้ดูแนวโน้ม ไม่ใช่เวลาทางการ</small></div></details>`}</div>`}
+  box.innerHTML=html}
 function cardInfo(a){const done=a.races.filter(r=>r.res&&r.res.pl);const med=[0,0,0];a.races.forEach(r=>{if(r.res&&r.res.lv!=null)med[r.res.lv]++});
   const best=done.slice().sort((x,y)=>(x.res.lv??9)-(y.res.lv??9)||x.res.pl/x.res.nfin-y.res.pl/y.res.nfin);
   return {name:a.name,g:a.g,cat:`${a.catL} · ${a.races.length} รายการ`,catShort:a.catL.replace(/^ชาย |^หญิง /,''),meet:DATA.meet.name,date:Object.values(DAYS).map(d=>d.label).join(' / '),med,pts:a.st.p,rk:a.st.rk,logo:'logo.png',
