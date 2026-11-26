@@ -564,7 +564,7 @@ function appendNext(){const row=$('#nextrow');if(nextShown>=nextAll.length)retur
   const chunk=nextAll.slice(nextShown,nextShown+NEXT_PAGE);nextShown+=chunk.length;
   row.querySelector('.mini-more')?.remove();
   row.insertAdjacentHTML('beforeend',chunk.map(miniCard).join('')+(nextShown<nextAll.length?`<div class="mini mini-more"><span class="spin"></span>อีก ${nextAll.length-nextShown} รายการ</div>`:`<div class="mini mini-end">✓ ครบทั้ง ${nextAll.length} รายการ</div>`))}
-function renderNext(){const b=bkk(),nm=nowM();nextNm=nm;$('#clock').textContent=`ตอนนี้ ${b.t} น.`;
+function renderNext(){const b=bkk(),nm=nowM();nextNm=nm;{const dd=Math.round((Date.parse(D1)-Date.parse(b.d))/864e5);$('#clock').textContent=dd>0?(dd===1?'แข่งพรุ่งนี้!':`อีก ${dd} วันแข่ง`):`ตอนนี้ ${b.t} น.`}
   let list,title;
   if(nm<0){list=R.slice();title='รายการแรกของทีม'}
   else{list=R.filter(r=>!isDone(r,nm));title=list.length?(list[0].day*1440-1440>nm?`รายการแรกของ ${dLabel(list[0].day)}`:'รายการถัดไปของทีม'):'จบการแข่งขันแล้ว — ดูสรุปที่แท็บผลแข่ง'}
