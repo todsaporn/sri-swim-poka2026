@@ -331,7 +331,7 @@ body.pulling .hero,body.pulling .next,body.pulling #medals{transition:none}
 <script src="photos.js"></script><script src="post.js"></script>
 <script>
 const DATA=__DATA__;
-const TZ=(DATA.rules||{}).tz||6,PZ=(DATA.rules||{}).pz||6;
+const TZ=(DATA.rules||{}).tz||6,PZ=(DATA.rules||{}).pz||6,CT=(DATA.rules||{}).ct||3,HM=(DATA.rules||{}).hm||11;
 const EV=DATA.events, R=DATA.races, H=DATA.heats;
 const $=s=>document.querySelector(s);
 const AV=(n,g,sz,o)=>window.Photos?Photos.avatar(n,g,sz,o):`<span class="gdot ${g}"></span>`;
@@ -524,7 +524,7 @@ function vResults(){const done=R.filter(r=>r.res&&okRace(r)).sort((a,b)=>b.m-a.m
   const newRec=Object.values(EV).filter(e=>e.rec&&e.rec.new&&(!S.d||e.day==S.d)).sort((a,b)=>a.no-b.no);
   if(newRec.length)h+=`<div class="board"><h3>🔥 สถิติภาคใต้ใหม่ (รายการที่ทีมเราลง)</h3>${newRec.map(e=>`<button class="brow" data-h="${e.no}-${(R.find(r=>r.ev===e.no)||{}).heat}"><span><b>${evLabel(e)}</b> <small style="color:var(--mut)">${G[e.g]} ${ageLabel(e)}</small><br><small>${esc(e.rec.n)} · ${esc(e.rec.tm||'')}</small></span><span class="md" style="flex-direction:column;align-items:flex-end;gap:0"><span style="color:#c2410c">${esc(e.rec.t)}</span><small style="color:var(--mut);font-weight:500">เดิม ${esc(e.rec.old||'-')}</small></span></button>`).join('')}</div>`;
   h+=trophyHTML();
-  if(CL&&CL.top.length)h+=`<div class="board" id="b-club"><h3>🏫 อันดับสโมสร (ถ้วย 3 อันดับแรก)</h3><div style="font-size:12px;color:var(--mut);margin-bottom:6px">รวมคะแนนรายการเดี่ยวทุกรุ่น · ผลออก ${CL.done}/${CL.nev} รายการ</div><table class="lu">${CL.top.map(c=>`<tr class="${c.me?'me':''}"><td>${c.rk<=3?'🏆'+c.rk:c.rk}</td><td><b>${esc(c.n)}</b></td><td><b>${c.p}</b> คะแนน</td></tr>`).join('')}${CL.our&&!CL.top.some(c=>c.me)?`<tr class="me"><td>${CL.our.rk}</td><td><b>${esc(CL.our.n)}</b></td><td><b>${CL.our.p}</b> คะแนน</td></tr>`:''}</table></div>`;
+  if(CL&&CL.top.length)h+=`<div class="board" id="b-club"><h3>🏫 อันดับสโมสร (ถ้วย ${CT} อันดับแรก)</h3><div style="font-size:12px;color:var(--mut);margin-bottom:6px">รวมคะแนนรายการเดี่ยวทุกรุ่น · ผลออก ${CL.done}/${CL.nev} รายการ</div><table class="lu">${CL.top.map(c=>`<tr class="${c.me?'me':''}"><td>${c.rk<=CT?'🏆'+c.rk:c.rk}</td><td><b>${esc(c.n)}</b></td><td><b>${c.p}</b> คะแนน</td></tr>`).join('')}${CL.our&&!CL.top.some(c=>c.me)?`<tr class="me"><td>${CL.our.rk}</td><td><b>${esc(CL.our.n)}</b></td><td><b>${CL.our.p}</b> คะแนน</td></tr>`:''}</table></div>`;
   const QA=DATA.qa||{unparsed:[],unmatched:[]};const nq=QA.unparsed.length+QA.unmatched.length;
   const qaBox=nq?`<div class="qa warn"><b>⚠️ ตรวจข้อมูล: พบ ${nq} จุดที่ระบบอ่าน/จับคู่ไม่ได้</b>${QA.unmatched.map(x=>`<div>• ชื่อในใบผลไม่ตรงกับ startlist: <b>${esc(x.n)}</b> (Event ${x.ev}) ${pdfA(x.ev)}</div>`).join('')}${QA.unparsed.slice(0,8).map(x=>`<div>• Event ${x.ev}: <code>${esc(x.l)}</code> ${pdfA(x.ev)}</div>`).join('')}<div style="margin-top:4px">ผลของรายการเหล่านี้อาจไม่ครบ — เปิด PDF เพื่อตรวจ</div></div>`
     :`<div class="qa ok">✓ ตรวจข้อมูลแล้ว: อ่านใบผลครบทุกบรรทัด และจับคู่ชื่อศรีอรุโณทัยได้ครบ (${DATA.meet.nevres} ใบผล)</div>`;
@@ -565,7 +565,7 @@ function renderMedals(){const rows=ath.map(a=>({a,m:a.med,t:a.med[0]+a.med[1]+a.
    ${o?`<div class="olk ${o.cls}" style="margin-top:6px">🏆 ${o.txt}</div>`:''}
    <button class="mopen" data-a="${esc(a.name)}">ดูโปรไฟล์และทุกรายการ ›</button></div></div>`}).join('')}</div>${out.length>8?`<button class="mmore" id="mmore">${medAll?'ย่อ ▲':`ดูทั้งหมด ${out.length} คน ▼`}</button>`:''}`:'<div style="color:var(--mut);font-size:14px;margin-top:6px">ยังไม่มีเหรียญ — รอผลรายการถัดไป</div>'}
   ${CL&&CL.our?`<div style="margin-top:10px;padding:9px 12px;background:#f6f9fb;border-radius:12px;font-size:14px;display:flex;justify-content:space-between;gap:8px;align-items:center"><span>🏫 อันดับสโมสร <small style="color:var(--mut)">(ถ้วย 3 อันดับแรก · ผลออก ${CL.done}/${CL.nev} รายการเดี่ยว)</small></span><b style="white-space:nowrap">#${CL.our.rk}/${CL.n} · ${CL.our.p} คะแนน</b></div>`:''}
-  <div style="font-size:12px;color:var(--mut);margin-top:8px">🥇🥈🥉 = เหรียญ (อายุ 7–11 แจกทุกฮีต · 12–14 อันดับ 1–3 ของรายการ) · ⭐ = คะแนนสะสม · 🏆 = อยู่ในโซนถ้วย 1–${TZ} ของรุ่น · ผลออก ${nRes}/${R.length} รายการ · อัปเดต ${DATA.meet.updated} น.</div></div>`}
+  <div style="font-size:12px;color:var(--mut);margin-top:8px">🥇🥈🥉 = เหรียญ (อายุไม่เกิน ${HM} ปี แจกทุกฮีต · ${HM+1} ปีขึ้นไป อันดับ 1–3 ของรายการ) · ⭐ = คะแนนสะสม · 🏆 = อยู่ในโซนถ้วย 1–${TZ} ของรุ่น · ผลออก ${nRes}/${R.length} รายการ · อัปเดต ${DATA.meet.updated} น.</div></div>`}
 // share card
 const MEDE=['🥇','🥈','🥉'];
 function cardInfo(a){const done=a.races.filter(r=>r.res&&r.res.pl);
@@ -621,13 +621,13 @@ document.addEventListener('click',e=>{if(e.target.closest('#instdone')){try{loca
 function renderStats(){const nm=nowM(),today=nm<0?1:Math.min(dayList[dayList.length-1],Math.floor(nm/1440)+1);
   const pct=Math.round(nRes/R.length*100),leftToday=R.filter(r=>r.day===today&&!isDone(r,nm)).length;
   const medT=[0,0,0];R.filter(r=>r.day===today&&r.res&&r.res.lv!=null).forEach(r=>medT[r.res.lv]++);const mt=medT[0]+medT[1]+medT[2];
-  const cl=CL&&CL.our,third=CL&&CL.top[2],gap3=cl&&third&&cl.rk>3?third.p-cl.p:0;
+  const cl=CL&&CL.our,third=CL&&CL.top[CT-1],gap3=cl&&third&&cl.rk>CT?third.p-cl.p:0;
   const inZ=ath.filter(a=>a.st.rk&&a.st.rk<=TZ).length;const rs_=a=>((DATA.stand[a.cat]||{}).risk||{})[nrm(a.name)]||{};const ch=ath.filter(a=>rs_(a).status==='chance').length;const lk=ath.filter(a=>rs_(a).status==='lock').length,rk_=ath.filter(a=>rs_(a).status==='risk').length;
   const T=(go,b,s,extra)=>`<button class="stat" data-go="${go}"><b>${b}</b><span>${s}</span>${extra||''}<i class="sgo">›</i></button>`;
   $('#stats').innerHTML=
    T('schedule',`${pct}%`,`ผลออก ${nRes}/${R.length} · ${leftToday?`D${today} เหลือ ${leftToday} รายการ`:'จบวันนี้แล้ว'}`,`<span class="sbar"><i style="width:${pct}%"></i></span>`)+
    T('results',`🥇${allMed[0]} 🥈${allMed[1]} 🥉${allMed[2]}`,`เหรียญรวม${mt&&dayList.length>1?` · D${today} +${mt}`:''}`)+
-   T('b-club',cl?`#${cl.rk}<small>/${CL.n}</small>`:'–',cl?`อันดับสโมสร · ${cl.p} คะแนน${gap3?` · ห่างที่ 3 อีก ${gap3}`:cl.rk<=3?' · โซนถ้วย 🏆':''}`:'อันดับสโมสร')+
+   T('b-club',cl?`#${cl.rk}<small>/${CL.n}</small>`:'–',cl?`อันดับสโมสร · ${cl.p} คะแนน${gap3?` · ห่างที่ ${CT} อีก ${gap3}`:cl.rk<=CT?' · โซนถ้วย 🏆':''}`:'อันดับสโมสร')+
    T('b-trophy',`🏆 ${inZ}<small> คน</small>`,`โซนถ้วย: 🔒 แน่นอน ${lk}${rk_?` · ⚠️ เสี่ยง ${rk_}`:''}${ch?` · 🎯 ลุ้นเข้า ${ch}`:''}`)}
 document.addEventListener('click',e=>{const g=e.target.closest('[data-go]');if(!g)return;const v=g.dataset.go;
   if(v==='schedule'||v==='results'){location.hash=v;setTimeout(()=>document.querySelector('.bar').scrollIntoView({behavior:'smooth'}),60);return}

@@ -67,7 +67,7 @@ h3.sec small{font-family:'IBM Plex Sans Thai',sans-serif;font-weight:500;color:v
 <script src="photos.js"></script><script src="post.js"></script>
 <script>
 const DATA=__DATA__;
-const TZ=(DATA.rules||{}).tz||6,PZ=(DATA.rules||{}).pz||6;
+const TZ=(DATA.rules||{}).tz||6,PZ=(DATA.rules||{}).pz||6,CT=(DATA.rules||{}).ct||3;
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const G={M:'ชาย',F:'หญิง'},MED=['🥇','🥈','🥉'];
@@ -101,7 +101,7 @@ function render(){
   h+=`<h3 class="sec">🏆 ถ้วยนักกีฬายอดเยี่ยม <small>อันดับ 1–${TZ} ของรุ่น จากคะแนนสะสม</small></h3>`;
   h+=tro.length?`<div class="tro">${tro.map(a=>{const sc=ST[a.cat];const fin=sc&&sc.done>=sc.nev;return `<div class="tcard">${AV(a.name,a.g,52)}<div style="flex:1;min-width:0"><b>${esc(a.name)}</b><small>รุ่น${a.catL} · ⭐ ${a.st.p} คะแนน</small><span class="tag ${fin?'ok':'tmp'}">${fin?'ยืนยันแล้ว':'ชั่วคราว · ผลออก '+sc.done+'/'+sc.nev}</span></div><div class="big">#${a.st.rk}</div></div>`}).join('')}</div>`:'<div class="card"><div class="empty">ยังไม่มีนักกีฬาในโซนถ้วย</div></div>';
   // club
-  if(CL&&CL.top.length){h+=`<h3 class="sec">🏫 อันดับสโมสร <small>ถ้วย 3 อันดับแรก · ผลออก ${CL.done}/${CL.nev} รายการเดี่ยว</small></h3><div class="card">${CL.top.map(c=>`<div class="row ${c.me?'me':''}"><span class="rk">${c.rk<=3?'🏆'+c.rk:c.rk}</span><span class="nm"><b>${esc(c.n)}</b></span><span class="v">${c.p}<small>คะแนน</small></span></div>`).join('')}${CL.our&&!CL.top.some(c=>c.me)?`<div class="row me"><span class="rk">${CL.our.rk}</span><span class="nm"><b>${esc(CL.our.n)}</b></span><span class="v">${CL.our.p}<small>คะแนน</small></span></div>`:''}</div>`}
+  if(CL&&CL.top.length){h+=`<h3 class="sec">🏫 อันดับสโมสร <small>ถ้วย ${CT} อันดับแรก · ผลออก ${CL.done}/${CL.nev} รายการเดี่ยว</small></h3><div class="card">${CL.top.map(c=>`<div class="row ${c.me?'me':''}"><span class="rk">${c.rk<=CT?'🏆'+c.rk:c.rk}</span><span class="nm"><b>${esc(c.n)}</b></span><span class="v">${c.p}<small>คะแนน</small></span></div>`).join('')}${CL.our&&!CL.top.some(c=>c.me)?`<div class="row me"><span class="rk">${CL.our.rk}</span><span class="nm"><b>${esc(CL.our.n)}</b></span><span class="v">${CL.our.p}<small>คะแนน</small></span></div>`:''}</div>`}
   // medal table
   const mt=ath.map(a=>({a,t:a.med[0]+a.med[1]+a.med[2]})).sort((x,y)=>y.a.med[0]-x.a.med[0]||y.a.med[1]-x.a.med[1]||y.a.med[2]-x.a.med[2]||y.a.st.p-x.a.st.p);
   h+=`<h3 class="sec">🏅 เหรียญและคะแนนรายคน <small>เรียงตามทอง เงิน ทองแดง</small></h3><div class="card">${mt.map((x,i)=>`<a class="row" style="color:inherit;text-decoration:none" href="summary.html?a=${encodeURIComponent(x.a.name)}"><span style="display:flex;align-items:center;gap:8px"><span class="rk">${i+1}</span>${AV(x.a.name,x.a.g,34)}</span><span class="nm"><b>${esc(x.a.name)}</b><small>${x.a.catL} · ${x.a.races.filter(r=>r.res).length}/${x.a.races.length} รายการ${x.a.st.rk?` · อันดับรุ่น #${x.a.st.rk}`:''}</small></span><span class="v"><span class="md">${x.a.med.map((n,j)=>`<span style="opacity:${n?1:.3}">${MED[j]}${n}</span>`).join('')}</span><small>⭐ ${x.a.st.p} คะแนน</small></span></a>`).join('')}</div>`;
