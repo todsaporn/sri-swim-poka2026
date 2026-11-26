@@ -28,6 +28,10 @@ redirect = f"""<!doctype html><html lang="th"><head><meta charset="utf-8">
 </head><body><h3>ทีมว่ายน้ำศรีอรุโณทัย</h3><ul>{links}</ul>
 <script>if('serviceWorker' in navigator&&location.protocol==='https:'){{navigator.serviceWorker.register('sw.js').catch(()=>{{}})}}</script>
 </body></html>"""
+# pages opened before the split poll ./data.json and reload themselves when meet.ts is newer -> keep a stub here
+import datetime
+ts = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=7))).isoformat(timespec='seconds')
+json.dump({'meet': {'ts': ts, 'moved': cur}}, open(os.path.join(SITE, 'data.json'), 'w'))
 for name in ('index.html', 'summary.html', 'team.html'):
     open(os.path.join(SITE, name), 'w').write(redirect)
 # root PWA bits (apps installed before the split have the root as start_url and a root-scoped service worker)
